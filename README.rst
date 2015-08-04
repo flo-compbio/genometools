@@ -4,7 +4,7 @@ GenomeTools
 This is a collection of scripts and functions for working with genomic data.
 
 Copyright and License
-=====================
+---------------------
 
 Copyright (c) 2015 Florian Wagner
 
