@@ -3,6 +3,13 @@ GenomeTools
 
 This is a collection of scripts and functions for working with genomic data.
 
+Installation
+------------
+
+.. code-block:: bash
+
+	$ pip install genometools
+
 Copyright and License
 ---------------------
 
