@@ -29,7 +29,7 @@ from collections import Counter
 def read_args_from_cmdline():
 	parser = argparse.ArgumentParser(description='')
 
-	parser.add_argument('-a','--annotation-file',required=True)
+	parser.add_argument('-a','--annotation-file',default='-')
 	parser.add_argument('-o','--output-file',required=True)
 	parser.add_argument('-c','--chromosome-pattern',default=r'(?:\d\d?|MT|X|Y)$')
 	parser.add_argument('-g','--gene-field-name',default='gene')
