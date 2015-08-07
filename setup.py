@@ -118,8 +118,9 @@ setup(
     # pip to create the appropriate form of executable for the target platform.
     entry_points={
         'console_scripts': [
-            'extract_entrez2gene = genometools.extract_entrez2gene:main',
-            'extract_protein_coding_genes = genometools.extract_protein_coding_genes:main',
+            'extract_entrez2gene.py = genometools.extract_entrez2gene:main',
+            'extract_protein_coding_genes.py = genometools.extract_protein_coding_genes:main',
+            'extract_chromosome_lengths.py = genometools.extract_chromosome_lengths:main',
         ],
     },
 )
