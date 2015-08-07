@@ -17,6 +17,15 @@
 import os
 import csv
 import bisect
+import gzip
+
+def open_plain_or_gzip(fn,mode='r'):
+	try:
+		gzip.open(fn).next()
+	except IOError:
+		return open(fn,mode)
+	else:
+		return gzip.open(fn,mode)
 
 def flatten(l):
         return [item for sublist in l for item in sublist] # incomprehensible list comprehension
@@ -41,7 +50,7 @@ def argmax(seq):
 
 def read_single(fn):
 	data = []
-	with open(fn) as fh:
+	with open_plain_or_gzip(fn) as fh:
 		reader = csv.reader(fh,dialect='excel-tab')
 		for l in reader:
 			data.append(l[0])
@@ -49,7 +58,7 @@ def read_single(fn):
 
 def read_all(fn,m='r'):
 	data = []
-	with open(fn,m) as fh:
+	with open_plain_or_gzip(fn,m) as fh:
 		reader = csv.reader(fh,dialect='excel-tab')
 		for l in reader:
 			data.append(l)

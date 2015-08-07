@@ -1,3 +1,5 @@
+from genometools import misc
+
 class GenomicFeature(object):
 	def __init__(self):
 		pass
@@ -6,6 +8,45 @@ class GenomicFeature(object):
 		return "<GenomicFeature>" %(self.gene)
 	def __str__(self):
 		return "<GenomicFeature>" %(self.gene)
+
+class ChipPeak(GenomicFeature):
+	def __init__(self,chrom,start,end,summit):
+		super(ChipPeak,self).__init__()
+		assert start < end
+		assert summit < (end-start)
+		self.chrom = chrom
+		self.start = start
+		self.end = end
+		self.summit = summit
+
+	@property
+	def length(self):
+		return self.end - self.start
+
+	@classmethod
+	def read_ucsc_narrowpeak_file(cls,narrowpeak_file):
+		data = misc.read_all(narrowpeak_file)
+		peaks = []
+		for d in data:
+
+			# convert chromosome name to Ensembl
+			chrom = d[0]
+			if chrom[:3] == 'chr':
+				chrom = chrom[3:]
+			if chrom == 'M':
+				chrom = 'MT'
+
+			P = cls(d[0],int(d[1]),int(d[2]),int(d[9]))
+			peaks.append(P)
+
+		return peaks
+
+	def __repr__(self):
+		return "<Peak %s: %d-%d (%d bp), summit=%d)>" %(self.chrom,self.start,self.end,self.length,self.summit)
+	def __str__(self):
+		return "<Peak on chromosome '%s' (%d - %d), length = %d bp, summit @ %d>" \
+				%(self.chrom,self.start,self.end,self.length,self.summit+1)
+		
 
 class Peak(GenomicFeature):
 
@@ -85,6 +126,19 @@ class GeneFeature(GenomicFeature):
 		return "<Feature gene:'%s'>" %(self.gene)
 	def __str__(self):
 		return "<Feature of gene '%s'>" %(self.gene)
+
+	def __hash__(self):
+		return hash(repr(self))
+
+	def __eq__(self,other):
+		if self is other:
+			return True
+		elif type(self) != type(other):
+			return False
+		elif repr(self) == repr(other):
+			return True
+		else:
+			return False
 
 class DirectedGeneFeature(GeneFeature):
 	def __init__(self,gene,direction):
