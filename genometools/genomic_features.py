@@ -1,6 +1,7 @@
 import sys
 import os
 import csv
+import gzip
 from math import copysign
 
 from genometools import misc
@@ -122,19 +123,24 @@ class TranscriptFeature(GeneFeature):
 
 
 class ChipPeak(IntervalFeature):
-	def __init__(self,exp,chrom,start,end,summit):
+	def __init__(self,exp,chrom,start,end,summit=None):
 		IntervalFeature.__init__(self,chrom,start,end)
-		assert summit >= 0
-		assert summit < (end-start)
+		if summit is not None:
+			assert summit >= 0
+			assert summit < (end-start)
 		self.summit = summit
 		self.exp = exp
 
 	def __repr__(self):
-		return '<ChipPeak (exp:%s, chrom:%s, start:%d, end:%d, summit:%d)>' %(self.exp,self.chrom,self.start,self.end,self.summit)
+		return '<ChipPeak (exp:%s, chrom:%s, start:%d, end:%d, summit:%s)>' \
+				%(self.exp,self.chrom,self.start,self.end,str(self.summit))
 
 	def __str__(self):
-		return '<ChipPeak from experiment "%s" on chromosome "%s" (%d - %d), length = %d bp, summit @ %d>' \
-				%(self.exp,self.chrom,self.start,self.end,self.length,self.summit+1)
+		summit_str = 'summit N/A'
+		if self.summit is not None:
+			summit_str = 'summit @ %d' %(self.summit)
+		return '<ChipPeak from experiment "%s" on chromosome "%s" (%d - %d), length = %d bp, %s>' \
+				%(self.exp,self.chrom,self.start,self.end,self.length,summit_str)
 
 	@staticmethod
 	def get_chrom_ucsc2ensembl(chrom):
@@ -144,21 +150,32 @@ class ChipPeak(IntervalFeature):
 			chrom = 'MT'
 		return chrom
 
+	@staticmethod
+	def get_chrom_ensembl2ucsc(chrom):
+		if chrom == 'MT':
+			chrom = 'M'
+		chrom = 'chr' + chrom
+		return chrom
+
 	@classmethod
 	def from_text(cls,text,sep='\t'):
 		data = text.split(sep)
-		return cls(data[0],int(data[1]),int(data[2]),int(data[3]))
+		summit = None
+		if data[3] != 'None':
+			summit = int(data[3])
+		return cls(data[0],int(data[1]),int(data[2]),summit)
 
 	@classmethod
-	def read_ucsc_narrowpeaks(cls,narrowpeak_file,experiment):
+	def read_encode_narrowpeaks(cls,narrowpeak_file,experiment=None):
+		# assumes that summit positions are specified (last column)
 		data = misc.read_all(narrowpeak_file)
 		peaks = []
 		for d in data:
-
 			# convert chromosome name to Ensembl
 			chrom = ChipPeak.get_chrom_ucsc2ensembl(d[0])
 			try:
-				P = cls(experiment,chrom,int(d[1]),int(d[2]),int(d[9])-1) # -1 since Encode apparently isn't using format correctly
+				summit = int(d[9])-1 # -1 since Encode apparently isn't using format correctly
+				P = cls(experiment,chrom,int(d[1]),int(d[2]),summit)
 			except AssertionError as e:
 				print chrom,d[1],d[2],d[9]
 				raise e
@@ -167,7 +184,8 @@ class ChipPeak(IntervalFeature):
 		return peaks
 
 	@classmethod
-	def read_ucsc_narrowpeaks_fixed_width(cls,narrowpeak_file,experiment,chromlen,width):
+	def read_encode_narrowpeaks_fixed_width(cls,narrowpeak_file,chromlen,width,experiment=None):
+		# assumes that summit positions are specified (last column)
 		data = misc.read_all(narrowpeak_file)
 		goleft = int(width/2.0)
 		goright = width-goleft
@@ -176,6 +194,7 @@ class ChipPeak(IntervalFeature):
 			chrom = ChipPeak.get_chrom_ucsc2ensembl(d[0])
 			assert chrom in chromlen
 			start = int(d[1])
+
 			summit = int(d[9])-1
 			pos = start + summit # genomic position of the peak summit
 
@@ -186,10 +205,36 @@ class ChipPeak(IntervalFeature):
 
 		return peaks
 
+	def read_ucsc_bed_regions(cls,file_name,experiment=None):
+		# reads peaks from bed file (no summit)
+		data = misc.read_all(file_name)
+		peaks = []
+		for d in data:
+			# convert chromosome name to Ensembl
+			chrom = ChipPeak.get_chrom_ucsc2ensembl(d[0])
+			P = cls(experiment,chrom,int(d[1]),int(d[2]))
+			peaks.append(P)
+		return peaks
+
+	@staticmethod
+	def write_encode_narrowpeaks(peaks,output_file,compressed=False):
+		# writes to encode narrowpeaks format, makes summit indexing 1-based (violating the format)
+		with open(output_file,'w') if not compressed else gzip.open(output_file,'w') as ofh:
+			writer = csv.writer(ofh,dialect='excel-tab',lineterminator=os.linesep,quoting=csv.QUOTE_NONE)
+			for p in peaks:
+				chrom = ChipPeak.get_chrom_ensembl2ucsc(p.chrom)
+				summit_str = str(-1)
+				if p.summit is not None:
+					summit_str = str(p.summit+1)
+				writer.writerow([chrom,str(p.start),str(p.end),'.',str(0),'.',str(0),str(-1),str(-1),summit_str])
+
 	def get_text(self,sep='\t'):
 		return sep.join([self.chrom,str(self.start),str(self.end),str(self.summit)])
 
 	def get_summit_position(self):
+		if self.summit is None:
+			raise ValueError('This peak does not have a summit position specified.')
+
 		pos = self.iv.start + self.summit
 		return GI(self.chrom,pos,pos+1)
 
@@ -197,6 +242,9 @@ class ChipPeak(IntervalFeature):
 		return GI(self.chrom,self.start,self.end)
 
 	def get_summit_interval(self):
+		if self.summit is None:
+			raise ValueError('This peak does not have a summit position specified.')
+
 		return GI(self.chrom,self.start+self.summit,self.start+self.summit+1)
 
 
