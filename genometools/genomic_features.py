@@ -205,9 +205,11 @@ class ChipPeak(IntervalFeature):
 
 		return peaks
 
+	@classmethod
 	def read_ucsc_bed_regions(cls,file_name,experiment=None):
 		# reads peaks from bed file (no summit)
 		data = misc.read_all(file_name)
+		data = data[1:] # remove header
 		peaks = []
 		for d in data:
 			# convert chromosome name to Ensembl

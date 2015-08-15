@@ -122,6 +122,7 @@ setup(
             'extract_protein_coding_genes.py = genometools.extract_protein_coding_genes:main',
             'extract_protein_coding_tss.py = genometools.extract_protein_coding_tss:main',
             'extract_entrez2gene.py = genometools.extract_entrez2gene:main',
+			'filter_fasta.py = genometools.filter_fasta:main',
         ],
     },
 )
