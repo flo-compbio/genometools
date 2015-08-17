@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 
 import sys
-import argparse
-import numpy as np
-import gzip
 import os
+import argparse
+import gzip
+import re
 
 def read_args_from_cmdline():
 	parser = argparse.ArgumentParser(description='Filter fasta.')
 	parser.add_argument('-f','--fasta-file',default='-')
 	parser.add_argument('-c','--chromosome-pattern',default=r'(?:\d\d?|MT|X|Y)$')
-	parser.add_argumetn('-o','--output-file')
+	parser.add_argument('-o','--output-file',default='-')
 	args = parser.parse_args()
 	return args
 
@@ -26,9 +26,11 @@ def main(args=None):
 	if args is None:
 		args = read_args_from_cmdline()
 
+	#print args.chromosome_pattern
+
 	input_file = args.fasta_file
 	output_file = args.output_file
-	chrom_pat = args.chromosome_pattern
+	chrom_pat = re.compile(args.chromosome_pattern)
 
 	inside = False
 	with open_plain_or_gzip(input_file) if input_file != '-' else sys.stdin as fh,\

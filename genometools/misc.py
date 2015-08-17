@@ -75,6 +75,21 @@ def read_chromosome_lengths(fn):
 def read_chromlen(fn):
 	return read_chromosome_lengths(fn)
 
+def get_chrom_ucsc2ensembl(chrom):
+	if chrom[:3] == 'chr':
+		chrom = chrom[3:]
+	if chrom == 'M':
+		chrom = 'MT'
+	return chrom
+
+def get_chrom_ensembl2ucsc(chrom):
+	if chrom == 'MT':
+		chrom = 'M'
+	chrom = 'chr' + chrom
+	return chrom
+
+
+
 def read_enrichment(fn):
 	return read_all_columns(fn)
 
@@ -98,3 +113,5 @@ def read_goterms(fn):
 
 def read_terms(fn):
 	return read_all_columns(fn)
+
+
