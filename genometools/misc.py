@@ -17,6 +17,15 @@
 import os
 import csv
 import bisect
+import gzip
+
+def open_plain_or_gzip(fn,mode='r'):
+	try:
+		gzip.open(fn).next()
+	except IOError:
+		return open(fn,mode)
+	else:
+		return gzip.open(fn,mode)
 
 def flatten(l):
         return [item for sublist in l for item in sublist] # incomprehensible list comprehension
@@ -41,7 +50,7 @@ def argmax(seq):
 
 def read_single(fn):
 	data = []
-	with open(fn) as fh:
+	with open_plain_or_gzip(fn) as fh:
 		reader = csv.reader(fh,dialect='excel-tab')
 		for l in reader:
 			data.append(l[0])
@@ -49,7 +58,7 @@ def read_single(fn):
 
 def read_all(fn,m='r'):
 	data = []
-	with open(fn,m) as fh:
+	with open_plain_or_gzip(fn,m) as fh:
 		reader = csv.reader(fh,dialect='excel-tab')
 		for l in reader:
 			data.append(l)
@@ -65,6 +74,21 @@ def read_chromosome_lengths(fn):
 
 def read_chromlen(fn):
 	return read_chromosome_lengths(fn)
+
+def get_chrom_ucsc2ensembl(chrom):
+	if chrom[:3] == 'chr':
+		chrom = chrom[3:]
+	if chrom == 'M':
+		chrom = 'MT'
+	return chrom
+
+def get_chrom_ensembl2ucsc(chrom):
+	if chrom == 'MT':
+		chrom = 'M'
+	chrom = 'chr' + chrom
+	return chrom
+
+
 
 def read_enrichment(fn):
 	return read_all_columns(fn)
@@ -89,3 +113,5 @@ def read_goterms(fn):
 
 def read_terms(fn):
 	return read_all_columns(fn)
+
+
