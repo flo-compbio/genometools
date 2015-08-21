@@ -67,30 +67,29 @@ def main(args=None):
 	chromosomes = set()
 	excluded_chromosomes = set()
 
-	tss = {}
-	genes_with_tss = []
+	#genes_with_tss = []
 
-	transcript_info = {}
-	transcript_ensembl = {}
+	#transcript_info = {}
+	#transcript_ensembl = {}
 
 	transcript_gene = {}
 	transcript_chrom = {}
 	transcript_tss = {}
 
 	i = 0
-	conflicts = 0
+	ignored = 0
 	problem = False
 	with open_plain_or_gzip(input_file) if input_file != '-' else sys.stdin as fh:
-		#if i >= 500000: break
 		reader = csv.reader(fh,dialect='excel-tab')
 		for l in reader:
 
 			if i % int(1e5) == 0:
 				print '\r%d...' %(i), ; sys.stdout.flush() # report progress
 			i += 1
+			#if i >= 1000:break
 
-			if len(l) > 1 and [2] == field_name:
-				attr = parse_attributes(l[8])
+			if len(l) > 1 and l[2] == field_name:
+				attr = parse_attributes(l[8].lstrip(' '))
 				type_ = attr['gene_biotype']
 
 				if type_ in ['protein_coding','polymorphic_pseudogene']:
@@ -105,56 +104,46 @@ def main(args=None):
 
 					source = l[1]
 
-					gene_id = attr['gene_id']
+					try:
+						gene_id = attr['gene_id']
+					except KeyError as e:
+						print attr_sep.split(l[8])
+						print i,l
+						print attr
+						raise e
+
 					gene_name = attr['gene_name']
 					transcript_name = attr['transcript_name']
 
-
 					if gene_id in ignore_ensembl:
+						ignored += 1
 						continue
 
 					pos = 0
 					if l[6] == '+': pos = int(l[3])-1
 					else: pos = -(int(l[4])-1)
 
-					try:
-						tg = transcript_gene[transcript_name]
-						assert tg == gene_name
-						tpos = transcript_tss[transcript_name]
+					if transcript_name in transcript_chrom:
+
+						# another exon of this transcript has been seen before
+						# make sure transcript information is consistent
 						tchrom = transcript_chrom[transcript_name]
+						tg = transcript_gene[transcript_name]
+						tpos = transcript_tss[transcript_name]
+						assert tg == gene_name
 						assert tchrom == chrom
 						assert sign(tpos) == sign(pos)
+
+						# if exon is located more upstream than previous exons of this transcript,
+						# remember its position
 						transcript_tss[transcript_name] = min(tpos,pos)
-					except KeyError:
-						transcript_gene = gene_name
-						transcript_tss = pos
-
-					try:
-						transcript_ensembl[transcript_name].add(gene_id)
-					except KeyError:
-						transcript_ensembl[transcript_name] = set([gene_id])
-
-					continue
-					# 
-					info = (gene_name,chrom,int(copysign(1,pos)))
-					if transcript_name in transcript_info:
-						try:
-							assert transcript_info[transcript_name] == info
-						except AssertionError as e:
-							problem = True
-							print
-							print 'Problem:',transcript_name
-							print transcript_info[transcript_name]
-							print info
+						
 					else:
-						transcript_info[transcript_name] = info
+						transcript_chrom[transcript_name] = chrom
+						transcript_gene[transcript_name] = gene_name
+						transcript_tss[transcript_name] = pos
 
-					start_site = (gene_name,chrom,str(pos))
-					try:
-						tss[transcript_name].append(start_site)
-					except KeyError:
-						tss[transcript_name] = [start_site]
-
+	
 	print "done (parsed %d lines)." %(i)
 
 	if problem:
@@ -162,34 +151,21 @@ def main(args=None):
 		print 'Please resolve these conflicts by specifying Ensembl IDs to be excluded.'
 		return 1
 
-	#all_transcripts = sorted(transcript_ensembl.keys())
-
 	#counts = np.int64([len(transcript_ensembl[t]) for t in all_transcripts])
 	#print 'Ensembl Gene ID counts per transcript name:'
 	#print np.bincount(counts)
-
-	return 0
 
 	#counts = np.int64([len(tss[t]) for t in all_transcripts])
 	#print 'Transcript annotation counts per transcript name:'
 	#print np.bincount(counts)
 
-	c="""
-	# for transcripts that have multiple annotations, select TSS to be the most upstream TSS
-	for t in all_transcripts:
-		start_sites = tss[t]
-		if int(start_sites[0][2]) >= 0:
-			start_sites = sorted(start_sites,key=lambda s:int(s[2]))
-		else:
-			start_sites = sorted(start_sites,key=lambda s:-int(s[2]))
-		tss[t] = start_sites[0]
-	"""
-
 	# output
+	all_transcripts = sorted(transcript_chrom.keys())
 	with open(output_file,'w') as ofh:
 		writer = csv.writer(ofh,dialect='excel-tab',lineterminator=os.linesep,quoting=csv.QUOTE_NONE)
 		for t in all_transcripts:
-			writer.writerow([t] + list(tss[t]))
+			tss = [t, transcript_gene[t], transcript_chrom[t], str(transcript_tss[t])]
+			writer.writerow(tss)
 
 	return 0
 
