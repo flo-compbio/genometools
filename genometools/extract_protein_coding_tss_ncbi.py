@@ -162,7 +162,7 @@ def main(args=None):
 	# output
 	all_transcripts = sorted(transcript_chrom.keys())
 	with open(output_file,'w') as ofh:
-		writer = csv.writer(ofh,dialect='excel-tab',lineterminator=os.linesep,quoting=csv.QUOTE_NONE)
+		writer = csv.writer(ofh,dialect='excel-tab',lineterminator='\n',quoting=csv.QUOTE_NONE)
 		for t in all_transcripts:
 			tss = [t, transcript_gene[t], transcript_chrom[t], str(transcript_tss[t])]
 			writer.writerow(tss)

@@ -184,7 +184,7 @@ def main(args=None):
 	print "Total protein-coding genes:", len(genes)
 
 	with open(args.output_file,'w') as ofh:
-		writer = csv.writer(ofh,dialect='excel-tab',lineterminator=os.linesep,quoting=csv.QUOTE_NONE)
+		writer = csv.writer(ofh,dialect='excel-tab',lineterminator='\n',quoting=csv.QUOTE_NONE)
 		for name in sorted(genes):
 			chroms = ','.join(sorted(gene_chroms[name]))
 			ids = ','.join(sorted(gene_ids[name]))

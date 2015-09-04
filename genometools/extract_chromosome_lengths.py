@@ -49,7 +49,7 @@ def main(args=None):
 	print "Extracted chromosome lengths for %d chromosomes." %(n)
 
 	with open(output_file,'w') as ofh:
-		writer = csv.writer(ofh,dialect='excel-tab',lineterminator=os.linesep,quoting=csv.QUOTE_NONE)
+		writer = csv.writer(ofh,dialect='excel-tab',lineterminator='\n',quoting=csv.QUOTE_NONE)
 		for chrom in sorted(chromlen.keys()):
 			writer.writerow([chrom,str(chromlen[chrom])])
 

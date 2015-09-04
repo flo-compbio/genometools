@@ -74,7 +74,7 @@ def main(args=None):
 	with open_plain_or_gzip(input_file) if input_file != '-' else sys.stdin as fh, open(output_file,'w') as ofh:
 		#if i >= 500000: break
 		reader = csv.reader(fh,dialect='excel-tab')
-		writer = csv.writer(ofh,dialect='excel-tab',lineterminator=os.linesep,\
+		writer = csv.writer(ofh,dialect='excel-tab',lineterminator='\n',\
 				quoting=csv.QUOTE_NONE,quotechar='|')
 		for l in reader:
 			i += 1
