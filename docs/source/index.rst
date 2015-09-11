@@ -9,7 +9,7 @@ GenomeTools Documentation
 Coming soon!
 
 Table of Contents
-------------------
+-----------------
 
 .. toctree::
    :maxdepth: 2
