@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 
 # Copyright (c) 2015 Florian Wagner
 #
@@ -32,7 +32,7 @@ def read_args_from_cmdline():
 	parser.add_argument('-a','--annotation-file',default='-')
 	parser.add_argument('-o','--output-file',required=True)
 	parser.add_argument('-c','--chromosome-pattern',default=r'(?:\d\d?|MT|X|Y)$')
-	parser.add_argument('-g','--gene-field-name',default='gene')
+	parser.add_argument('-f','--field-name',default='gene')
 
 	#parser.add_argument('-e','--exclude-chromosomes',default=[],nargs='+')
 
@@ -66,7 +66,7 @@ def main(args=None):
 
 	input_file = args.annotation_file
 	chrom_pat = re.compile(args.chromosome_pattern)
-	gene_field_name = args.gene_field_name
+	field_name = args.field_name
 
 	#if exclude_chromosomes:
 	#	print "Excluding chromosomes %s..." %(', '.join(sorted(exclude_chromosomes)))
@@ -99,48 +99,55 @@ def main(args=None):
 			i += 1
 			if i % int(1e5) == 0:
 				print '\r%d...' %(i), ; sys.stdout.flush() # report progress
-			if len(l) > 1 and l[2] == gene_field_name:
-				attr = parse_attributes(l[8])
+
+			if len(l) > 1 and l[2] == field_name:
+
+				# Note: Older Ensembl GTF files sometimes have a leading space in field #9
+				attr = parse_attributes(l[8].lstrip(' '))
+
 				type_ = attr['gene_biotype']
-				if type_ in ['protein_coding','polymorphic_pseudogene']:
-					chrom = l[0]
+				if type_ not in ['protein_coding','polymorphic_pseudogene']:
+					continue
 
-					# test whether chromosome is valid
-					m = chrom_pat.match(chrom)
-					if m is None:
-						excluded_chromosomes.add(chrom)
-					else:
-						chromosomes.add(m.group())
+				chrom = l[0]
 
-						source = l[1]
-						id_ = attr['gene_id']
-						try:
-							name = attr['gene_name']
-						except KeyError as e:
-							missing += 1
-							continue
+				# test whether chromosome is valid
+				m = chrom_pat.match(chrom)
+				if m is None:
+					excluded_chromosomes.add(chrom)
+					continue
 
-						# store gene name
-						genes[name] += 1
+				chromosomes.add(m.group())
 
-						# store Ensemble ID
-						try:
-							gene_ids[name].add(id_)
-						except KeyError:
-							gene_ids[name] = set([id_])
+				source = l[1]
+				id_ = attr['gene_id']
+				try:
+					name = attr['gene_name']
+				except KeyError as e:
+					missing += 1
+					continue
 
-						# store chromsome
-						try:
-							gene_chroms[name].add(chrom)
-						except KeyError:
-							gene_chroms[name] = set([chrom])
+				# store gene name
+				genes[name] += 1
 
-						# record some statistics
-						sources[source] += 1
-						types[type_] += 1
-						if type_ == 'polymorphic_pseudogene':
-							polymorphic.add(name)
-							genes2[name] += 1
+				# store Ensemble ID
+				try:
+					gene_ids[name].add(id_)
+				except KeyError:
+					gene_ids[name] = set([id_])
+
+				# store chromsome
+				try:
+					gene_chroms[name].add(chrom)
+				except KeyError:
+					gene_chroms[name] = set([chrom])
+
+				# record some statistics
+				sources[source] += 1
+				types[type_] += 1
+				if type_ == 'polymorphic_pseudogene':
+					polymorphic.add(name)
+					genes2[name] += 1
 
 	print "done (parsed %d lines)." %(i)
 
@@ -177,7 +184,7 @@ def main(args=None):
 	print "Total protein-coding genes:", len(genes)
 
 	with open(args.output_file,'w') as ofh:
-		writer = csv.writer(ofh,dialect='excel-tab',lineterminator=os.linesep,quoting=csv.QUOTE_NONE)
+		writer = csv.writer(ofh,dialect='excel-tab',lineterminator='\n',quoting=csv.QUOTE_NONE)
 		for name in sorted(genes):
 			chroms = ','.join(sorted(gene_chroms[name]))
 			ids = ','.join(sorted(gene_ids[name]))
