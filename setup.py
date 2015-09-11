@@ -34,7 +34,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 setup(
     name='genometools',
 
-    version='1.1.0',
+    version='1.1rc1',
 
     description=description,
     long_description=long_description,

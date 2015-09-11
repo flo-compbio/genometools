@@ -10,6 +10,11 @@ Installation
 
 	$ pip install genometools
 
+Documentation
+-------------
+
+In the works!
+
 Copyright and License
 ---------------------
 
