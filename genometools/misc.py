@@ -28,18 +28,19 @@ def open_plain_or_gzip(fn,mode='r'):
 		return gzip.open(fn,mode)
 
 def flatten(l):
-        return [item for sublist in l for item in sublist] # incomprehensible list comprehension
+	# see http://stackoverflow.com/questions/952914/making-a-flat-list-out-of-list-of-lists-in-python#comment10547502_952952
+	# use incomprensible list comprehension
+	return [item for sublist in l for item in sublist]
 
 def bisect_index(a, x):
-	'Locate the leftmost value exactly equal to x'
+	# locate the leftmost value exactly equal to x
 	i = bisect.bisect_left(a, x)
 	if i != len(a) and a[i] == x:
 		return i
 	raise ValueError
 
 def argsort(seq):
-	#http://stackoverflow.com/questions/3382352/equivalent-of-numpy-argsort-in-basic-python/3382369#3382369
-	#by unutbu
+	# see http://stackoverflow.com/questions/3382352/equivalent-of-numpy-argsort-in-basic-python/3382369#3382369
 	return sorted(range(len(seq)), key=seq.__getitem__)
 
 def argmin(seq):
@@ -63,55 +64,3 @@ def read_all(fn,m='r'):
 		for l in reader:
 			data.append(l)
 	return data
-
-def read_chromosome_lengths(fn):
-	chromlen = {}
-	with open(fn) as fh:
-		reader = csv.reader(fh,dialect='excel-tab')
-		for l in reader:
-			chromlen[l[0]] = int(l[1])
-	return chromlen
-
-def read_chromlen(fn):
-	return read_chromosome_lengths(fn)
-
-def get_chrom_ucsc2ensembl(chrom):
-	if chrom[:3] == 'chr':
-		chrom = chrom[3:]
-	if chrom == 'M':
-		chrom = 'MT'
-	return chrom
-
-def get_chrom_ensembl2ucsc(chrom):
-	if chrom == 'MT':
-		chrom = 'M'
-	chrom = 'chr' + chrom
-	return chrom
-
-
-
-def read_enrichment(fn):
-	return read_all_columns(fn)
-
-def read_genes(fn):
-	return read_single(fn)
-
-def read_genes_and_chromosomes(fn):
-	genes = []
-	chromosomes = []
-	with open(fn) as fh:
-		reader = csv.reader(fh,dialect='excel-tab')
-		i = 0
-		for l in reader:
-			genes.append(l[0])
-			chromosomes.append(set(l[1].split(',')))
-			i += 1
-	return genes,chromosomes
-
-def read_goterms(fn):
-	return read_single_column(fn)
-
-def read_terms(fn):
-	return read_all_columns(fn)
-
-
