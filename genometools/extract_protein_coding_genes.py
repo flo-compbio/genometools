@@ -31,7 +31,8 @@ def read_args_from_cmdline():
 
 	parser.add_argument('-a','--annotation-file',default='-')
 	parser.add_argument('-o','--output-file',required=True)
-	parser.add_argument('-c','--chromosome-pattern',default=r'(?:\d\d?|MT|X|Y)$')
+	parser.add_argument('-s','--species',choices=['human','mouse','fly','worm','fish','yeast'],default='human')
+	parser.add_argument('-c','--chromosome-pattern',required=False,default=None)
 	parser.add_argument('-f','--field-name',default='gene')
 
 	#parser.add_argument('-e','--exclude-chromosomes',default=[],nargs='+')
@@ -61,12 +62,26 @@ def parse_attributes(s):
 
 def main(args=None):
 
+	chromosome_patterns = {\
+			'human': r'(?:\d\d?|MT|X|Y)$',\
+			'mouse': r'(?:\d\d?|MT|X|Y)$',\
+			'fly': r'(?:2L|2R|3L|3R|4|X|Y|dmel_mitochondrion_genome)$',\
+			'worm': r'(?:I|II|III|IV|V|X|MtDNA)$',\
+			'fish': r'(?:\d\d?|MT)$',\
+			'yeast': r'(?:I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|Mito)$'}
+
 	if args is None:
 		args = read_args_from_cmdline()
 
 	input_file = args.annotation_file
-	chrom_pat = re.compile(args.chromosome_pattern)
+	species = args.species
+	chrom_pat = args.chromosome_pattern
 	field_name = args.field_name
+
+	if chrom_pat is None:
+		chrom_pat = re.compile(chromosome_patterns[species])
+	else:
+		chrom_pat = re.compile(chrom_pat)
 
 	#if exclude_chromosomes:
 	#	print "Excluding chromosomes %s..." %(', '.join(sorted(exclude_chromosomes)))
@@ -92,13 +107,14 @@ def main(args=None):
 	i = 0
 	missing = 0
 	excluded_chromosomes = set()
+	print 'Parsing data...'; sys.stdout.flush()
 	with open_plain_or_gzip(input_file) if input_file != '-' else sys.stdin as fh:
 		#if i >= 500000: break
 		reader = csv.reader(fh,dialect='excel-tab')
 		for l in reader:
 			i += 1
-			if i % int(1e5) == 0:
-				print '\r%d...' %(i), ; sys.stdout.flush() # report progress
+			#if i % int(1e5) == 0:
+			#	print '\r%d...' %(i), ; sys.stdout.flush() # report progress
 
 			if len(l) > 1 and l[2] == field_name:
 
