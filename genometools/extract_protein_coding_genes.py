@@ -23,191 +23,211 @@ import csv
 import re
 import gzip
 import argparse
+import logging
 
 from collections import Counter
 
+def get_argument_parser():
+    parser = argparse.ArgumentParser(description='')
+
+    parser.add_argument('-a','--annotation-file',default='-',help='Ensembl gene annotation file (in GTF format) - use "-" to read from stdin')
+    parser.add_argument('-o','--output-file',required=True,help='Output file')
+    parser.add_argument('-s','--species',choices=['human','mouse','fly','worm','fish','yeast'],default='human',help='Species for which to extract genes')
+    parser.add_argument('-c','--chromosome-pattern',required=False,default=None,help='Regular expression used to determine which chromosomes to include (takes precedence over the "species" parameter when set)')
+    parser.add_argument('-f','--field-name',default='gene',help='Only lines in the GTF file that contain this value in its third column are included')
+    parser.add_argument('-l','--log-file',default=None,help='Log file - if not specified, print to stdout')
+    parser.add_argument('-v','--verbose',action='store_true',help='Verbose output')
+
+    return parser
+
 def read_args_from_cmdline():
-	parser = argparse.ArgumentParser(description='')
-
-	parser.add_argument('-a','--annotation-file',default='-')
-	parser.add_argument('-o','--output-file',required=True)
-	parser.add_argument('-s','--species',choices=['human','mouse','fly','worm','fish','yeast'],default='human')
-	parser.add_argument('-c','--chromosome-pattern',required=False,default=None)
-	parser.add_argument('-f','--field-name',default='gene')
-
-	#parser.add_argument('-e','--exclude-chromosomes',default=[],nargs='+')
-
-	return parser.parse_args()
+    #parser.add_argument('-e','--exclude-chromosomes',default=[],nargs='+')
+    parser = get_argument_parser()
+    return parser.parse_args()
 
 def open_plain_or_gzip(fn):
-	try:
-		gzip.open(fn).next()
-		return gzip.open(fn)
-	except IOError:
-		return open(fn)
+    try:
+        gzip.open(fn).next()
+        return gzip.open(fn)
+    except IOError:
+        return open(fn)
 
 attr_sep = re.compile(r"(?<!\\)\s*;\s*") # use negative lookbehind to make sure we don't split on escaped semicolons ("\;")
 def parse_attributes(s):
-	''' parses the 9th field (attributes) of a GFF/GTF entry into a dictionary '''
-	attr = {}
-	atts = attr_sep.split(s)
-	for a in atts:
-		#print a
-		kv = a.split(' ')
-		if len(kv) == 2:
-			k,v = kv
-			v = v.strip('"')
-			attr[k] = v
-	return attr	
+    ''' parses the 9th field (attributes) of a GFF/GTF entry into a dictionary '''
+    attr = {}
+    atts = attr_sep.split(s)
+    for a in atts:
+        #print a
+        kv = a.split(' ')
+        if len(kv) == 2:
+            k,v = kv
+            v = v.strip('"')
+            attr[k] = v
+    return attr 
 
 def main(args=None):
 
-	chromosome_patterns = {\
-			'human': r'(?:\d\d?|MT|X|Y)$',\
-			'mouse': r'(?:\d\d?|MT|X|Y)$',\
-			'fly': r'(?:2L|2R|3L|3R|4|X|Y|dmel_mitochondrion_genome)$',\
-			'worm': r'(?:I|II|III|IV|V|X|MtDNA)$',\
-			'fish': r'(?:\d\d?|MT)$',\
-			'yeast': r'(?:I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|Mito)$'}
+    chromosome_patterns = {\
+            'human': r'(?:\d\d?|MT|X|Y)$',\
+            'mouse': r'(?:\d\d?|MT|X|Y)$',\
+            'fly': r'(?:2L|2R|3L|3R|4|X|Y|dmel_mitochondrion_genome)$',\
+            'worm': r'(?:I|II|III|IV|V|X|MtDNA)$',\
+            'fish': r'(?:\d\d?|MT)$',\
+            'yeast': r'(?:I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|Mito)$'}
 
-	if args is None:
-		args = read_args_from_cmdline()
+    if args is None:
+        args = read_args_from_cmdline()
 
-	input_file = args.annotation_file
-	species = args.species
-	chrom_pat = args.chromosome_pattern
-	field_name = args.field_name
+    input_file = args.annotation_file
+    species = args.species
+    chrom_pat = args.chromosome_pattern
+    field_name = args.field_name
+    log_file = args.log_file
+    verbose = args.verbose
 
-	if chrom_pat is None:
-		chrom_pat = re.compile(chromosome_patterns[species])
-	else:
-		chrom_pat = re.compile(chrom_pat)
+    # configure logger
+    log_level = logging.INFO
+    if verbose:
+        log_level = logging.DEBUG
 
-	#if exclude_chromosomes:
-	#	print "Excluding chromosomes %s..." %(', '.join(sorted(exclude_chromosomes)))
-	#	sys.stdout.flush()
-	print 'Regular expression used for filtering chromosome names:',chrom_pat.pattern
+    log_format = '[%(asctime)s] %(levelname)s: %(message)s'
+    log_datefmt = '%Y-%m-%d %H:%M:%S'
+    # when filename is not None, "stream" parameter is ignored (see https://docs.python.org/2/library/logging.html#logging.basicConfig)
+    logging.basicConfig(filename=log_file,stream=sys.stdout,level=log_level,format=log_format,datefmt=log_datefmt)
+    logger = logging.getLogger()
 
-	# for statistics
-	types = Counter()
-	sources = Counter()
+    if chrom_pat is None:
+        chrom_pat = re.compile(chromosome_patterns[species])
+    else:
+        chrom_pat = re.compile(chrom_pat)
 
-	# primary information
-	genes = Counter()
-	gene_chroms = dict()
-	gene_ids = dict()
+    #if exclude_chromosomes:
+    #   print "Excluding chromosomes %s..." %(', '.join(sorted(exclude_chromosomes)))
+    #   sys.stdout.flush()
+    logger.info('Regular expression used for filtering chromosome names: %s',chrom_pat.pattern)
 
-	# secondary information
-	genes2 = Counter()
-	polymorphic = set()
+    # for statistics
+    types = Counter()
+    sources = Counter()
 
-	# list of chromosomes
-	chromosomes = set()
+    # primary information
+    genes = Counter()
+    gene_chroms = dict()
+    gene_ids = dict()
 
-	i = 0
-	missing = 0
-	excluded_chromosomes = set()
-	print 'Parsing data...'; sys.stdout.flush()
-	with open_plain_or_gzip(input_file) if input_file != '-' else sys.stdin as fh:
-		#if i >= 500000: break
-		reader = csv.reader(fh,dialect='excel-tab')
-		for l in reader:
-			i += 1
-			#if i % int(1e5) == 0:
-			#	print '\r%d...' %(i), ; sys.stdout.flush() # report progress
+    # secondary information
+    genes2 = Counter()
+    polymorphic = set()
 
-			if len(l) > 1 and l[2] == field_name:
+    # list of chromosomes
+    chromosomes = set()
 
-				# Note: Older Ensembl GTF files sometimes have a leading space in field #9
-				attr = parse_attributes(l[8].lstrip(' '))
+    i = 0
+    missing = 0
+    excluded_chromosomes = set()
+    logger.info('Parsing data...')
+    with open_plain_or_gzip(input_file) if input_file != '-' else sys.stdin as fh:
+        #if i >= 500000: break
+        reader = csv.reader(fh,dialect='excel-tab')
+        for l in reader:
+            i += 1
+            #if i % int(1e5) == 0:
+            #   print '\r%d...' %(i), ; sys.stdout.flush() # report progress
 
-				type_ = attr['gene_biotype']
-				if type_ not in ['protein_coding','polymorphic_pseudogene']:
-					continue
+            if len(l) > 1 and l[2] == field_name:
 
-				chrom = l[0]
+                # Note: Older Ensembl GTF files sometimes have a leading space in field #9
+                attr = parse_attributes(l[8].lstrip(' '))
 
-				# test whether chromosome is valid
-				m = chrom_pat.match(chrom)
-				if m is None:
-					excluded_chromosomes.add(chrom)
-					continue
+                type_ = attr['gene_biotype']
+                if type_ not in ['protein_coding','polymorphic_pseudogene']:
+                    continue
 
-				chromosomes.add(m.group())
+                chrom = l[0]
 
-				source = l[1]
-				id_ = attr['gene_id']
-				try:
-					name = attr['gene_name']
-				except KeyError as e:
-					missing += 1
-					continue
+                # test whether chromosome is valid
+                m = chrom_pat.match(chrom)
+                if m is None:
+                    excluded_chromosomes.add(chrom)
+                    continue
 
-				# store gene name
-				genes[name] += 1
+                chromosomes.add(m.group())
 
-				# store Ensemble ID
-				try:
-					gene_ids[name].add(id_)
-				except KeyError:
-					gene_ids[name] = set([id_])
+                source = l[1]
+                id_ = attr['gene_id']
+                try:
+                    name = attr['gene_name']
+                except KeyError as e:
+                    missing += 1
+                    continue
 
-				# store chromsome
-				try:
-					gene_chroms[name].add(chrom)
-				except KeyError:
-					gene_chroms[name] = set([chrom])
+                # store gene name
+                genes[name] += 1
 
-				# record some statistics
-				sources[source] += 1
-				types[type_] += 1
-				if type_ == 'polymorphic_pseudogene':
-					polymorphic.add(name)
-					genes2[name] += 1
+                # store Ensemble ID
+                try:
+                    gene_ids[name].add(id_)
+                except KeyError:
+                    gene_ids[name] = set([id_])
 
-	print "done (parsed %d lines)." %(i)
+                # store chromsome
+                try:
+                    gene_chroms[name].add(chrom)
+                except KeyError:
+                    gene_chroms[name] = set([chrom])
 
-	print 
-	print "Gene chromosomes (%d):" %(len(chromosomes))
-	print "\t" + ', '.join(sorted(chromosomes))
-	print
-	print "Excluded chromosomes (%d):" %(len(excluded_chromosomes))
-	print "\t" + ', '.join(sorted(excluded_chromosomes))
+                # record some statistics
+                sources[source] += 1
+                types[type_] += 1
+                if type_ == 'polymorphic_pseudogene':
+                    polymorphic.add(name)
+                    genes2[name] += 1
 
-	if missing > 0:
-		print 
-		print "Genes without names:",missing
+    logger.info('done (parsed %d lines).',i)
 
-	def print_counter(C,sep=os.linesep):
-		print sep.join(['\t%s: %d' %(k,C[k]) for k in sorted(C.keys(),key=lambda x:-C[x])])
+    logger.info('')
+    logger.info('Gene chromosomes (%d):',len(chromosomes))
+    logger.info('\t' + ', '.join(sorted(chromosomes)))
+    logger.info('')
+    logger.info('Excluded chromosomes (%d):',len(excluded_chromosomes))
+    logger.info('\t' + ', '.join(sorted(excluded_chromosomes)))
 
-	print
-	print "Gene sources:"
-	print_counter(sources)
+    if missing > 0:
+        logger.info('')
+        logger.info('# Genes without names: %d',missing)
 
-	print
-	print "Gene types:"
-	print_counter(types)
+    def print_counter(C):
+        for k in sorted(C.keys(),key=lambda x:-C[x]):
+            logger.info('\t%s: %d' %(k,C[k]))
 
-	redundant_genes = sorted(g for g in genes if genes[g]>1)
-	print
-	print 'Genes with redundant annotations:', len(redundant_genes)
+    logger.info('')
+    logger.info('Gene sources:')
+    print_counter(sources)
 
-	print
-	print 'Polymorphic pseudogenes (%d):' %(len(polymorphic)), ', '.join('%s (%d)' %(g,genes2[g]) for g in sorted(polymorphic))
+    logger.info('')
+    logger.info('Gene types:')
+    print_counter(types)
 
-	print
-	print "Total protein-coding genes:", len(genes)
+    redundant_genes = sorted(g for g in genes if genes[g]>1)
+    logger.info('')
+    logger.info('# Genes with redundant annotations: %d',len(redundant_genes))
 
-	with open(args.output_file,'w') as ofh:
-		writer = csv.writer(ofh,dialect='excel-tab',lineterminator='\n',quoting=csv.QUOTE_NONE)
-		for name in sorted(genes):
-			chroms = ','.join(sorted(gene_chroms[name]))
-			ids = ','.join(sorted(gene_ids[name]))
-			writer.writerow([name,chroms,ids])
+    logger.info('')
+    logger.info('Polymorphic pseudogenes (%d): %s',len(polymorphic), ', '.join('%s (%d)' %(g,genes2[g]) for g in sorted(polymorphic)))
 
-	return 0
+    logger.info('')
+    logger.info('Total protein-coding genes: %d', len(genes))
+
+    with open(args.output_file,'w') as ofh:
+        writer = csv.writer(ofh,dialect='excel-tab',lineterminator='\n',quoting=csv.QUOTE_NONE)
+        for name in sorted(genes):
+            chroms = ','.join(sorted(gene_chroms[name]))
+            ids = ','.join(sorted(gene_ids[name]))
+            writer.writerow([name,chroms,ids])
+
+    return 0
 
 if __name__ == '__main__':
-	return_code = main()
-	sys.exit(return_code)
+    return_code = main()
+    sys.exit(return_code)
