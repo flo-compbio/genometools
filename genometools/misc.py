@@ -18,6 +18,14 @@ import os
 import csv
 import bisect
 import gzip
+import logging
+
+def get_logger(log_file=None,log_level=logging.INFO):
+    log_format = '[%(asctime)s] %(levelname)s: %(message)s'
+    log_datefmt = '%Y-%m-%d %H:%M:%S'
+    logging.basicConfig(filename=log_file,stream=sys.stdout,level=log_level,format=log_format,datefmt=log_datefmt)
+    logger = logging.getLogger()
+    return logger
 
 def open_plain_or_gzip(fn,mode='r'):
     try:
