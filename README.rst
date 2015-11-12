@@ -1,7 +1,7 @@
 GenomeTools
 ===========
 
-This is a collection of scripts and functions for working with genomic data.
+GenomeTools is a collection of Python scripts and functions for working with genomic data.
 
 Installation
 ------------
@@ -13,7 +13,9 @@ Installation
 Documentation
 -------------
 
-In the works!
+The
+`GenomeTools documentation <http://genometools.readthedocs.org/en/latest/>`_
+is available on ReadTheDocs.
 
 Copyright and License
 ---------------------
