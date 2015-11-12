@@ -6,7 +6,7 @@
 GenomeTools
 ===========
 
-GenomeTools is a collection of functions and scripts that perform general
+GenomeTools is a collection of scripts and functions that perform general
 tasks encountered in the analysis of genomic data. GenomeTools is free
 and open-source software, `licensed <license>` under the GNU GPL v3.
 
