@@ -67,10 +67,11 @@ setup(
 
 	#libraries = [],
 
-    install_requires=['HTSeq','sphinx','sphinx-rtd-theme'],
+    install_requires=['HTSeq'],
 
-	# development requires
-    #extras_require={},
+    extras_require={
+            'docs': ['sphinx','sphinx-rtd-theme','sphinx-argparse','mock']
+    },
 
 	# data
     #package_data={},

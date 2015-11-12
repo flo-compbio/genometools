@@ -16,6 +16,33 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+"""Command-line interface to extract a mapping of Entrez IDs to gene symbols.
+
+The script contained in the `main` function reads the gene2accession.gz file
+from ftp://ftp.ncbi.nlm.nih.gov/gene/DATA (or a filtered version thereof) and
+extracts a mapping of Entrez IDs to gene symbols.
+
+Examples
+--------
+
+- Step 1) Filtering of the gene2accession.gz file to only contain entries for
+  human genes:
+
+.. code-block:: bash
+
+    $ gunzip -c gene2accession.gz | grep -P "^9606\t" | gzip > gene2accession_human.gz
+
+- Step 2) Use GenomeTools to extract a mapping between Entrez IDs and gene
+  symbols:
+
+.. code-block:: bash
+
+    $ extract_entrez2gene.py \\
+        -f gene2accession_human.gz \\
+        -o entrez2gene_human.tsv
+
+"""
+
 import sys
 import os
 import logging
@@ -24,35 +51,56 @@ import csv
 import gzip
 
 def get_argument_parser():
-    parser = argparse.ArgumentParser(description='Generate a mapping of Entrez IDs to gene symbols.')
+    """Creates the argument parser for the extract_entrez2gene.py script.
 
-    parser.add_argument('-f','--gene2acc-file',required=True,'gene2accession.gz file from ftp://ftp.ncbi.nlm.nih.gov/gene/DATA, or a subset thereof')
-    parser.add_argument('-o','--output-file',required=True,'Output file')
-    parser.add_argument('-l','--log-file',default=None,help='Log file - if not specified, print to stdout')
-    parser.add_argument('-v','--verbose',action='store_true',help='Verbose output')
+    Returns
+    -------
+    A fully configured `argparse.ArgumentParser` object.
+
+    Notes
+    -----
+    This function is used by the `sphinx-argparse` extension for sphinx.
+
+    """
+
+    parser = argparse.ArgumentParser(
+            description = 'Generate a mapping of Entrez IDs to gene symbols.')
+
+    parser.add_argument('-f','--gene2acc-file',required=True,\
+            help='Path of gene2accession.gz file \
+            (from ftp://ftp.ncbi.nlm.nih.gov/gene/DATA),\
+            or a filtered version thereof.')
+    parser.add_argument('-o','--output-file',required=True,\
+            help='Path of output file.')
+    parser.add_argument('-l','--log-file',default=None,\
+            help='Path of log file. If not specified, print to stdout.')
+    parser.add_argument('-v','--verbose',action='store_true',\
+            help='Enable verbose output.')
 
     return parser
 
-def read_args_from_cmdline():
-    parser = get_argument_parser()
-    return parser.parse_args()
-
-def open_plain_or_gzip(fn):
-    try:
-        gzip.open(fn).next()
-        return gzip.open(fn)
-    except IOError:
-        return open(fn)
-
 def read_gene2acc(fn,logger):
+    """Extracts Entrez ID -> gene symbol mapping from gene2accession.gz file.
+
+    Parameters
+    ----------
+    fn: str
+        The path to the gene2accession.gz file.
+    logger: logging.Logger object
+        The logger.
+
+    Returns
+    -------
+    dict
+        A mapping of Entrez IDs to gene symbols.
+
+    """
+
     gene2acc = {}
     with open_plain_or_gzip(fn) as fh:
         reader = csv.reader(fh,dialect='excel-tab')
         reader.next() # skip header
         for i,l in enumerate(reader):
-            if (i % 1000000) == 0:
-                logger.info('%d...',i)
-
             id_ = int(l[1])
             symbol = l[15]
 
@@ -61,7 +109,6 @@ def read_gene2acc(fn,logger):
             except:
                 gene2acc[id_] = [symbol]
             #print l[0],l[15]
-    logger.info('')
 
     # make sure all EntrezIDs map to a unique gene symbol
     n = len(gene2acc.keys())
@@ -77,15 +124,53 @@ def read_gene2acc(fn,logger):
     return gene2acc
 
 def write_entrez2gene(ofn,entrez2gene,logger):
+    """Writes Entrez ID -> gene symbol mapping to a tab-delimited text file.
+
+    Parameters
+    ----------
+    ofn: str
+        The path to the output file file.
+    entrez2gene: dict
+        The mapping of Entrez IDs to gene symbols.
+    logger: logging.Logger object
+        The logger.
+
+    Returns
+    -------
+    None
+
+    """
+
     with open(ofn,'w') as ofh:
         writer = csv.writer(ofh,dialect='excel-tab',lineterminator='\n')
         for k,v in entrez2gene.iteritems():
             writer.writerow([k,v])
+    logger.info('Output written to file "%s".', ofn)
 
 def main(args=None):
+    """Extracts Entrez ID -> gene symbol mapping and writes it to a text file.
+
+    This is the main function of the extract_entrez2gene.py script, which
+    parses a gene2accession.gz file, extracts a mapping of Entrez IDs to gene
+    symbols, and writes this mapping to a tab-delimited text file. Each row in
+    the output file contains one Entrez ID ands its associated gene symbol.
+
+    Parameters
+    ----------
+    args: argparse.Namespace object, optional
+        The argument values. If not specified, the values will be obtained by
+        parsing the command line arguments using the `argparse` module.
+
+    Returns
+    -------
+    int
+        Exit code (0 if no error occurred).
+ 
+    """
 
     if args is None:
-        args = read_args_from_cmdline()
+        parser = get_argument_parser()
+        args = parser.parse_args()
 
     gene2acc_file = args.gene2acc_file
     output_file = args.output_file

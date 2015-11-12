@@ -16,6 +16,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+"""Command-line interface for extracting lists of protein-coding genes.
+
+The script contained in the `main` function reads an Ensembl gene
+annotation file and extracts a list of all protein-coding genes contained in
+that file.
+
+Examples
+--------
+
+Extract the protein coding genes from the human Ensembl v82 gene annotations,
+downloaded from the
+`Ensembl FTP server <ftp://ftp.ensembl.org/pub/release-82/gtf/homo_sapiens/>`_:
+
+.. code-block:: bash
+
+    $ extract_protein_coding_genes.py \\
+        -a Homo_sapiens.GRCh38.82.gtf.gz \\
+        -o protein_coding_genes_human.tsv
+
+"""
+
 import sys
 import os
 import gzip
@@ -24,37 +45,58 @@ import re
 import gzip
 import argparse
 import logging
-
 from collections import Counter
 
-def get_argument_parser():
-    parser = argparse.ArgumentParser(description='')
+from genometools import misc
 
-    parser.add_argument('-a','--annotation-file',default='-',help='Ensembl gene annotation file (in GTF format) - use "-" to read from stdin')
-    parser.add_argument('-o','--output-file',required=True,help='Output file')
-    parser.add_argument('-s','--species',choices=['human','mouse','fly','worm','fish','yeast'],default='human',help='Species for which to extract genes')
-    parser.add_argument('-c','--chromosome-pattern',required=False,default=None,help='Regular expression used to determine which chromosomes to include (takes precedence over the "species" parameter when set)')
-    parser.add_argument('-f','--field-name',default='gene',help='Only lines in the GTF file that contain this value in its third column are included')
-    parser.add_argument('-l','--log-file',default=None,help='Log file - if not specified, print to stdout')
-    parser.add_argument('-v','--verbose',action='store_true',help='Verbose output')
+def get_argument_parser():
+    """Function to obtain the argument parser.
+
+    Returns
+    -------
+    A fully configured `argparse.ArgumentParser` object.
+
+    Notes
+    -----
+    This function is used by the `sphinx-argparse` extension for sphinx.
+
+    """
+
+    parser = argparse.ArgumentParser(description='Extracts all protein-coding genes from an Ensembl gene annotation (GTF) file.')
+
+    parser.add_argument('-a','--annotation-file',default='-',help='Path of Ensembl gene annotation file (in GTF format). Use "-" to read from stdin.')
+    parser.add_argument('-o','--output-file',required=True,help='Path of output file.')
+    parser.add_argument('-s','--species',choices=['human','mouse','fly','worm','fish','yeast'],default='human',help='Species for which to extract genes.')
+    parser.add_argument('-c','--chromosome-pattern',required=False,default=None,
+        help="""Regular expression used to determine which chromosomes to include.
+                (Takes precedence over the "species" parameter when set.)""")
+    parser.add_argument('-f','--field-name',default='gene',help='Only lines in the GTF file that contain this value in the third column are included.')
+    parser.add_argument('-l','--log-file',default=None,help='Path of log file. If not specified, print to stdout.')
+    parser.add_argument('-v','--verbose',action='store_true',help='Enable verbose output.')
 
     return parser
 
-def read_args_from_cmdline():
-    #parser.add_argument('-e','--exclude-chromosomes',default=[],nargs='+')
-    parser = get_argument_parser()
-    return parser.parse_args()
-
-def open_plain_or_gzip(fn):
-    try:
-        gzip.open(fn).next()
-        return gzip.open(fn)
-    except IOError:
-        return open(fn)
-
-attr_sep = re.compile(r"(?<!\\)\s*;\s*") # use negative lookbehind to make sure we don't split on escaped semicolons ("\;")
 def parse_attributes(s):
-    ''' parses the 9th field (attributes) of a GFF/GTF entry into a dictionary '''
+    """ Parses the ``attribute`` string of a GFF/GTF annotation.
+
+    Parameters
+    ----------
+    s : str
+        The attribute string.
+
+    Returns
+    -------
+    Dict
+        A dictionary containing attribute name/value pairs.
+
+    Notes
+    -----
+    The ``attribute`` string is the 9th field of each annotation (row),
+    as described in the
+    `GTF format specification <http://mblab.wustl.edu/GTF22.html>`_.
+
+    """
+    attr_sep = re.compile(r"(?<!\\)\s*;\s*") # use negative lookbehind to make sure we don't split on escaped semicolons ("\;")
     attr = {}
     atts = attr_sep.split(s)
     for a in atts:
@@ -67,6 +109,31 @@ def parse_attributes(s):
     return attr 
 
 def main(args=None):
+    """Extract protein-coding genes and store in tab-delimited text file.
+
+    This function is the main function of the extract_protein_coding_genes.py
+    script, which parses a GTF file, extract information about all protein-
+    coding genes, and writes the results to a tab-delimited text file. Each
+    row in the output file corresponds to one protein-coding gene. The
+    columns of the output file are: 1) gene symbol, 2) chromosome name,
+    3) Ensembl ID. Some genes, such as those in the
+    `Pseudoautosomal region <https://en.wikipedia.org/wiki/Pseudoautosomal_region>`_,
+    have annotations for multiple chromosomes, and/or are associated with
+    multiple Ensembl IDs. In those cases, columns 2) and/or 3) contain
+    all values, separated by a comma.
+
+    Parameters
+    ----------
+    args: argparse.Namespace object, optional
+        The argument values. If not specified, the values will be obtained by
+        parsing the command line arguments using the `argparse` module.
+
+    Returns
+    -------
+    int
+        Exit code (0 if no error occurred).
+ 
+    """
 
     chromosome_patterns = {\
             'human': r'(?:\d\d?|MT|X|Y)$',\
@@ -77,7 +144,8 @@ def main(args=None):
             'yeast': r'(?:I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|Mito)$'}
 
     if args is None:
-        args = read_args_from_cmdline()
+        parser = get_argument_parser()
+        args = parser.parse_args()
 
     input_file = args.annotation_file
     species = args.species
@@ -127,7 +195,7 @@ def main(args=None):
     missing = 0
     excluded_chromosomes = set()
     logger.info('Parsing data...')
-    with open_plain_or_gzip(input_file) if input_file != '-' else sys.stdin as fh:
+    with misc.open_plain_or_gzip(input_file) if input_file != '-' else sys.stdin as fh:
         #if i >= 500000: break
         reader = csv.reader(fh,dialect='excel-tab')
         for l in reader:
