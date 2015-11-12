@@ -1,6 +1,8 @@
 GenomeTools
 ===========
 
+|docs-latest| |docs-develop|
+
 GenomeTools is a collection of Python scripts and functions for working with genomic data.
 
 Installation
