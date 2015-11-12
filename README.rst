@@ -14,7 +14,7 @@ Documentation
 -------------
 
 The
-`GenomeTools documentation <http://genometools.readthedocs.org/en/latest/>`_
+`GenomeTools documentation <https://genometools.readthedocs.org/en/latest/>`_
 is available on ReadTheDocs.
 
 Copyright and License
@@ -35,3 +35,13 @@ Copyright (c) 2015 Florian Wagner
   
   You should have received a copy of the GNU General Public License
   along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+.. |docs-latest| image:: https://readthedocs.org/projects/genometools/badge/?version=latest
+    :alt: Documentation Status (master branch)
+    :scale: 100%
+    :target: https://genometools.readthedocs.org/en/latest/?badge=latest
+
+.. |docs-develop| image:: https://readthedocs.org/projects/genometools/badge/?version=develop
+    :alt: Documentation Status (develop branch)
+    :scale: 100%
+    :target: https://genometools.readthedocs.org/en/develop/?badge=develop
