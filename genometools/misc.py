@@ -53,13 +53,15 @@ def get_logger(log_file=None,log_level=logging.INFO):
     logger = logging.getLogger()
     return logger
 
-def open_plain_or_gzip(fn):
+def open_plain_or_gzip(fn,mode='r'):
     """Returns a handle for a file that is either gzip'ed or not.
 
     Parameters
     ----------
     fn: str
         The path of the file.
+    mode: str
+        The mode to be used in opening the file if it is not gzip'ed.
 
     Returns
     -------
@@ -68,17 +70,18 @@ def open_plain_or_gzip(fn):
 
     Notes
     -----
-    Generally, reading gzip with gzip.open is very slow, and it is preferable
-    to pipe the file into the python script (so that the scripts reads the file
-    from stdin).
+    Generally, reading gzip'ed files with gzip.open is very slow, and it is
+    preferable to pipe the file into the python script using ``gunzip -c``.
+    The script then reads the file from stdin.
+
     """
 
     try:
         gzip.open(fn,'rb').next()
     except IOError:
-        return open(fn,'r')
+        return open(fn,mode)
     else:
-        return gzip.open(fn,mode)
+        return gzip.open(fn,'rb')
 
 def flatten(l):
     """Flattens a list of lists.
