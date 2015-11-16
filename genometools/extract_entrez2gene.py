@@ -50,6 +50,8 @@ import argparse
 import csv
 import gzip
 
+from genometools import misc
+
 def get_argument_parser():
     """Creates the argument parser for the extract_entrez2gene.py script.
 
@@ -74,8 +76,10 @@ def get_argument_parser():
             help='Path of output file.')
     parser.add_argument('-l','--log-file',default=None,\
             help='Path of log file. If not specified, print to stdout.')
-    parser.add_argument('-v','--verbose',action='store_true',\
-            help='Enable verbose output.')
+    parser.add_argument('-q','--quiet', action='store_true',
+        help='Suppress all output except warnings and errors.')
+    parser.add_argument('-v','--verbose', action='store_true',
+        help='Enable verbose output. Ignored if ``--quiet`` is specified.')
 
     return parser
 
@@ -97,7 +101,7 @@ def read_gene2acc(fn,logger):
     """
 
     gene2acc = {}
-    with open_plain_or_gzip(fn) as fh:
+    with misc.open_plain_or_gzip(fn) as fh:
         reader = csv.reader(fh,dialect='excel-tab')
         reader.next() # skip header
         for i,l in enumerate(reader):
@@ -140,11 +144,10 @@ def write_entrez2gene(ofn,entrez2gene,logger):
     None
 
     """
-
     with open(ofn,'w') as ofh:
         writer = csv.writer(ofh,dialect='excel-tab',lineterminator='\n')
-        for k,v in entrez2gene.iteritems():
-            writer.writerow([k,v])
+        for k in sorted(entrez2gene.keys(),key=lambda x:int(x)):
+            writer.writerow([k,entrez2gene[k]])
     logger.info('Output written to file "%s".', ofn)
 
 def main(args=None):
@@ -175,18 +178,16 @@ def main(args=None):
     gene2acc_file = args.gene2acc_file
     output_file = args.output_file
     log_file = args.log_file
+    quiet = args.quiet
     verbose = args.verbose
 
     # configure logger
     log_level = logging.INFO
-    if verbose:
+    if quiet:
+        log_level = logging.WARNING
+    elif verbose:
         log_level = logging.DEBUG
-
-    log_format = '[%(asctime)s] %(levelname)s: %(message)s'
-    log_datefmt = '%Y-%m-%d %H:%M:%S'
-    # when filename is not None, "stream" parameter is ignored (see https://docs.python.org/2/library/logging.html#logging.basicConfig)
-    logging.basicConfig(filename=log_file,stream=sys.stdout,level=log_level,format=log_format,datefmt=log_datefmt)
-    logger = logging.getLogger()
+    logger = misc.get_logger(log_file=log_file, log_level=log_level)
 
     entrez2gene = read_gene2acc(gene2acc_file,logger)
     write_entrez2gene(output_file,entrez2gene,logger)

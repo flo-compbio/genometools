@@ -62,17 +62,32 @@ def get_argument_parser():
 
     """
 
-    parser = argparse.ArgumentParser(description='Extracts all protein-coding genes from an Ensembl gene annotation (GTF) file.')
+    parser = argparse.ArgumentParser(description=
+        'Extracts all protein-coding genes from a gene annotation (GTF) file.')
 
-    parser.add_argument('-a','--annotation-file',default='-',help='Path of Ensembl gene annotation file (in GTF format). Use "-" to read from stdin.')
-    parser.add_argument('-o','--output-file',required=True,help='Path of output file.')
-    parser.add_argument('-s','--species',choices=['human','mouse','fly','worm','fish','yeast'],default='human',help='Species for which to extract genes.')
-    parser.add_argument('-c','--chromosome-pattern',required=False,default=None,
-        help="""Regular expression used to determine which chromosomes to include.
-                (Takes precedence over the "species" parameter when set.)""")
-    parser.add_argument('-f','--field-name',default='gene',help='Only lines in the GTF file that contain this value in the third column are included.')
-    parser.add_argument('-l','--log-file',default=None,help='Path of log file. If not specified, print to stdout.')
-    parser.add_argument('-v','--verbose',action='store_true',help='Enable verbose output.')
+    parser.add_argument('-a','--annotation-file', default='-',
+        help="""Path of Ensembl gene annotation file (in GTF format).
+                Use "-" to read from stdin.""")
+    parser.add_argument('-o','--output-file', required=True,
+        help='Path of output file.')
+    parser.add_argument('-s', '--species',
+        choices=['human','mouse','fly','worm','fish','yeast'],
+        default='human',
+        help="""Species for which to extract genes. Ignored if ``-c`` is
+                specified.""")
+    parser.add_argument('-c', '--chromosome-pattern',
+        required=False, default=None,
+        help="""Regular expression that chromosome names have to match.
+                If not specified, determine pattern based on ``--species``.""")
+    parser.add_argument('-f','--field-name', default='gene',
+        help="""Rows in the GTF file that do not contain this value
+                in the third column are ignored.""")
+    parser.add_argument('-l','--log-file', default=None,
+        help='Path of log file. If not specified, print to stdout.')
+    parser.add_argument('-q','--quiet', action='store_true',
+        help='Suppress all output except warnings and errors.')
+    parser.add_argument('-v','--verbose', action='store_true',
+        help='Enable verbose output. Ignored if ``--quiet`` is specified.')
 
     return parser
 
@@ -152,18 +167,16 @@ def main(args=None):
     chrom_pat = args.chromosome_pattern
     field_name = args.field_name
     log_file = args.log_file
+    quiet = args.quiet
     verbose = args.verbose
 
     # configure logger
     log_level = logging.INFO
-    if verbose:
+    if quiet:
+        log_level = logging.WARNING
+    elif verbose:
         log_level = logging.DEBUG
-
-    log_format = '[%(asctime)s] %(levelname)s: %(message)s'
-    log_datefmt = '%Y-%m-%d %H:%M:%S'
-    # when filename is not None, "stream" parameter is ignored (see https://docs.python.org/2/library/logging.html#logging.basicConfig)
-    logging.basicConfig(filename=log_file,stream=sys.stdout,level=log_level,format=log_format,datefmt=log_datefmt)
-    logger = logging.getLogger()
+    logger = misc.get_logger(log_file=log_file, log_level=log_level)
 
     if chrom_pat is None:
         chrom_pat = re.compile(chromosome_patterns[species])
