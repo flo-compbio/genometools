@@ -12,6 +12,11 @@ Installation
 
 	$ pip install genometools
 
+Demo Notebooks
+--------------
+
+- `Scripts.py <docs/source/notebooks/Scripts.ipynb>`_: GenomeTools command-line scripts
+
 Documentation
 -------------
 
