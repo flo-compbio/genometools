@@ -1,11 +1,26 @@
 License
 =======
 
+GenomeTools Documentation
+-------------------------
+
+Copyright (c) 2015 Florian Wagner.
+
+The GenomeTools Documentation is licensed under a
+`Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License`__
+
+__ cc_license_
+
+.. _cc_license: http://creativecommons.org/licenses/by-nc-sa/4.0/
+
+GenomeTools
+-----------
+
 Copyright (c) 2015 Florian Wagner.
 
 ::
     
-    This documentation is part of GenomeTools.
+    The source code of this documentation is part of GenomeTools.
 
     GenomeTools is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License, Version 3,
@@ -17,4 +32,4 @@ Copyright (c) 2015 Florian Wagner.
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
+    along with this program. If not, see <http://www.gnu.org/licenses/>.License

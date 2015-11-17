@@ -17,10 +17,16 @@ Main Features
 - Script to extract a mapping from Entrez IDs to gene symbols: :ref:`extract_e2g`
 - Convenience function for configuring a logger: `misc.get_logger`
 
-Demos
------
+Demo Notebooks
+--------------
 
-- Juypter (IPython) notebook showcasing the scripts: :download:`_static/notebooks/Tests_01.ipynb`
+- `Scripts.ipynb`__ (:download:`download <notebooks/Scripts.ipynb>`): GenomeTools command-line scripts
+
+__ scripts_notebook_
+
+.. _scripts_notebook: http://nbviewer.ipython.org/url/genometools.readthedocs.org/en/latest/_downloads/Scripts.ipynb
+
+.. This only links to the "latest" (master) version...no way to automatically switch to the "develop" version
 
 Installation
 ------------

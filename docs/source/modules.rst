@@ -1,5 +1,5 @@
-Modules
-=======
+GenomeTools Modules
+===================
 
 GenomeTools contains the following modules:
 

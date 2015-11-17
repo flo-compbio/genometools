@@ -1,7 +1,7 @@
-Command Line Scripts
-====================
+GenomeTools Scripts
+===================
 
-GenomeTools provides the following scripts that can be run on the command line.
+GenomeTools provides the following command-line scripts:
 
 .. _extract_genes:
 
