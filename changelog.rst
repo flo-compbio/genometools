@@ -24,7 +24,8 @@ Version 1.1.0
 
 - added documentation
 - converted all tabs to four spaces
-- added convenience function to create a logger (misc.get_logger)
+- added convenience function to create a logger (misc.get_logger) using
+  Python's `logging` module
 - added logging capabilities to the scripts extract_protein_coding_genes.py
-  and extract_entrez2gene.py (using Python's "logging" module)
+  and extract_entrez2gene.py
 - added chromosome patterns for five species to extract_protein_coding_genes.py

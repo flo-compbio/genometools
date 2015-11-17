@@ -1,5 +1,4 @@
 recursive-include docs *
 prune docs/build
-recursive-include notebooks *
 include README.rst
 include LICENSE
