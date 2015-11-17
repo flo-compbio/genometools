@@ -12,17 +12,17 @@ Installation
 
 	$ pip install genometools
 
+Demo Notebooks
+--------------
+
+- `Scripts.py <docs/source/notebooks/Scripts.ipynb>`_: GenomeTools command-line scripts
+
 Documentation
 -------------
 
 The
 `GenomeTools documentation <https://genometools.readthedocs.org/en/latest/>`_
 is available on ReadTheDocs.
-
-Demo Notebooks
---------------
-
-- `Scripts.py <docs/source/notebooks/Scripts.py>`_: GenomeTools command-line scripts
 
 Copyright and License
 ---------------------
