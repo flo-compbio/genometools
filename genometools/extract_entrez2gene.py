@@ -18,9 +18,13 @@
 
 """Command-line interface to extract a mapping of Entrez IDs to gene symbols.
 
-The script contained in the `main` function reads the gene2accession.gz file
-from ftp://ftp.ncbi.nlm.nih.gov/gene/DATA (or a filtered version thereof) and
-extracts a mapping of Entrez IDs to gene symbols.
+The script contained in the `main` function parses the gene2accession.gz file
+from the `NCBI FTP server`__ (or a filtered version thereof), extracts a
+mapping of Entrez IDs to gene symbols, and writes this mapping to a
+tab-delimited text file. Each row in the output file contains one Entrez ID
+and its associated gene symbol.
+
+__ ncbi_ftp_
 
 Examples
 --------
@@ -40,6 +44,8 @@ Examples
     $ extract_entrez2gene.py \\
         -f gene2accession_human.gz \\
         -o entrez2gene_human.tsv
+
+.. _ncbi_ftp: ftp://ftp.ncbi.nlm.nih.gov/gene/DATA
 
 """
 
@@ -150,11 +156,6 @@ def write_entrez2gene(file_path,entrez2gene):
 
 def main(args=None):
     """Extracts Entrez ID -> gene symbol mapping and writes it to a text file.
-
-    This is the main function of the extract_entrez2gene.py script, which
-    parses a gene2accession.gz file, extracts a mapping of Entrez IDs to gene
-    symbols, and writes this mapping to a tab-delimited text file. Each row in
-    the output file contains one Entrez ID ands its associated gene symbol.
 
     Parameters
     ----------
