@@ -84,24 +84,23 @@ def get_argument_parser():
 
     return parser
 
-def read_gene2acc(fn):
+def read_gene2acc(file_path):
     """Extracts Entrez ID -> gene symbol mapping from gene2accession.gz file.
 
     Parameters
     ----------
-    fn: str
-        The path to the gene2accession.gz file (or a filtered version thereof).
+    file_path: str
+        The path of the gene2accession.gz file (or a filtered version thereof).
         The file may be gzip'ed.
 
     Returns
     -------
     dict
         A mapping of Entrez IDs to gene symbols.
-
     """
     logger = logging.getLogger(__name__)
     gene2acc = {}
-    with misc.open_plain_or_gzip(fn,try_gzip=True) as fh:
+    with misc.smart_open(file_path,try_gzip=True) as fh:
         reader = csv.reader(fh,dialect='excel-tab')
         reader.next() # skip header
         for i,l in enumerate(reader):
@@ -127,13 +126,13 @@ def read_gene2acc(fn):
     logger.info('Found %d Entrez Gene IDs associated with %d gene symbols.', n,m)
     return gene2acc
 
-def write_entrez2gene(output_file,entrez2gene):
+def write_entrez2gene(file_path,entrez2gene):
     """Writes Entrez ID -> gene symbol mapping to a tab-delimited text file.
 
     Parameters
     ----------
-    ofn: str
-        The path to the output file file.
+    file_path: str
+        The path of the output file.
     entrez2gene: dict
         The mapping of Entrez IDs to gene symbols.
 
@@ -143,11 +142,11 @@ def write_entrez2gene(output_file,entrez2gene):
 
     """
     logger = logging.getLogger(__name__)
-    with misc.smart_open_write(output_file) as ofh:
+    with misc.smart_open_write(file_path) as ofh:
         writer = csv.writer(ofh,dialect='excel-tab',lineterminator='\n')
         for k in sorted(entrez2gene.keys(),key=lambda x:int(x)):
             writer.writerow([k,entrez2gene[k]])
-    logger.info('Output written to file "%s".', ofn)
+    logger.info('Output written to file "%s".', file_path)
 
 def main(args=None):
     """Extracts Entrez ID -> gene symbol mapping and writes it to a text file.
@@ -193,8 +192,8 @@ def main(args=None):
     logger = misc.configure_logger(__name__, log_stream = log_stream,
             log_file = log_file, log_level = log_level)
 
-    entrez2gene = read_gene2acc(gene2acc_file,logger)
-    write_entrez2gene(output_file,entrez2gene,logger)
+    entrez2gene = read_gene2acc(gene2acc_file)
+    write_entrez2gene(output_file,entrez2gene)
 
     return 0
 

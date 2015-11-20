@@ -1,5 +1,7 @@
 """Functions for GTF files."""
 
+import re
+
 def parse_attributes(s):
     """ Parses the ``attribute`` string of a GFF/GTF annotation.
 
@@ -10,7 +12,7 @@ def parse_attributes(s):
 
     Returns
     -------
-    Dict
+    dict
         A dictionary containing attribute name/value pairs.
 
     Notes

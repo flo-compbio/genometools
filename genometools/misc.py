@@ -73,6 +73,9 @@ def configure_logger(name, log_stream = sys.stdout, log_file = None,
     # create a child logger
     logger = logging.getLogger(name)
 
+    # set the logger's level
+    logger.setLevel(log_level)
+
     # set the logger's propagation attribute
     logger.propgate = propagate
 
