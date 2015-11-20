@@ -77,7 +77,7 @@ def configure_logger(name, log_stream = sys.stdout, log_file = None,
     logger.setLevel(log_level)
 
     # set the logger's propagation attribute
-    logger.propgate = propagate
+    logger.propagate = propagate
 
     if not keep_old_handlers:
         # remove previously attached handlers
@@ -101,6 +101,10 @@ def configure_logger(name, log_stream = sys.stdout, log_file = None,
         file_handler = logging.FileHandler(log_file)
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
+
+    if log_stream is None and log_file is None:
+        # "no handler" => use NullHandler
+        logger.addHandler(logging.NullHandler())
       
     return logger
 
