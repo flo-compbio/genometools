@@ -15,7 +15,7 @@ Main Features
 
 - Script to extract a list of all protein-coding genes from Ensembl GTF files: :ref:`extract_genes`
 - Script to extract a mapping from Entrez IDs to gene symbols: :ref:`extract_e2g`
-- Convenience function for configuring a logger: `misc.get_logger`
+- Convenience function for configuring a logger: `misc.configure_logger`
 
 Demo Notebooks
 --------------

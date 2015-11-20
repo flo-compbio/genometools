@@ -16,11 +16,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Command-line interface for extracting lists of protein-coding genes.
+"""Script for extracting lists of protein-coding genes.
 
-The script contained in the `main` function reads an Ensembl gene
-annotation file and extracts a list of all protein-coding genes contained in
-that file.
+The script (see `main` function) parses an Ensembl GTF file containing gene
+annotations, extracts information about all protein-coding genes contained in
+it, and writes the results to a tab-delimited text file. Each row in the output
+file corresponds to one protein-coding gene.
+
+The columns of the output file are:
+    1) gene symbol,
+    2) chromosome name,
+    3) Ensembl ID.
+
+Some genes, such as those in the `Pseudoautosomal region`__, have annotations
+for multiple chromosomes, and/or are associated with multiple Ensembl IDs. In
+those cases, columns 2) and/or 3) contain all values, separated by a comma.
+
+__ pseudoauto_
 
 Examples
 --------
@@ -35,6 +47,8 @@ downloaded from the
         -a Homo_sapiens.GRCh38.82.gtf.gz \\
         -o protein_coding_genes_human.tsv
 
+.. _pseudoauto: https://en.wikipedia.org/wiki/Pseudoautosomal_region
+
 """
 
 import sys
@@ -47,7 +61,9 @@ import argparse
 import logging
 from collections import Counter
 
+import genometools
 from genometools import misc
+from genometools.gtf import parse_attributes
 
 def get_argument_parser():
     """Function to obtain the argument parser.
@@ -61,81 +77,44 @@ def get_argument_parser():
     This function is used by the `sphinx-argparse` extension for sphinx.
 
     """
-
     parser = argparse.ArgumentParser(description=
         'Extracts all protein-coding genes from a gene annotation (GTF) file.')
 
     parser.add_argument('-a','--annotation-file', default='-',
-        help="""Path of Ensembl gene annotation file (in GTF format).
-                Use "-" to read from stdin.""")
+        help="""Path of Ensembl gene annotation file (in GTF format). The file
+                may be gzip'ed. If set to ``-``, read from ``stdin``.""")
+
     parser.add_argument('-o','--output-file', required=True,
-        help='Path of output file.')
+        help="""Path of output file. If set to ``-``, print to ``stdout``,
+                and redirect logging messages to ``stderr``.""")
+
     parser.add_argument('-s', '--species',
-        choices=['human','mouse','fly','worm','fish','yeast'],
-        default='human',
-        help="""Species for which to extract genes. Ignored if ``-c`` is
-                specified.""")
+        choices=sorted(genometools.species_chrompat.keys()), default='human',
+        help="""Species for which to extract genes. (This parameter is ignored
+                if ``--chromosome-pattern`` is specified.)""")
+
     parser.add_argument('-c', '--chromosome-pattern',
         required=False, default=None,
         help="""Regular expression that chromosome names have to match.
                 If not specified, determine pattern based on ``--species``.""")
+
     parser.add_argument('-f','--field-name', default='gene',
         help="""Rows in the GTF file that do not contain this value
                 in the third column are ignored.""")
+
     parser.add_argument('-l','--log-file', default=None,
         help='Path of log file. If not specified, print to stdout.')
+
     parser.add_argument('-q','--quiet', action='store_true',
         help='Suppress all output except warnings and errors.')
+
     parser.add_argument('-v','--verbose', action='store_true',
         help='Enable verbose output. Ignored if ``--quiet`` is specified.')
 
     return parser
 
-def parse_attributes(s):
-    """ Parses the ``attribute`` string of a GFF/GTF annotation.
-
-    Parameters
-    ----------
-    s : str
-        The attribute string.
-
-    Returns
-    -------
-    Dict
-        A dictionary containing attribute name/value pairs.
-
-    Notes
-    -----
-    The ``attribute`` string is the 9th field of each annotation (row),
-    as described in the
-    `GTF format specification <http://mblab.wustl.edu/GTF22.html>`_.
-
-    """
-    attr_sep = re.compile(r"(?<!\\)\s*;\s*") # use negative lookbehind to make sure we don't split on escaped semicolons ("\;")
-    attr = {}
-    atts = attr_sep.split(s)
-    for a in atts:
-        #print a
-        kv = a.split(' ')
-        if len(kv) == 2:
-            k,v = kv
-            v = v.strip('"')
-            attr[k] = v
-    return attr 
-
 def main(args=None):
     """Extract protein-coding genes and store in tab-delimited text file.
-
-    This function is the main function of the extract_protein_coding_genes.py
-    script, which parses a GTF file, extract information about all protein-
-    coding genes, and writes the results to a tab-delimited text file. Each
-    row in the output file corresponds to one protein-coding gene. The
-    columns of the output file are: 1) gene symbol, 2) chromosome name,
-    3) Ensembl ID. Some genes, such as those in the
-    `Pseudoautosomal region <https://en.wikipedia.org/wiki/Pseudoautosomal_region>`_,
-    have annotations for multiple chromosomes, and/or are associated with
-    multiple Ensembl IDs. In those cases, columns 2) and/or 3) contain
-    all values, separated by a comma.
 
     Parameters
     ----------
@@ -150,19 +129,13 @@ def main(args=None):
  
     """
 
-    chromosome_patterns = {\
-            'human': r'(?:\d\d?|MT|X|Y)$',\
-            'mouse': r'(?:\d\d?|MT|X|Y)$',\
-            'fly': r'(?:2L|2R|3L|3R|4|X|Y|dmel_mitochondrion_genome)$',\
-            'worm': r'(?:I|II|III|IV|V|X|MtDNA)$',\
-            'fish': r'(?:\d\d?|MT)$',\
-            'yeast': r'(?:I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|Mito)$'}
-
     if args is None:
+        # parse command-line arguments
         parser = get_argument_parser()
         args = parser.parse_args()
 
     input_file = args.annotation_file
+    output_file = args.output_file
     species = args.species
     chrom_pat = args.chromosome_pattern
     field_name = args.field_name
@@ -171,22 +144,26 @@ def main(args=None):
     verbose = args.verbose
 
     # configure logger
+    log_stream = sys.stdout
+    if output_file == '-':
+        # if we print output to stdout, redirect log messages to stderr
+        log_stream = sys.stderr
+
     log_level = logging.INFO
     if quiet:
         log_level = logging.WARNING
     elif verbose:
         log_level = logging.DEBUG
-    logger = misc.get_logger(log_file=log_file, log_level=log_level)
+    logger = misc.configure_logger(__name__, log_stream = log_stream,
+            log_file = log_file, log_level = log_level)
 
     if chrom_pat is None:
-        chrom_pat = re.compile(chromosome_patterns[species])
+        chrom_pat = re.compile(genometools.species_chrompat[species])
     else:
         chrom_pat = re.compile(chrom_pat)
 
-    #if exclude_chromosomes:
-    #   print "Excluding chromosomes %s..." %(', '.join(sorted(exclude_chromosomes)))
-    #   sys.stdout.flush()
-    logger.info('Regular expression used for filtering chromosome names: %s',chrom_pat.pattern)
+    logger.info('Regular expression used for filtering chromosome names: "%s"',
+            chrom_pat.pattern)
 
     # for statistics
     types = Counter()
@@ -208,7 +185,7 @@ def main(args=None):
     missing = 0
     excluded_chromosomes = set()
     logger.info('Parsing data...')
-    with misc.open_plain_or_gzip(input_file) if input_file != '-' else sys.stdin as fh:
+    with misc.smart_open(input_file,try_gzip=True) as fh:
         #if i >= 500000: break
         reader = csv.reader(fh,dialect='excel-tab')
         for l in reader:
@@ -300,7 +277,7 @@ def main(args=None):
     logger.info('')
     logger.info('Total protein-coding genes: %d', len(genes))
 
-    with open(args.output_file,'w') as ofh:
+    with misc.smart_open_write(output_file) as ofh:
         writer = csv.writer(ofh,dialect='excel-tab',lineterminator='\n',quoting=csv.QUOTE_NONE)
         for name in sorted(genes):
             chroms = ','.join(sorted(gene_chroms[name]))

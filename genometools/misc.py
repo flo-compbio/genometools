@@ -24,34 +24,129 @@ import csv
 import bisect
 import gzip
 import logging
+import contextlib
 
-def get_logger(log_file=None,log_level=logging.INFO):
-    """Returns a fully configured `logging.Logger` object.
+def configure_logger(name, log_stream = sys.stdout, log_file = None,
+        log_level = logging.INFO, keep_old_handlers = False,
+        propagate = False):
+    """Configures and returns a logger.
 
-    This function serves to simplify the generation of a logger that either
-    writes either to a file or to stdout.
+    This function serves to simplify the configuration of a logger that
+    writes to a file and/or to a stream (e.g., stdout).
 
     Parameters
     ----------
-    log_file: Optional[str]
-        The path of the log file. If None, write to stdout.
-    log_level: Optional[int]
-        A logging level as 
-        `defined <https://docs.python.org/2/library/logging.html#logging-levels>`_ in
-        Python's logging module.
+    name: str
+        The name of the logger. Typically set to ``__name__``.
+    log_stream: a stream object, optional
+        The stream to write log messages to. If ``None``, do not write to any
+        stream. The default value is `sys.stdout`.
+    log_file: str, optional
+        The path of a file to write log messages to. If None, do not write to
+        any file. The default value is ``None``.
+    log_level: int, optional
+        A logging level as `defined`__ in Python's logging module. The default
+        value is `logging.INFO`.
+    keep_old_handlers: bool, optional
+        If set to ``True``, keep any pre-existing handlers that are attached to
+        the logger. The default value is ``False``.
+    propagate: bool, optional
+        If set to ``True``, propagate the loggers messages to the parent logger.
+        The default value is ``False``.
 
     Returns
     -------
-    logger: logging.Logger
-        The logger object.
+    `logging.Logger`
+        The logger.
+
+    Notes
+    -----
+    Note that if ``log_stream`` and ``log_file`` are both ``None``, no handlers
+    will be created.
+
+    __ loglvl_
+
+    .. _loglvl: https://docs.python.org/2/library/logging.html#logging-levels
 
     """
 
-    log_format = '[%(asctime)s] %(levelname)s: %(message)s'
+    # create a child logger
+    logger = logging.getLogger(name)
+
+    # set the logger's level
+    logger.setLevel(log_level)
+
+    # set the logger's propagation attribute
+    logger.propagate = propagate
+
+    if not keep_old_handlers:
+        # remove previously attached handlers
+        logger.handlers = []
+
+    # create the formatter
+    log_fmt = '[%(asctime)s] %(levelname)s: %(message)s'
     log_datefmt = '%Y-%m-%d %H:%M:%S'
-    logging.basicConfig(filename=log_file,stream=sys.stdout,level=log_level,format=log_format,datefmt=log_datefmt)
-    logger = logging.getLogger()
+    formatter = logging.Formatter(log_fmt,log_datefmt)
+
+    # create and attach the handlers
+
+    if log_stream is not None:
+        # create a StreamHandler
+        stream_handler = logging.StreamHandler(log_stream)
+        stream_handler.setFormatter(formatter)
+        logger.addHandler(stream_handler)
+
+    if log_file is not None:
+        # create a FileHandler
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+
+    if log_stream is None and log_file is None:
+        # "no handler" => use NullHandler
+        logger.addHandler(logging.NullHandler())
+      
     return logger
+
+@contextlib.contextmanager
+def smart_open(filename=None,mode='r',try_gzip=False):
+    """Open a file for reading or return ``stdin``.
+
+    Author: StackOverflow user "Wolph"
+    Source: http://stackoverflow.com/a/17603000
+    """
+    fh = None
+    if filename and filename != '-':
+        if try_gzip:
+            fh = open_plain_or_gzip(filename,mode)
+        else:
+            fh = open(filename, mode)
+    else:
+        fh = sys.stdin
+
+    try:
+        yield fh
+    finally:
+        if fh is not sys.stdin:
+            fh.close()
+
+@contextlib.contextmanager
+def smart_open_write(filename=None,mode='w'):
+    """Open a file for writing or return ``stdout``.
+
+    Author: StackOverflow user "Wolph"
+    Source: http://stackoverflow.com/a/17603000
+    """
+    if filename and filename != '-':
+        fh = open(filename, mode)
+    else:
+        fh = sys.stdout
+
+    try:
+        yield fh
+    finally:
+        if fh is not sys.stdout:
+            fh.close()
 
 def open_plain_or_gzip(fn,mode='r'):
     """Returns a handle for a file that is either gzip'ed or not.

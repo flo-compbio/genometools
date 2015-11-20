@@ -15,14 +15,14 @@ Installation
 Demo Notebooks
 --------------
 
-- `Scripts.py <docs/source/notebooks/Scripts.ipynb>`_: GenomeTools command-line scripts
+- `Scripts.ipynb <docs/source/notebooks/Scripts.ipynb>`_: GenomeTools command-line scripts
 
 Documentation
 -------------
 
-The
-`GenomeTools documentation <https://genometools.readthedocs.org/en/latest/>`_
-is available on ReadTheDocs.
+The `GenomeTools Documentation`__ is available on ReadTheDocs.
+
+__ gtdocs_
 
 Copyright and License
 ---------------------
@@ -52,3 +52,5 @@ Copyright (c) 2015 Florian Wagner
     :alt: Documentation Status (develop branch)
     :scale: 100%
     :target: https://genometools.readthedocs.org/en/develop/?badge=develop
+
+.. _gtdocs: https://genometools.readthedocs.org/en/latest/
