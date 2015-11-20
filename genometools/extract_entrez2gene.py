@@ -73,7 +73,8 @@ def get_argument_parser():
             (from ftp://ftp.ncbi.nlm.nih.gov/gene/DATA),\
             or a filtered version thereof.')
     parser.add_argument('-o','--output-file',required=True,\
-            help='Path of output file.')
+            help="""Path of output file. If set to ``-``, print to ``stdout``,
+                and redirect logging messages to ``stderr``.""")
     parser.add_argument('-l','--log-file',default=None,\
             help='Path of log file. If not specified, print to stdout.')
     parser.add_argument('-q','--quiet', action='store_true',
@@ -83,15 +84,14 @@ def get_argument_parser():
 
     return parser
 
-def read_gene2acc(fn,logger):
+def read_gene2acc(fn):
     """Extracts Entrez ID -> gene symbol mapping from gene2accession.gz file.
 
     Parameters
     ----------
     fn: str
-        The path to the gene2accession.gz file.
-    logger: logging.Logger object
-        The logger.
+        The path to the gene2accession.gz file (or a filtered version thereof).
+        The file may be gzip'ed.
 
     Returns
     -------
@@ -99,9 +99,9 @@ def read_gene2acc(fn,logger):
         A mapping of Entrez IDs to gene symbols.
 
     """
-
+    logger = logging.getLogger(__name__)
     gene2acc = {}
-    with misc.open_plain_or_gzip(fn) as fh:
+    with misc.open_plain_or_gzip(fn,try_gzip=True) as fh:
         reader = csv.reader(fh,dialect='excel-tab')
         reader.next() # skip header
         for i,l in enumerate(reader):
@@ -127,7 +127,7 @@ def read_gene2acc(fn,logger):
     logger.info('Found %d Entrez Gene IDs associated with %d gene symbols.', n,m)
     return gene2acc
 
-def write_entrez2gene(ofn,entrez2gene,logger):
+def write_entrez2gene(output_file,entrez2gene):
     """Writes Entrez ID -> gene symbol mapping to a tab-delimited text file.
 
     Parameters
@@ -136,15 +136,14 @@ def write_entrez2gene(ofn,entrez2gene,logger):
         The path to the output file file.
     entrez2gene: dict
         The mapping of Entrez IDs to gene symbols.
-    logger: logging.Logger object
-        The logger.
 
     Returns
     -------
     None
 
     """
-    with open(ofn,'w') as ofh:
+    logger = logging.getLogger(__name__)
+    with misc.smart_open_write(output_file) as ofh:
         writer = csv.writer(ofh,dialect='excel-tab',lineterminator='\n')
         for k in sorted(entrez2gene.keys(),key=lambda x:int(x)):
             writer.writerow([k,entrez2gene[k]])
@@ -182,12 +181,17 @@ def main(args=None):
     verbose = args.verbose
 
     # configure logger
+    log_stream = sys.stdout
+    if output_file == '-':
+        log_stream = sys.stderr
+
     log_level = logging.INFO
     if quiet:
         log_level = logging.WARNING
     elif verbose:
         log_level = logging.DEBUG
-    logger = misc.get_logger(log_file=log_file, log_level=log_level)
+    logger = misc.configure_logger(__name__, log_stream = log_stream,
+            log_file = log_file, log_level = log_level)
 
     entrez2gene = read_gene2acc(gene2acc_file,logger)
     write_entrez2gene(output_file,entrez2gene,logger)
