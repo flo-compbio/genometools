@@ -56,7 +56,7 @@ def configure_logger(name, log_stream = sys.stdout, log_file = None,
 
     Returns
     -------
-    logger: `logging.Logger`
+    `logging.Logger`
         The logger.
 
     Notes
