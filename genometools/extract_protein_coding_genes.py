@@ -89,7 +89,7 @@ def get_argument_parser():
                 and redirect logging messages to ``stderr``.""")
 
     parser.add_argument('-s', '--species',
-        choices=sorted(genometools.chrom_pat.keys()), default='human',
+        choices=sorted(genometools.species_chrom_pat.keys()), default='human',
         help="""Species for which to extract genes. (This parameter is ignored
                 if ``--chromosome-pattern`` is specified.)""")
 
