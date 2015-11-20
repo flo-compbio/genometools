@@ -53,4 +53,4 @@ Copyright (c) 2015 Florian Wagner
     :scale: 100%
     :target: https://genometools.readthedocs.org/en/develop/?badge=develop
 
-:: _gtdocs: https://genometools.readthedocs.org/en/latest/
+.. _gtdocs: https://genometools.readthedocs.org/en/latest/
