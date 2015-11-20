@@ -9,6 +9,7 @@ Submodules
    genometools.expression
    genometools.extract_entrez2gene
    genometools.extract_protein_coding_genes
+   genometools.gtf
    genometools.misc
 
 Module contents
