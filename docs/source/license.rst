@@ -7,7 +7,7 @@ GenomeTools Documentation
 Copyright (c) 2015 Florian Wagner.
 
 The GenomeTools Documentation is licensed under a
-`Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License`__
+`Creative Commons BY-NC-SA 4.0 License`__.
 
 __ cc_license_
 
