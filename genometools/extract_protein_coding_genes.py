@@ -24,9 +24,9 @@ it, and writes the results to a tab-delimited text file. Each row in the output
 file corresponds to one protein-coding gene.
 
 The columns of the output file are:
-    - 1) gene symbol,
-    - 2) chromosome name,
-    - 3) Ensembl ID.
+    1) gene symbol,
+    2) chromosome name,
+    3) Ensembl ID.
 
 Some genes, such as those in the `Pseudoautosomal region`__, have annotations
 for multiple chromosomes, and/or are associated with multiple Ensembl IDs. In
@@ -47,7 +47,7 @@ downloaded from the
         -a Homo_sapiens.GRCh38.82.gtf.gz \\
         -o protein_coding_genes_human.tsv
 
-:: _pseudoauto: https://en.wikipedia.org/wiki/Pseudoautosomal_region
+.. _pseudoauto: https://en.wikipedia.org/wiki/Pseudoautosomal_region
 
 """
 
