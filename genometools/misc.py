@@ -54,8 +54,6 @@ def configure_logger(name, log_stream = sys.stdout, log_file = None,
         If set to ``True``, propagate the loggers messages to the parent logger.
         The default value is ``False``.
 
-    __ log_lvl_
-
     Returns
     -------
     logger: `logging.Logger`
@@ -66,7 +64,9 @@ def configure_logger(name, log_stream = sys.stdout, log_file = None,
     Note that if ``log_stream`` and ``log_file`` are both ``None``, no handlers
     will be created.
 
-    .. _log_lvl: https://docs.python.org/2/library/logging.html#logging-levels
+    __ loglvl_
+
+    .. _loglvl: https://docs.python.org/2/library/logging.html#logging-levels
 
     """
 
