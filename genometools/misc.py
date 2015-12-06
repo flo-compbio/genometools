@@ -19,6 +19,9 @@
 """
 
 import os
+import errno
+import shutil
+import urllib2
 import sys
 import csv
 import bisect
@@ -112,8 +115,8 @@ def configure_logger(name, log_stream = sys.stdout, log_file = None,
 def smart_open(filename=None,mode='r',try_gzip=False):
     """Open a file for reading or return ``stdin``.
 
-    Author: StackOverflow user "Wolph"
-    Source: http://stackoverflow.com/a/17603000
+    Adapted from StackOverflow user "Wolph"
+    (http://stackoverflow.com/a/17603000).
     """
     fh = None
     if filename and filename != '-':
@@ -134,8 +137,8 @@ def smart_open(filename=None,mode='r',try_gzip=False):
 def smart_open_write(filename=None,mode='w'):
     """Open a file for writing or return ``stdout``.
 
-    Author: StackOverflow user "Wolph"
-    Source: http://stackoverflow.com/a/17603000
+    Adapted from StackOverflow user "Wolph"
+    (http://stackoverflow.com/a/17603000).
     """
     if filename and filename != '-':
         fh = open(filename, mode)
@@ -147,6 +150,47 @@ def smart_open_write(filename=None,mode='w'):
     finally:
         if fh is not sys.stdout:
             fh.close()
+
+def download_url(url,output_file):
+    """Downloads a file from a given URL.
+
+    Source: StackOverflow user "J.F. Sebastian"
+    (http://stackoverflow.com/a/11768443)
+
+    Parameters
+    ----------
+    url: str
+        The URL (source).
+    output_file: str
+        The path of the output file.
+    """
+    with contextlib.closing(urllib2.urlopen(url)) as fh:
+        with open(output_file, 'wb') as ofh:
+            shutil.copyfileobj(fh, ofh)
+
+def make_sure_dir_exists(d):
+    """Ensures that a directory exists.
+
+    Adapted from StackOverflow users "Bengt" and "Heikki Toivonen"
+    (http://stackoverflow.com/a/5032238).
+    """
+    try:
+        os.mkdir(d)
+    except OSError as exception:
+        if exception.errno != errno.EEXIST:
+            raise
+
+def make_sure_path_exists(path):
+    """Ensures that a path exists.
+
+    Source: StackOverflow users "Bengt" and "Heikki Toivonen"
+    (http://stackoverflow.com/a/5032238).
+    """
+    try:
+        os.makedirs(path)
+    except OSError as exception:
+        if exception.errno != errno.EEXIST:
+            raise
 
 def open_plain_or_gzip(fn,mode='r'):
     """Returns a handle for a file that is either gzip'ed or not.

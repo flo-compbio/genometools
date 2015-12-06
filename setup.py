@@ -49,7 +49,7 @@ class CleanCommand(Command):
 setup(
     name='genometools',
 
-    version='1.1.0',
+    version='1.2rc1',
 
     description=description,
     long_description=long_description,
@@ -99,6 +99,7 @@ setup(
         'console_scripts': [
             'extract_protein_coding_genes.py = genometools.extract_protein_coding_genes:main',
             'extract_entrez2gene.py = genometools.extract_entrez2gene:main',
+            'sra_download_experiment.py = genometools.sra.download_experiment:main',
         ],
     },
 
