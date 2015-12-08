@@ -75,7 +75,7 @@ setup(
         'Programming Language :: Python :: 2.7',
     ],
 
-    keywords='genome genes tools analysis',
+    keywords='genome genes tools analysis expression sequencing',
 
     #packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
     packages=[root],
@@ -100,11 +100,13 @@ setup(
             # Ensembl scripts
             'ensembl_extract_protein_coding_genes.py = genometools.ensembl.extract_protein_coding_genes:main',
             'ensembl_extract_protein_coding_gene_ids.py = genometools.ensembl.extract_protein_coding_gene_ids:main',
-            'ensembl_extract_entrez2gene.py = genometools.ensembl.extract_entrez2gene:main',
             'ensembl_extract_protein_coding_exon_annotations.py = genometools.ensembl.extract_protein_coding_exon_annotations:main',
 
-            # FASTQ scripts
-            'trim_fastq.py = genometools.trim_fastq:main',
+            # NCBI scripts
+            'ncbi_extract_entrez2gene.py = genometools.ncbi.extract_entrez2gene:main',
+
+            # sequencing scripts
+            'seq_trim_fastq.py = genometools.seq.trim_fastq:main',
 
             # SRA scripts
             'sra_download_experiment.py = genometools.sra.download_experiment:main',
