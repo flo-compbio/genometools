@@ -2,7 +2,6 @@ import pkg_resources
 
 __version__ = pkg_resources.require('genometools')[0].version
 
-from genometools import misc, gtf, ensembl, rnaseq, sra, log
-from genometools.log import Loggable
+from genometools import misc, gtf, ensembl, rnaseq, sra
 
-__all__ = ['Loggable']
+__all__ = []

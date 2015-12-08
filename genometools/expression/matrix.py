@@ -110,7 +110,7 @@ class ExpMatrix(object):
         samples = None
         expr = []
         unknown = 0
-        with open(fn) as fh:
+        with open(path) as fh:
             reader = csv.reader(fh,dialect='excel-tab')
             samples = reader.next()[1:] # samples are in first row
             for l in reader:
@@ -136,7 +136,7 @@ class ExpMatrix(object):
         path: str
             The path of the output file.
         """
-        with open(output_file,'w') as ofh:
+        with open(path,'w') as ofh:
             writer = csv.writer(ofh, dialect = 'excel-tab',
                     lineterminator = '\n', quoting = csv.QUOTE_NONE)
             writer.writerow(['.'] + self.samples) # write samples

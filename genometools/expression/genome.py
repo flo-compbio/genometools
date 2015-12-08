@@ -48,13 +48,30 @@ class ExpGenome(object):
         self._genes = genes
         logger.debug('Initialized ExpGenome with %d genes.', self.p)
 
+    def __repr__(self):
+        return '<ExpGenome (%d genes; hash = %d)>' \
+                %(self.p, hash(self.get_genes()))
+
+    def __str__(self):
+        return '<ExpGenome with %d genes>' %(self.p)
+
+    def __hash__(self):
+        return hash(repr(self))
+
+    def __eq__(self,other):
+        if type(self) != type(other):
+            return False
+        elif repr(self) == repr(other):
+            return True
+        else:
+            return False
+
     @property
     def p(self):
         return len(self._genes)
 
-    @property
-    def genes(self):
-        return self._genes
+    def get_genes(self):
+        return tuple(self._genes.values())
 
     def get_gene_names(self):
         return self._genes.keys()
@@ -97,6 +114,4 @@ class ExpGenome(object):
                     lineterminator = '\n', quoting = csv.QUOTE_NONE)
             for g in self._genes.itervalues():
                 writer.writerow(g.to_list())
-        logger.info('Wrote %d genes to file "%s".' %(self.p, path)
-
-
+        logger.info('Wrote %d genes to file "%s".', self.p, path)
