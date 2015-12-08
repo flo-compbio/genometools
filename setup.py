@@ -97,9 +97,20 @@ setup(
 	# executable scripts
     entry_points = {
         'console_scripts': [
-            'extract_protein_coding_genes.py = genometools.extract_protein_coding_genes:main',
-            'extract_entrez2gene.py = genometools.extract_entrez2gene:main',
+            # Ensembl scripts
+            'ensembl_extract_protein_coding_genes.py = genometools.ensembl.extract_protein_coding_genes:main',
+            'ensembl_extract_protein_coding_gene_ids.py = genometools.ensembl.extract_protein_coding_gene_ids:main',
+            'ensembl_extract_entrez2gene.py = genometools.ensembl.extract_entrez2gene:main',
+            'ensembl_extract_protein_coding_exon_annotations.py = genometools.ensembl.extract_protein_coding_exon_annotations:main',
+
+            # FASTQ scripts
+            'trim_fastq.py = genometools.trim_fastq:main',
+
+            # SRA scripts
             'sra_download_experiment.py = genometools.sra.download_experiment:main',
+
+            # RNA-Seq scripts
+            'rnaseq_stringtie_gene_level_expression.py = genometools.rnaseq.stringtie_gene_level_expression:main',
         ],
     },
 
