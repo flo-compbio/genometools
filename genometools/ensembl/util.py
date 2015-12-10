@@ -1,5 +1,6 @@
 import argparse
 
+from genometools.misc import add_logging_params
 from genometools import ensembl
 
 def get_gtf_argument_parser(description):
@@ -39,13 +40,6 @@ def get_gtf_argument_parser(description):
         help="""Rows in the GTF file that do not contain this value
                 in the third column are ignored.""")
 
-    parser.add_argument('-l','--log-file', default=None,
-        help='Path of log file. If not specified, print to stdout.')
-
-    parser.add_argument('-q','--quiet', action='store_true',
-        help='Suppress all output except warnings and errors.')
-
-    parser.add_argument('-v','--verbose', action='store_true',
-        help='Enable verbose output. Ignored if ``--quiet`` is specified.')
+    parser = add_logging_params(parser)
 
     return parser

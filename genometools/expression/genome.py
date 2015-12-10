@@ -66,6 +66,9 @@ class ExpGenome(object):
         else:
             return False
 
+    def __contains__(self, g):
+        return self.has_gene(g)
+
     @property
     def p(self):
         return len(self._genes)
