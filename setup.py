@@ -78,7 +78,7 @@ setup(
     keywords='genome genes tools analysis expression sequencing',
 
     #packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
-    packages=[root],
+    packages=[root,'genometools.misc'],
 
 	#libraries = [],
 
