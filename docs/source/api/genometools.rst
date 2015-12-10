@@ -1,16 +1,25 @@
 genometools package
 ===================
 
+Subpackages
+-----------
+
+.. toctree::
+
+    genometools.ensembl
+    genometools.expression
+    genometools.misc
+    genometools.ncbi
+    genometools.rnaseq
+    genometools.seq
+    genometools.sra
+
 Submodules
 ----------
 
 .. toctree::
 
-   genometools.expression
-   genometools.extract_entrez2gene
-   genometools.extract_protein_coding_genes
    genometools.gtf
-   genometools.misc
 
 Module contents
 ---------------

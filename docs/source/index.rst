@@ -37,8 +37,8 @@ GenomeTools can be installed from `PyPI <https://pypi.python.org/pypi>`_ using `
 
     $ pip install genometools
 
-.. A link to :mod:`genometools.misc` and another link to :mod:`misc` and one to `misc`.
-.. A link to :mod:`genometools.extract_protein_coding_genes` and another link to :mod:`misc` and one to `extract_protein_coding_genes`.
+.. A link to :mod:`genometools.misc.misc` and another link to :mod:`misc` and one to `misc`.
+.. A link to :mod:`genometools.ensembl.extract_protein_coding_genes` and another link to :mod:`misc` and one to `extract_protein_coding_genes`.
 
 .. Indices and tables
 .. ==================
