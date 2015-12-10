@@ -1,9 +1,14 @@
 GenomeTools Modules
 ===================
 
-GenomeTools contains the following modules:
+GenomeTools contains the following subpackages:
 
 .. toctree::
     :glob:
 
-    api/genometools.*
+    api/genometools.misc
+    api/genometools.ncbi
+    api/genometools.ensembl
+    api/genometools.seq
+    api/genometools.expression
+    api/genometools.rnaseq
