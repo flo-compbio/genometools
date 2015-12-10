@@ -53,16 +53,15 @@ downloaded from the
 
 import sys
 import os
-import gzip
 import csv
 import re
-import gzip
 import argparse
 import logging
 from collections import Counter
 
-import genometools
 from genometools import misc
+from genometools import ensembl
+from genometools.ensembl.util import get_gtf_argument_parser
 from genometools.gtf import parse_attributes
 
 def get_argument_parser():
@@ -77,40 +76,8 @@ def get_argument_parser():
     This function is used by the `sphinx-argparse` extension for sphinx.
 
     """
-    parser = argparse.ArgumentParser(description=
-        'Extracts all protein-coding genes from a gene annotation (GTF) file.')
-
-    parser.add_argument('-a','--annotation-file', default='-',
-        help="""Path of Ensembl gene annotation file (in GTF format). The file
-                may be gzip'ed. If set to ``-``, read from ``stdin``.""")
-
-    parser.add_argument('-o','--output-file', required=True,
-        help="""Path of output file. If set to ``-``, print to ``stdout``,
-                and redirect logging messages to ``stderr``.""")
-
-    parser.add_argument('-s', '--species',
-        choices=sorted(genometools.species_chrompat.keys()), default='human',
-        help="""Species for which to extract genes. (This parameter is ignored
-                if ``--chromosome-pattern`` is specified.)""")
-
-    parser.add_argument('-c', '--chromosome-pattern',
-        required=False, default=None,
-        help="""Regular expression that chromosome names have to match.
-                If not specified, determine pattern based on ``--species``.""")
-
-    parser.add_argument('-f','--field-name', default='gene',
-        help="""Rows in the GTF file that do not contain this value
-                in the third column are ignored.""")
-
-    parser.add_argument('-l','--log-file', default=None,
-        help='Path of log file. If not specified, print to stdout.')
-
-    parser.add_argument('-q','--quiet', action='store_true',
-        help='Suppress all output except warnings and errors.')
-
-    parser.add_argument('-v','--verbose', action='store_true',
-        help='Enable verbose output. Ignored if ``--quiet`` is specified.')
-
+    description = 'Extracts all protein-coding genes from an Ensembl GTF file.'
+    parser = get_gtf_argument_parser(description)
     return parser
 
 def main(args=None):
@@ -158,7 +125,7 @@ def main(args=None):
             log_file = log_file, log_level = log_level)
 
     if chrom_pat is None:
-        chrom_pat = re.compile(genometools.species_chrompat[species])
+        chrom_pat = re.compile(ensembl.species_chrompat[species])
     else:
         chrom_pat = re.compile(chrom_pat)
 
@@ -180,10 +147,10 @@ def main(args=None):
 
     # list of chromosomes
     chromosomes = set()
+    excluded_chromosomes = set()
 
     i = 0
     missing = 0
-    excluded_chromosomes = set()
     logger.info('Parsing data...')
     with misc.smart_open(input_file,try_gzip=True) as fh:
         #if i >= 500000: break

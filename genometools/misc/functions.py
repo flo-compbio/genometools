@@ -19,6 +19,9 @@
 """
 
 import os
+import errno
+import shutil
+import urllib2
 import sys
 import csv
 import bisect
@@ -26,99 +29,17 @@ import gzip
 import logging
 import contextlib
 
-def configure_logger(name, log_stream = sys.stdout, log_file = None,
-        log_level = logging.INFO, keep_old_handlers = False,
-        propagate = False):
-    """Configures and returns a logger.
-
-    This function serves to simplify the configuration of a logger that
-    writes to a file and/or to a stream (e.g., stdout).
-
-    Parameters
-    ----------
-    name: str
-        The name of the logger. Typically set to ``__name__``.
-    log_stream: a stream object, optional
-        The stream to write log messages to. If ``None``, do not write to any
-        stream. The default value is `sys.stdout`.
-    log_file: str, optional
-        The path of a file to write log messages to. If None, do not write to
-        any file. The default value is ``None``.
-    log_level: int, optional
-        A logging level as `defined`__ in Python's logging module. The default
-        value is `logging.INFO`.
-    keep_old_handlers: bool, optional
-        If set to ``True``, keep any pre-existing handlers that are attached to
-        the logger. The default value is ``False``.
-    propagate: bool, optional
-        If set to ``True``, propagate the loggers messages to the parent logger.
-        The default value is ``False``.
-
-    Returns
-    -------
-    `logging.Logger`
-        The logger.
-
-    Notes
-    -----
-    Note that if ``log_stream`` and ``log_file`` are both ``None``, no handlers
-    will be created.
-
-    __ loglvl_
-
-    .. _loglvl: https://docs.python.org/2/library/logging.html#logging-levels
-
-    """
-
-    # create a child logger
-    logger = logging.getLogger(name)
-
-    # set the logger's level
-    logger.setLevel(log_level)
-
-    # set the logger's propagation attribute
-    logger.propagate = propagate
-
-    if not keep_old_handlers:
-        # remove previously attached handlers
-        logger.handlers = []
-
-    # create the formatter
-    log_fmt = '[%(asctime)s] %(levelname)s: %(message)s'
-    log_datefmt = '%Y-%m-%d %H:%M:%S'
-    formatter = logging.Formatter(log_fmt,log_datefmt)
-
-    # create and attach the handlers
-
-    if log_stream is not None:
-        # create a StreamHandler
-        stream_handler = logging.StreamHandler(log_stream)
-        stream_handler.setFormatter(formatter)
-        logger.addHandler(stream_handler)
-
-    if log_file is not None:
-        # create a FileHandler
-        file_handler = logging.FileHandler(log_file)
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
-
-    if log_stream is None and log_file is None:
-        # "no handler" => use NullHandler
-        logger.addHandler(logging.NullHandler())
-      
-    return logger
-
 @contextlib.contextmanager
-def smart_open(filename=None,mode='r',try_gzip=False):
+def smart_open(filename=None, mode='r', try_gzip=False):
     """Open a file for reading or return ``stdin``.
 
-    Author: StackOverflow user "Wolph"
-    Source: http://stackoverflow.com/a/17603000
+    Adapted from StackOverflow user "Wolph"
+    (http://stackoverflow.com/a/17603000).
     """
     fh = None
     if filename and filename != '-':
         if try_gzip:
-            fh = open_plain_or_gzip(filename,mode)
+            fh = open_plain_or_gzip(filename, mode)
         else:
             fh = open(filename, mode)
     else:
@@ -131,11 +52,11 @@ def smart_open(filename=None,mode='r',try_gzip=False):
             fh.close()
 
 @contextlib.contextmanager
-def smart_open_write(filename=None,mode='w'):
+def smart_open_write(filename=None, mode='w'):
     """Open a file for writing or return ``stdout``.
 
-    Author: StackOverflow user "Wolph"
-    Source: http://stackoverflow.com/a/17603000
+    Adapted from StackOverflow user "Wolph"
+    (http://stackoverflow.com/a/17603000).
     """
     if filename and filename != '-':
         fh = open(filename, mode)
@@ -148,7 +69,48 @@ def smart_open_write(filename=None,mode='w'):
         if fh is not sys.stdout:
             fh.close()
 
-def open_plain_or_gzip(fn,mode='r'):
+def download_url(url, download_file):
+    """Downloads a file from a given URL.
+
+    Source: StackOverflow user "J.F. Sebastian"
+    (http://stackoverflow.com/a/11768443)
+
+    Parameters
+    ----------
+    url: str
+        The URL (source).
+    output_file: str
+        The path of the output file.
+    """
+    with contextlib.closing(urllib2.urlopen(url)) as fh:
+        with open(download_file, 'wb') as ofh:
+            shutil.copyfileobj(fh, ofh)
+
+def make_sure_dir_exists(d):
+    """Ensures that a directory exists.
+
+    Adapted from StackOverflow users "Bengt" and "Heikki Toivonen"
+    (http://stackoverflow.com/a/5032238).
+    """
+    try:
+        os.mkdir(d)
+    except OSError as exception:
+        if exception.errno != errno.EEXIST:
+            raise
+
+def make_sure_path_exists(path):
+    """Ensures that a path exists.
+
+    Source: StackOverflow users "Bengt" and "Heikki Toivonen"
+    (http://stackoverflow.com/a/5032238).
+    """
+    try:
+        os.makedirs(path)
+    except OSError as exception:
+        if exception.errno != errno.EEXIST:
+            raise
+
+def open_plain_or_gzip(fn, mode='r'):
     """Returns a handle for a file that is either gzip'ed or not.
 
     Parameters
@@ -172,11 +134,11 @@ def open_plain_or_gzip(fn,mode='r'):
     """
 
     try:
-        gzip.open(fn,'rb').next()
+        gzip.open(fn, 'rb').next()
     except IOError:
-        return open(fn,mode)
+        return open(fn, mode)
     else:
-        return gzip.open(fn,'rb')
+        return gzip.open(fn, 'rb')
 
 def flatten(l):
     """Flattens a list of lists.
@@ -293,7 +255,7 @@ def read_single(fn):
     """
     data = []
     with open_plain_or_gzip(fn) as fh:
-        reader = csv.reader(fh,dialect='excel-tab')
+        reader = csv.reader(fh, dialect='excel-tab')
         for l in reader:
             data.append(l[0])
     return data
@@ -317,7 +279,7 @@ def read_all(fn):
 
     data = []
     with open_plain_or_gzip(fn) as fh:
-        reader = csv.reader(fh,dialect='excel-tab')
+        reader = csv.reader(fh, dialect='excel-tab')
         for l in reader:
             data.append(l)
     return data

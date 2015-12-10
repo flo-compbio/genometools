@@ -1,4 +1,4 @@
-genometools.misc package
+genometools.ncbi package
 ========================
 
 Submodules
@@ -6,13 +6,12 @@ Submodules
 
 .. toctree::
 
-   genometools.misc.functions
-   genometools.misc.log
+   genometools.ncbi.extract_entrez2gene
 
 Module contents
 ---------------
 
-.. automodule:: genometools.misc
+.. automodule:: genometools.ncbi
     :members:
     :undoc-members:
     :show-inheritance:

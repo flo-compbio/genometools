@@ -19,6 +19,14 @@
 Changelog
 =========
 
+Version 1.2.0
+-------------
+
+- added basic classes for handling expression data (see
+  `genometools.expression`)
+- reorganized package structure, created sub-packages  based on data source
+  (e.g., `genometools.ensembl`) or method (e.g., `genometools.rnaseq`)
+
 Version 1.1.0
 -------------
 

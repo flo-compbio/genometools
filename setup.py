@@ -24,7 +24,7 @@ from os import path
 root = 'genometools'
 
 here = path.abspath(path.dirname(__file__))
-description = 'GenomeTools: Scripts and Functions For Working With Genomic Data.'
+description = 'GenomeTools: Scripts and Classes For Working With Genomic Data.'
 
 # get long description from file
 long_description = ''
@@ -49,7 +49,7 @@ class CleanCommand(Command):
 setup(
     name='genometools',
 
-    version='1.1.0',
+    version='1.2rc2',
 
     description=description,
     long_description=long_description,
@@ -75,10 +75,11 @@ setup(
         'Programming Language :: Python :: 2.7',
     ],
 
-    keywords='genome genes tools analysis',
+    keywords='genome genes tools analysis expression sequencing',
 
     #packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
-    packages=[root],
+    packages=find_packages(exclude=['docs']),
+    #packages=find_packages(root),
 
 	#libraries = [],
 
@@ -97,8 +98,22 @@ setup(
 	# executable scripts
     entry_points = {
         'console_scripts': [
-            'extract_protein_coding_genes.py = genometools.extract_protein_coding_genes:main',
-            'extract_entrez2gene.py = genometools.extract_entrez2gene:main',
+            # Ensembl scripts
+            'ensembl_extract_protein_coding_genes.py = genometools.ensembl.extract_protein_coding_genes:main',
+            'ensembl_extract_protein_coding_gene_ids.py = genometools.ensembl.extract_protein_coding_gene_ids:main',
+            'ensembl_extract_protein_coding_exon_annotations.py = genometools.ensembl.extract_protein_coding_exon_annotations:main',
+
+            # NCBI scripts
+            'ncbi_extract_entrez2gene.py = genometools.ncbi.extract_entrez2gene:main',
+
+            # sequencing scripts
+            'seq_trim_fastq.py = genometools.seq.trim_fastq:main',
+
+            # SRA scripts
+            'sra_download_experiment.py = genometools.sra.download_experiment:main',
+
+            # RNA-Seq scripts
+            'rnaseq_stringtie_gene_level_expression.py = genometools.rnaseq.stringtie_gene_level_expression:main',
         ],
     },
 
