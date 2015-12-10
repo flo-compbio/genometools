@@ -1,11 +1,11 @@
 # project-specific
-misc/
+/misc/
 
 # sphinx docs
-docs/build/
+/docs/build/
 
 # dropbox
-.dropbox
+/.dropbox
 
 # vim
 [._]*.s[a-w][a-z]

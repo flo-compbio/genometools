@@ -49,7 +49,7 @@ class CleanCommand(Command):
 setup(
     name='genometools',
 
-    version='1.1.0',
+    version='1.2rc1',
 
     description=description,
     long_description=long_description,
@@ -75,7 +75,7 @@ setup(
         'Programming Language :: Python :: 2.7',
     ],
 
-    keywords='genome genes tools analysis',
+    keywords='genome genes tools analysis expression sequencing',
 
     #packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
     packages=[root],
@@ -97,8 +97,22 @@ setup(
 	# executable scripts
     entry_points = {
         'console_scripts': [
-            'extract_protein_coding_genes.py = genometools.extract_protein_coding_genes:main',
-            'extract_entrez2gene.py = genometools.extract_entrez2gene:main',
+            # Ensembl scripts
+            'ensembl_extract_protein_coding_genes.py = genometools.ensembl.extract_protein_coding_genes:main',
+            'ensembl_extract_protein_coding_gene_ids.py = genometools.ensembl.extract_protein_coding_gene_ids:main',
+            'ensembl_extract_protein_coding_exon_annotations.py = genometools.ensembl.extract_protein_coding_exon_annotations:main',
+
+            # NCBI scripts
+            'ncbi_extract_entrez2gene.py = genometools.ncbi.extract_entrez2gene:main',
+
+            # sequencing scripts
+            'seq_trim_fastq.py = genometools.seq.trim_fastq:main',
+
+            # SRA scripts
+            'sra_download_experiment.py = genometools.sra.download_experiment:main',
+
+            # RNA-Seq scripts
+            'rnaseq_stringtie_gene_level_expression.py = genometools.rnaseq.stringtie_gene_level_expression:main',
         ],
     },
 
