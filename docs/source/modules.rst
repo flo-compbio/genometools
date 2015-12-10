@@ -5,6 +5,7 @@ GenomeTools contains the following subpackages:
 
 .. toctree::
     :glob:
+    :maxdepth: 1
 
     api/genometools.misc
     api/genometools.ncbi
