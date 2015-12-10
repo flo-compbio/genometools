@@ -6,8 +6,8 @@ Submodules
 
 .. toctree::
 
+   genometools.misc.functions
    genometools.misc.log
-   genometools.misc.misc
 
 Module contents
 ---------------

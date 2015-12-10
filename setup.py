@@ -24,7 +24,7 @@ from os import path
 root = 'genometools'
 
 here = path.abspath(path.dirname(__file__))
-description = 'GenomeTools: Scripts and Functions For Working With Genomic Data.'
+description = 'GenomeTools: Scripts and Classes For Working With Genomic Data.'
 
 # get long description from file
 long_description = ''
