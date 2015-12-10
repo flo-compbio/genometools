@@ -4,4 +4,4 @@ __version__ = pkg_resources.require('genometools')[0].version
 
 from genometools import misc, gtf, ensembl, rnaseq, sra
 
-__all__ = [misc,gtf,ensembl,rnaseq,rna]
+__all__ = [misc,gtf,ensembl,rnaseq,rnaseq]
