@@ -122,7 +122,7 @@ def main(args=None):
     logger.info('\t' + ', '.join(sorted(chromosomes)))
     logger.info('')
     logger.info('Excluded chromosomes (%d):', len(excluded_chromosomes))
-    logger.info('\t' + ', '.join(sorted(excluded_chromosomes))
+    logger.info('\t' + ', '.join(sorted(excluded_chromosomes)))
     logger.info('')
     logger.info('Total no. of exons: %d' %(exons))
 
