@@ -47,8 +47,8 @@ class ExpMatrix(object):
 
     def __init__(self, genes, samples, X, preserve_gene_order = False):
 
-        assert len(genes) == E.shape[0]
-        assert len(samples) == E.shape[1]
+        assert len(genes) == X.shape[0]
+        assert len(samples) == X.shape[1]
 
         genes = tuple(genes)
         samples = tuple(samples)
