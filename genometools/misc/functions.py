@@ -86,10 +86,11 @@ def test_file_writable(path):
                 pass
         except IOError:
             return False
+        else:
+            return True
     else:
         # file does not exist, can we write to the directory?
         return test_dir_writable(path)
-    return 
 
 def download_url(url, download_file):
     """Downloads a file from a given URL.
