@@ -49,7 +49,7 @@ class CleanCommand(Command):
 setup(
     name='genometools',
 
-    version='1.2rc3',
+    version='1.2rc4',
 
     description=description,
     long_description=long_description,
@@ -106,11 +106,11 @@ setup(
             # NCBI scripts
             'ncbi_extract_entrez2gene.py = genometools.ncbi.extract_entrez2gene:main',
 
-            # sequencing scripts
-            'seq_trim_fastq.py = genometools.seq.trim_fastq:main',
-
             # SRA scripts
             'sra_download_experiment.py = genometools.sra.download_experiment:main',
+
+            # sequencing scripts
+            'seq_trim_fastq.py = genometools.seq.trim_fastq:main',
 
             # RNA-Seq scripts
             'rnaseq_stringtie_gene_level_expression.py = genometools.rnaseq.stringtie_gene_level_expression:main',

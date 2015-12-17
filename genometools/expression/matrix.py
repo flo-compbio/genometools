@@ -32,8 +32,8 @@ class ExpMatrix(object):
         See :attr:`genes` attribute.
     samples: list or tuple of str
         See :attr:`samples` attribute.
-    E: `numpy.ndarray`
-        See :attr:`E` attribute.
+    X: `numpy.ndarray`
+        See :attr:`X` attribute.
 
     Attributes
     ----------
@@ -41,29 +41,29 @@ class ExpMatrix(object):
         The names of the genes (rows) in the matrix.
     samples: tuple of str
         The names of the samples (columns) in the matrix.
-    E: `numpy.ndarray`
+    X: `numpy.ndarray`
         The matrix of expression values.
     """
 
-    def __init__(self,genes,samples,E,preserve_gene_order=None):
+    def __init__(self, genes, samples, X, preserve_gene_order = False):
 
         assert len(genes) == E.shape[0]
         assert len(samples) == E.shape[1]
 
         genes = tuple(genes)
         samples = tuple(samples)
-        E = E.copy()
+        X = X.copy()
 
-        if preserve_gene_order is None or (not preserve_gene_order):
+        if (not preserve_gene_order):
             # make sure genes are in alphabetical order
             a = np.lexsort([genes])
             if not np.all(a == np.arange(len(genes))):
                 genes = tuple(genes[i] for i in a)
-                E = E[a,:]
+                X = X[a,:]
 
         self.genes = genes
         self.samples = samples
-        self.E = E
+        self.X = X
 
     @property
     def p(self):
@@ -78,9 +78,9 @@ class ExpMatrix(object):
         return (len(self.genes),len(self.samples))
 
     def __repr__(self):
-        self.E.flags.writable = False
+        self.X.flags.writable = False
         h = hash((self.genes,self.samples,self.E))
-        self.E.flags.writable = True
+        self.X.flags.writable = True
         return '<ExprMatrix with %d genes, %d samples (hash = %d)>' \
                 %(self.p,self.n,h)
 
@@ -100,7 +100,7 @@ class ExpMatrix(object):
             return False
 
     @classmethod
-    def read_tsv(cls, path, genome = None, preserve_gene_order = None):
+    def read_tsv(cls, path, genome = None, preserve_gene_order = False):
         """Read expression matrix from a tab-delimited text file.
 
         Parameters
@@ -138,8 +138,8 @@ class ExpMatrix(object):
             logger.warning('Ignored %d / %d genes with missing data (%.1f%%).',
                     missing, len(genes), 100*(missing/float(len(genes))))
 
-        E = np.float64(expr)
-        return cls(genes, samples, E,
+        X = np.float64(expr)
+        return cls(genes, samples, X,
                 preserve_gene_order = preserve_gene_order)
 
     def write_tsv(self, path):
@@ -150,12 +150,12 @@ class ExpMatrix(object):
         path: str
             The path of the output file.
         """
-        with open(path,'w') as ofh:
+        with open(path, 'w') as ofh:
             writer = csv.writer(ofh, dialect = 'excel-tab',
                     lineterminator = '\n', quoting = csv.QUOTE_NONE)
             writer.writerow(['.'] + list(self.samples)) # write samples
             for i,g in enumerate(self.genes):
                 writer.writerow([g] +
-                        ['%.5f' %(self.E[i,j]) for j in range(self.n)])
+                        ['%.5f' %(self.X[i,j]) for j in range(self.n)])
         logger.info('Wrote %d x %d expression matrix to "%s".',
                 self.p, self.n, path)
