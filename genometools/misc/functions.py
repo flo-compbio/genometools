@@ -69,6 +69,29 @@ def smart_open_write(filename=None, mode='w'):
         if fh is not sys.stdout:
             fh.close()
 
+def test_dir_writable(path):
+    """Test if we can write to a directory.
+    """
+    dir_ = os.path_dirname(path)
+    if dir_ == '':
+        dir_ = '.'
+    return os.access(dir_, os.W_OK)
+
+def test_file_writable(path):
+    """Test if we can write to a file."""
+    if os.path.isfile(path):
+        # file exists, can we overwrite it?
+        try:
+            with open(path, 'a') as fh:
+                pass
+        except IOError:
+            return False
+        else:
+            return True
+    else:
+        # file does not exist, can we write to the directory?
+        return test_dir_writable(path)
+
 def download_url(url, download_file):
     """Downloads a file from a given URL.
 

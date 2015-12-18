@@ -43,7 +43,7 @@ def get_argument_parser():
     This function is used by the `sphinx-argparse` extension for sphinx.
     """
     description = 'Extract all exon annotations of protein-coding genes.'
-    parser = get_gtf_argument_parser(description)
+    parser = get_gtf_argument_parser(description, default_field_name = 'exon')
     return parser
 
 def main(args=None):
@@ -122,7 +122,7 @@ def main(args=None):
     logger.info('\t' + ', '.join(sorted(chromosomes)))
     logger.info('')
     logger.info('Excluded chromosomes (%d):', len(excluded_chromosomes))
-    logger.info('\t' + ', '.join(sorted(excluded_chromosomes))
+    logger.info('\t' + ', '.join(sorted(excluded_chromosomes)))
     logger.info('')
     logger.info('Total no. of exons: %d' %(exons))
 

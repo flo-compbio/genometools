@@ -26,6 +26,10 @@ Version 1.2.0
   `genometools.expression`)
 - reorganized package structure, created sub-packages  based on data source
   (e.g., `genometools.ensembl`) or method (e.g., `genometools.rnaseq`)
+- added script for downloading all SRA data for a given expermient accession
+  number (``sra_download_experiment.py``)
+- added functions for obtaining URLs for GEO data series (see
+  `genometools.geo`)
 
 Version 1.1.0
 -------------
