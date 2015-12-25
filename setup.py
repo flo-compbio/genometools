@@ -83,7 +83,7 @@ setup(
 
 	#libraries = [],
 
-    install_requires = [],
+    install_requires = ['unicodecsv'],
 
     extras_require = {
             'docs': ['sphinx','sphinx-rtd-theme','sphinx-argparse','mock']
@@ -106,14 +106,20 @@ setup(
             # NCBI scripts
             'ncbi_extract_entrez2gene.py = genometools.ncbi.extract_entrez2gene:main',
 
+            # GEO scripts
+            'geo_generate_sample_sheet.py = genometools.geo.generate_sample_sheet:main',
+
             # SRA scripts
-            'sra_download_experiment.py = genometools.sra.download_experiment:main',
+            'sra_find_experiment_runs.py = genometools.sra.find_experiment_runs:main',
 
             # sequencing scripts
             'seq_trim_fastq.py = genometools.seq.trim_fastq:main',
 
             # RNA-Seq scripts
             'rnaseq_stringtie_gene_level_expression.py = genometools.rnaseq.stringtie_gene_level_expression:main',
+
+            # expression scripts
+            'exp_convert_entrez2gene.py = genometools.expression.convert_entrez2gene:main',
         ],
     },
 

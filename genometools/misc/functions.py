@@ -23,14 +23,15 @@ import errno
 import shutil
 import urllib2
 import sys
-import csv
 import bisect
 import gzip
 import logging
 import contextlib
 
+import unicodecsv as csv
+
 @contextlib.contextmanager
-def smart_open(filename=None, mode='r', try_gzip=False):
+def smart_open(filename = None, mode = 'rb', try_gzip = False):
     """Open a file for reading or return ``stdin``.
 
     Adapted from StackOverflow user "Wolph"
@@ -52,7 +53,7 @@ def smart_open(filename=None, mode='r', try_gzip=False):
             fh.close()
 
 @contextlib.contextmanager
-def smart_open_write(filename=None, mode='w'):
+def smart_open_write(filename = None, mode = 'wb'):
     """Open a file for writing or return ``stdout``.
 
     Adapted from StackOverflow user "Wolph"
@@ -72,7 +73,7 @@ def smart_open_write(filename=None, mode='w'):
 def test_dir_writable(path):
     """Test if we can write to a directory.
     """
-    dir_ = os.path_dirname(path)
+    dir_ = os.path.dirname(path)
     if dir_ == '':
         dir_ = '.'
     return os.access(dir_, os.W_OK)
@@ -80,9 +81,9 @@ def test_dir_writable(path):
 def test_file_writable(path):
     """Test if we can write to a file."""
     if os.path.isfile(path):
-        # file exists, can we overwrite it?
+        # file exists, can we modify it?
         try:
-            with open(path, 'a') as fh:
+            with open(path, 'ab') as fh:
                 pass
         except IOError:
             return False
@@ -109,31 +110,22 @@ def download_url(url, download_file):
         with open(download_file, 'wb') as ofh:
             shutil.copyfileobj(fh, ofh)
 
-def make_sure_dir_exists(d):
+def make_sure_dir_exists(d, create_subfolders = False):
     """Ensures that a directory exists.
 
     Adapted from StackOverflow users "Bengt" and "Heikki Toivonen"
     (http://stackoverflow.com/a/5032238).
     """
     try:
-        os.mkdir(d)
+        if create_subfolders:
+            os.makedirs(d)
+        else:
+            os.mkdir(d)
     except OSError as exception:
         if exception.errno != errno.EEXIST:
             raise
 
-def make_sure_path_exists(path):
-    """Ensures that a path exists.
-
-    Source: StackOverflow users "Bengt" and "Heikki Toivonen"
-    (http://stackoverflow.com/a/5032238).
-    """
-    try:
-        os.makedirs(path)
-    except OSError as exception:
-        if exception.errno != errno.EEXIST:
-            raise
-
-def open_plain_or_gzip(fn, mode='r'):
+def open_plain_or_gzip(fn, mode = 'rb'):
     """Returns a handle for a file that is either gzip'ed or not.
 
     Parameters
@@ -197,7 +189,6 @@ def bisect_index(a, x):
         The index.
 
     """
-
     i = bisect.bisect_left(a, x)
     if i != len(a) and a[i] == x:
         return i
@@ -223,7 +214,6 @@ def argsort(seq):
     instead.
 
     """
-
     # see http://stackoverflow.com/questions/3382352/equivalent-of-numpy-argsort-in-basic-python/3382369#3382369
     return sorted(range(len(seq)), key=seq.__getitem__)
 
@@ -241,7 +231,6 @@ def argmin(seq):
         The index of the smallest element.
 
     """
-
     return argsort(seq)[0]
 
 def argmax(seq):
@@ -257,10 +246,9 @@ def argmax(seq):
     int
         The index of the largest element.
     """
-
     return argsort(seq)[-1]
 
-def read_single(fn):
+def read_single(fn, enc = 'utf-8'):
     """ Reads the first column of a tab-delimited text file.
 
     The file can either be uncompressed or gzip'ed.
@@ -269,6 +257,8 @@ def read_single(fn):
     ----------
     fn: str
         The path of the file.
+    enc: str, optional
+        The file encoding.
 
     Returns
     -------
@@ -278,12 +268,12 @@ def read_single(fn):
     """
     data = []
     with open_plain_or_gzip(fn) as fh:
-        reader = csv.reader(fh, dialect='excel-tab')
+        reader = csv.reader(fh, dialect = 'excel-tab', encoding = enc)
         for l in reader:
             data.append(l[0])
     return data
 
-def read_all(fn):
+def read_all(fn, enc = 'utf-8'):
     """ Reads a tab-delimited text file.
 
     The file can either be uncompressed or gzip'ed.
@@ -292,6 +282,8 @@ def read_all(fn):
     ----------
     fn: str
         The path of the file.
+    enc: str, optional
+        The file encoding.
 
     Returns
     -------
@@ -299,12 +291,9 @@ def read_all(fn):
         A list, which each element containing the contents of a row
         (as a list).
     """
-
     data = []
     with open_plain_or_gzip(fn) as fh:
-        reader = csv.reader(fh, dialect='excel-tab')
+        reader = csv.reader(fh, dialect='excel-tab', encoding = enc)
         for l in reader:
             data.append(l)
     return data
-
-

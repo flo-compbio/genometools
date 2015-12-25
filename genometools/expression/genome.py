@@ -16,10 +16,11 @@
 
 """Module containing the `ExpGenome` class."""
 
-import csv
+import os
 import logging
 from collections import OrderedDict
 
+import unicodecsv as csv
 import numpy as np
 
 from genometools import misc
@@ -89,32 +90,36 @@ class ExpGenome(object):
         return self._genes[name]
 
     @classmethod
-    def read_tsv(cls,path):
+    def read_tsv(cls, path, enc = 'utf-8'):
         """Read genes from tab-delimited text file.
 
         Parameters
         ----------
         path: str
             The path of the text file.
+        enc: str
+            The file encoding.
         """
         genes = []
-        with open(path) as fh:
-            reader = csv.reader(fh, dialect = 'excel-tab')
+        with open(path, 'rb') as fh:
+            reader = csv.reader(fh, dialect = 'excel-tab', encoding = enc)
             for l in reader:
                 genes.append(ExpGene.from_list(l))
         return cls(genes)
 
-    def write_tsv(self,path):
+    def write_tsv(self, path, enc = 'utf-8'):
         """Write genes to tab-delimited text file in alphabetical order.
 
         Parameters
         ----------
         path: str
             The path of the output file.
+        enc: str
+            The file encoding.
         """
-        with open(path,'w') as ofh:
-            writer = csv.writer(ofh, dialect = 'excel-tab',
-                    lineterminator = '\n', quoting = csv.QUOTE_NONE)
+        with open(path, 'wb') as ofh:
+            writer = csv.writer(ofh, dialect = 'excel-tab', encoding = enc,
+                    lineterminator = os.linesep, quoting = csv.QUOTE_NONE)
             for g in self._genes.itervalues():
                 writer.writerow(g.to_list())
         logger.info('Wrote %d genes to file "%s".', self.p, path)

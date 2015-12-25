@@ -22,11 +22,12 @@
 
 import sys
 import os
-import csv
 import re
 import argparse
 import logging
 from collections import Counter
+
+import unicodecsv as csv
 
 from genometools import misc
 from genometools import ensembl
@@ -45,8 +46,8 @@ def get_argument_parser():
     This function is used by the `sphinx-argparse` extension for sphinx.
 
     """
-    description = 'Extract gene IDs and symbols from Ensembl GTF file.'
-    parser = get_gtf_argument_parser(description)
+    desc = 'Extract gene IDs and symbols from Ensembl GTF file.'
+    parser = get_gtf_argument_parser(desc)
     return parser
 
 def main(args=None):
@@ -84,13 +85,8 @@ def main(args=None):
         # if we print output to stdout, redirect log messages to stderr
         log_stream = sys.stderr
 
-    log_level = logging.INFO
-    if quiet:
-        log_level = logging.WARNING
-    elif verbose:
-        log_level = logging.DEBUG
-    logger = misc.configure_logger(__name__, log_stream = log_stream,
-            log_file = log_file, log_level = log_level)
+    logger = misc.get_logger(log_stream = log_stream, log_file = log_file,
+            quiet = quiet, verbose = verbose)
 
     if chrom_pat is None:
         chrom_pat = re.compile(ensembl.species_chrompat[species])
@@ -126,7 +122,7 @@ def main(args=None):
     logger.info('Parsing data...')
     with misc.smart_open(input_file,try_gzip=True) as fh:
         #if i >= 500000: break
-        reader = csv.reader(fh,dialect='excel-tab')
+        reader = csv.reader(fh, dialect = 'excel-tab')
         for l in reader:
 
             i += 1
@@ -137,7 +133,7 @@ def main(args=None):
                 attr = parse_attributes(l[8])
                 type_ = attr['gene_biotype']
 
-                if type_ not in ['protein_coding','polymorphic_pseudogene']:
+                if type_ not in ['protein_coding', 'polymorphic_pseudogene']:
                     continue
 
                 chrom = l[0]
@@ -178,10 +174,10 @@ def main(args=None):
     logger.info('No. of gene names: %d', m)
 
     with misc.smart_open_write(output_file) as ofh:
-        writer = csv.writer(ofh,dialect='excel-tab',lineterminator='\n',
-                quoting=csv.QUOTE_NONE)
+        writer = csv.writer(ofh, dialect = 'excel-tab',
+                lineterminator = os.linesep, quoting = csv.QUOTE_NONE)
         for g in sorted(genes.keys()):
-            writer.writerow([g,genes[g]])
+            writer.writerow([g, genes[g]])
 
     return 0
 

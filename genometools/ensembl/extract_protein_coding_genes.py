@@ -53,11 +53,12 @@ downloaded from the
 
 import sys
 import os
-import csv
 import re
 import argparse
 import logging
 from collections import Counter
+
+import unicodecsv as csv
 
 from genometools import misc
 from genometools import ensembl
@@ -76,8 +77,8 @@ def get_argument_parser():
     This function is used by the `sphinx-argparse` extension for sphinx.
 
     """
-    description = 'Extracts all protein-coding genes from an Ensembl GTF file.'
-    parser = get_gtf_argument_parser(description)
+    desc = 'Extracts all protein-coding genes from an Ensembl GTF file.'
+    parser = get_gtf_argument_parser(desc)
     return parser
 
 def main(args=None):
@@ -110,19 +111,14 @@ def main(args=None):
     quiet = args.quiet
     verbose = args.verbose
 
-    # configure logger
+    # configure root logger
     log_stream = sys.stdout
     if output_file == '-':
         # if we print output to stdout, redirect log messages to stderr
         log_stream = sys.stderr
 
-    log_level = logging.INFO
-    if quiet:
-        log_level = logging.WARNING
-    elif verbose:
-        log_level = logging.DEBUG
-    logger = misc.configure_logger(__name__, log_stream = log_stream,
-            log_file = log_file, log_level = log_level)
+    logger = misc.get_logger(log_stream = log_stream, log_file = log_file,
+            quiet = quiet, verbose = verbose)
 
     if chrom_pat is None:
         chrom_pat = re.compile(ensembl.species_chrompat[species])
@@ -152,9 +148,9 @@ def main(args=None):
     i = 0
     missing = 0
     logger.info('Parsing data...')
-    with misc.smart_open(input_file,try_gzip=True) as fh:
+    with misc.smart_open(input_file, try_gzip = True) as fh:
         #if i >= 500000: break
-        reader = csv.reader(fh,dialect='excel-tab')
+        reader = csv.reader(fh, dialect='excel-tab')
         for l in reader:
             i += 1
             #if i % int(1e5) == 0:
@@ -239,13 +235,15 @@ def main(args=None):
     logger.info('# Genes with redundant annotations: %d',len(redundant_genes))
 
     logger.info('')
-    logger.info('Polymorphic pseudogenes (%d): %s',len(polymorphic), ', '.join('%s (%d)' %(g,genes2[g]) for g in sorted(polymorphic)))
+    logger.info('Polymorphic pseudogenes (%d): %s',len(polymorphic),
+            ', '.join('%s (%d)' %(g,genes2[g]) for g in sorted(polymorphic)))
 
     logger.info('')
     logger.info('Total protein-coding genes: %d', len(genes))
 
     with misc.smart_open_write(output_file) as ofh:
-        writer = csv.writer(ofh,dialect='excel-tab',lineterminator='\n',quoting=csv.QUOTE_NONE)
+        writer = csv.writer(ofh, dialect='excel-tab',
+                lineterminator = os.linesep, quoting = csv.QUOTE_NONE)
         for name in sorted(genes):
             chroms = ','.join(sorted(gene_chroms[name]))
             ids = ','.join(sorted(gene_ids[name]))

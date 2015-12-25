@@ -30,6 +30,7 @@ Version 1.2.0
   number (``sra_download_experiment.py``)
 - added functions for obtaining URLs for GEO data series (see
   `genometools.geo`)
+- added unicode support for all scripts
 
 Version 1.1.0
 -------------

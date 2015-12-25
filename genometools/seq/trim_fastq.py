@@ -4,9 +4,12 @@ import sys
 import argparse
 import itertools as it
 
+from genometools import cli
+
 def get_argument_parser():
-    parser = argparse.ArgumentParser(description=
-        'Trim FASTQ file  (read from stdin, write to stdout).')
+
+    desc = 'Trim FASTQ file (read from stdin, write to stdout).'
+    parser = cli.get_argument_parser(desc = desc)
 
     parser.add_argument('-l','--left', type=int, default=0,
         help="""Number of base pairs to trim from the left.""")

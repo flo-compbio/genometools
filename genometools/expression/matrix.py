@@ -16,10 +16,13 @@
 
 """Module containing the `ExpMatrix` class."""
 
-import csv
+import os
 import logging
 
+import unicodecsv as csv
 import numpy as np
+
+from genometools import misc
 
 logger = logging.getLogger(__name__)
 
@@ -100,8 +103,10 @@ class ExpMatrix(object):
             return False
 
     @classmethod
-    def read_tsv(cls, path, genome = None, preserve_gene_order = False):
+    def read_tsv(cls, path, genome = None, preserve_gene_order = False, enc = 'utf-8'):
         """Read expression matrix from a tab-delimited text file.
+
+        Unicode is supported, thanks to the `unicodecsv` module.
 
         Parameters
         ----------
@@ -110,14 +115,18 @@ class ExpMatrix(object):
         genome: `ExpGenome`, optional
             The set of valid genes. If given, the genes in the text file will
             be filtered against the set of genes in the genome.
+        preserve_gene_order: bool
+            Do not sort the genes alphabetically.
+        enc: str
+            The file encoding.
         """
         genes = []
         samples = None
         expr = []
         unknown = 0
         missing = 0
-        with open(path) as fh:
-            reader = csv.reader(fh,dialect='excel-tab')
+        with open(path, 'rb') as fh:
+            reader = csv.reader(fh, dialect = 'excel-tab', encoding = enc)
             samples = reader.next()[1:] # samples are in first row
             for l in reader:
                 g = l[0]
@@ -142,17 +151,19 @@ class ExpMatrix(object):
         return cls(genes, samples, X,
                 preserve_gene_order = preserve_gene_order)
 
-    def write_tsv(self, path):
+    def write_tsv(self, path, enc = 'utf-8'):
         """Write expression matrix to a tab-delimited text file.
 
         Parameters
         ----------
         path: str
             The path of the output file.
+        enc: str
+            The file encoding.
         """
-        with open(path, 'w') as ofh:
-            writer = csv.writer(ofh, dialect = 'excel-tab',
-                    lineterminator = '\n', quoting = csv.QUOTE_NONE)
+        with open(path, 'wb') as ofh:
+            writer = csv.writer(ofh, dialect = 'excel-tab', encoding = enc,
+                    lineterminator = os.linesep, quoting = csv.QUOTE_NONE)
             writer.writerow(['.'] + list(self.samples)) # write samples
             for i,g in enumerate(self.genes):
                 writer.writerow([g] +

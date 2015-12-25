@@ -22,15 +22,16 @@
 
 import sys
 import os
-import csv
-#import gzip
 import argparse
 import logging
 from collections import Counter
 
 import numpy as np
 
+import unicodecsv as csv
+
 from genometools import misc
+from genometools import cli
 from genometools.gtf import parse_attributes
 
 def get_argument_parser():
@@ -45,13 +46,18 @@ def get_argument_parser():
     This function is used by the `sphinx-argparse` extension for sphinx.
 
     """
-    parser = argparse.ArgumentParser(description=
-        'Extracts gene-level expression data from StringTie output.')
+    str_type = cli.str_type
+    file_mv = cli.file_mv
 
-    parser.add_argument('-s', '--stringtie-file', required=True,
+    desc = 'Extracts gene-level expression data from StringTie output.'
+    parser = cli.get_argument_parser(desc)
+
+    parser.add_argument('-s', '--stringtie-file', required = True,
+        type = str_type, metavar = file_mv,
         help="""Path of the StringTie output file .""")
 
-    parser.add_argument('-g', '--gene-file', required=True,
+    parser.add_argument('-g', '--gene-file', required = True,
+        type = str_type, metavar = file_mv,
         help="""File containing a list of protein-coding genes.""")
 
     parser.add_argument('--no-novel-transcripts', action = 'store_true',
@@ -62,21 +68,15 @@ def get_argument_parser():
     # possible strategies for ambiguous transcritps: 'ignore','highest','all'
     # currently we 
 
-    parser.add_argument('-o', '--output-file', required=True,
+    parser.add_argument('-o', '--output-file', required = True,
+        type = str_type, metavar = file_mv,
         help="""Path of output file.""")
 
-    parser.add_argument('-l', '--log-file', default=None,
-        help='Path of log file. If not specified, print to stdout.')
-
-    parser.add_argument('-q', '--quiet', action='store_true',
-        help='Suppress all output except warnings and errors.')
-
-    parser.add_argument('-v', '--verbose', action='store_true',
-        help='Enable verbose output. Ignored if ``--quiet`` is specified.')
+    cli.add_reporting_args(parser)
 
     return parser
 
-def main(args=None):
+def main(args = None):
     """Extracts gene-level expression data from StringTie output.
 
     Parameters
@@ -102,18 +102,12 @@ def main(args=None):
     no_novel_transcripts = args.no_novel_transcripts
     output_file = args.output_file
 
+    log_file = args.log_file
     quiet = args.quiet
     verbose = args.verbose
 
-    log_file = args.log_file
-    log_stream = sys.stdout
-    log_level = logging.INFO
-    if quiet:
-        log_level = logging.WARNING
-    elif verbose:
-        log_level = logging.DEBUG
-    logger = misc.configure_logger('', log_stream = log_stream,
-            log_file = log_file, log_level = log_level)
+    logger = misc.get_logger(log_file = log_file, quiet = quiet,
+            verbose = verbose)
 
     # read list of gene symbols
     logger.info('Reading gene data...')
@@ -161,7 +155,7 @@ def main(args=None):
     fpkm_novel_trans = 0
     fpkm_ambig = 0
     with open(stringtie_file) as fh:
-        reader = csv.reader(fh,dialect='excel-tab')
+        reader = csv.reader(fh, dialect='excel-tab')
         for l in reader:
             if l[0][0] == '#':
                 # skip header
@@ -240,8 +234,8 @@ def main(args=None):
     # write output file
     E = np.c_[fpkm,tpm]
     with open(output_file,'w') as ofh:
-        writer = csv.writer(ofh, dialect='excel-tab', lineterminator='\n',
-                quoting=csv.QUOTE_NONE)
+        writer = csv.writer(ofh, dialect = 'excel-tab',
+                lineterminator = os.linesep, quoting = csv.QUOTE_NONE)
         for i,g in enumerate(genes):
             writer.writerow([g] + ['%.5f' %(e) for e in E[i,:]])
 
