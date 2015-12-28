@@ -78,12 +78,12 @@ class ExpMatrix(object):
 
     @property
     def shape(self):
-        return (len(self.genes),len(self.samples))
+        return (len(self.genes), len(self.samples))
 
     def __repr__(self):
-        self.X.flags.writable = False
-        h = hash((self.genes,self.samples,self.E))
-        self.X.flags.writable = True
+        self.X.flags.writeable = False
+        h = hash((self.genes, self.samples, self.X.data))
+        self.X.flags.writeable = True
         return '<ExprMatrix with %d genes, %d samples (hash = %d)>' \
                 %(self.p,self.n,h)
 
