@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Extract all exon annotations of protein-coding genes.
+"""Script for extracting all exons annotations of protein-coding genes.
 """
 
 import sys

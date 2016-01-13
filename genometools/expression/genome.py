@@ -18,7 +18,7 @@
 
 import os
 import logging
-from collections import OrderedDict
+from collections import OrderedDict, Iterable
 
 import unicodecsv as csv
 import numpy as np
@@ -33,61 +33,51 @@ class ExpGenome(object):
 
     Parameters
     ----------
-    genes: list or tuple of ExpGene objects
+    genes: list (tuple, set) of ExpGene objects
         The genes in the analysis.
     """
     def __init__(self, genes):
-        genes = OrderedDict([g.name,g] for g in genes)
 
-        # make sure genes are in alphabetical order
-        names = genes.keys()
-        a = np.lexsort([names])
-        if not np.all(a == np.arange(len(genes))):
-            sorted_names = [names[i] for i in a]
-            genes = OrderedDict([n,genes[n]] for n in sorted_names)
+        assert isinstance(genes, Iterable)
 
-        self._genes = genes
+        genes = sorted(genes, key = lambda g: g.name)
+        self._genes = OrderedDict([g.name, g] for g in genes)
+        self._gene_indices = OrderedDict([g.name, i] for i, g in enumerate(genes))
         logger.debug('Initialized ExpGenome with %d genes.', self.p)
 
     def __repr__(self):
         return '<ExpGenome (%d genes; hash = %d)>' \
-                %(self.p, hash(self.get_genes()))
+                %(self.p, hash(self))
 
     def __str__(self):
         return '<ExpGenome with %d genes>' %(self.p)
 
     def __hash__(self):
-        return hash(repr(self))
+        return hash(self.genes)
 
     def __eq__(self,other):
-        if type(self) != type(other):
-            return False
-        elif repr(self) == repr(other):
+        if self is other:
             return True
-        else:
+        elif type(self) != type(other):
             return False
+        else:
+            return  repr(self) == repr(other):
 
-    def __contains__(self, g):
-        return self.has_gene(g)
+    def __contains__(self, gene):
+        return gene in self._genes
 
     @property
     def p(self):
+        """Returns the number of genes."""
         return len(self._genes)
 
-    def get_genes(self):
+    def genes(self):
+        """Returns the list of genes as a tuple."""
         return tuple(self._genes.values())
 
-    def get_gene_names(self):
-        return self._genes.keys()
-
-    def index(self,gene):
-        return misc.bisect_index(self.get_gene_names(),gene)
-
-    def has_gene(self,name):
-        return name in self._genes
-
-    def get_gene(self,name):
-        return self._genes[name]
+    def index(self, gene):
+        """Returns the index of the given gene."""
+        return self.gene_indices[gene]
 
     @classmethod
     def read_tsv(cls, path, enc = 'utf-8'):

@@ -23,7 +23,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class ExpGene(object):
-    """A gene in gene expression analysis.
+    """A gene in a gene expression analysis.
 
     Parameters
     ----------
@@ -55,6 +55,7 @@ class ExpGene(object):
     def __init__(self, name, chromosomes = None, ensembl_ids = None):
 
         self.name = name
+
         if chromosomes is None:
             chromosomes = []
         self.chromosomes = chromosomes
@@ -63,28 +64,58 @@ class ExpGene(object):
         self.ensembl_ids = ensembl_ids
 
     def __repr__(self):
-        return '<ExpGene "%s">' %(self.name)
+        return '<ExpGene "%s" (%s; %s)>' \
+                %(self.name, repr(self.chromosomes), repr(self.ensembl_ids))
 
     def __str__(self):
-        chrom_str = ','.join(self.chromosomes)
-        ensembl_str = ','.join(self.ensembl_ids)
+        chrom_str = 'None'
+        if self.chromosomes is not None:
+            chrom_str = ','.join(self.chromosomes)
+        ens_str = 'None'
+        self.ensembl_ids is not None:
+            ens_str = ','.join(self.ensembl_ids)
         return '<ExpGene "%s" (Chromosome(s): %s, EnsemblID(s): %s)>' \
-                %(self.name, chrom_str, ensembl_str)
+                %(self.name, chrom_str, ens_str)
 
     def __hash__(self):
-        return hash(repr(self))
+        data = []
+        data.append(self.name)
 
-    def __eq__(self,other):
-        if type(self) != type(other):
-            return False
-        elif repr(self) == repr(other):
-            return True
+        if self.chromosomes is None:
+            data.append(None)
         else:
+            data.append(tuple(self.chromosomes))
+
+        if self.ensembl_ids is None:
+            data.append(None)
+        else:
+            data.append(tuple(self.ensembl_ids))
+
+        return hash(tuple(data))
+
+    def __eq__(self, other):
+        if self is other:
+            return True
+        elif type(self) != type(other):
             return False
+        else:
+            return repr(self) == repr(other)
 
     def to_list(self):
-        return [self.name,','.join(self.chromosomes),','.join(self.ensembl_ids)]
+        return [self.name, ','.join(self.chromosomes),
+                ','.join(self.ensembl_ids)]
 
     @classmethod
-    def from_list(cls,l):
-        return cls(l[0],l[1].split(','),l[2].split(','))
+    def from_list(cls, l):
+        assert len(l) == 3
+        assert l[0]
+
+        chrom = None
+        if l[1]:
+            chrom = l[1].split(',')
+
+        ens = None
+        if l[2]:
+            ens = l[2].split(',')
+
+        return cls(l[0], chromosomes = chrom, ensembl_ids = ens)
