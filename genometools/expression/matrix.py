@@ -18,11 +18,14 @@
 
 import os
 import logging
+import copy
+from collections import Iterable
 
 import unicodecsv as csv
 import numpy as np
 
-from genometools import misc
+from .. import misc
+from . import ExpGenome
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +34,8 @@ class ExpMatrix(object):
 
     Parameters
     ----------
-    genes: list or tuple of str
-        See :attr:`genes` attribute.
+    genome: `ExpGenome` object
+        See :attr:`genome` attribute.
     samples: list or tuple of str
         See :attr:`samples` attribute.
     X: `numpy.ndarray`
@@ -40,37 +43,71 @@ class ExpMatrix(object):
 
     Attributes
     ----------
-    genes: tuple of str
-        The names of the genes (rows) in the matrix.
+    genome: `ExpGenome` object
+        The genes (rows) in the matrix.
     samples: tuple of str
         The names of the samples (columns) in the matrix.
     X: `numpy.ndarray`
         The matrix of expression values.
     """
 
-    def __init__(self, genes, samples, X, preserve_gene_order = False):
+    def __init__(self, genome, samples, X, sort_genes = False):
 
+        assert isinstance(genome, ExpGenome)
+        assert isinstance(samples, Iterable)
+        assert isinstance(X, np.ndarray)
         assert len(genes) == X.shape[0]
         assert len(samples) == X.shape[1]
 
-        genes = tuple(genes)
         samples = tuple(samples)
-        X = X.copy()
 
-        if (not preserve_gene_order):
-            # make sure genes are in alphabetical order
-            a = np.lexsort([genes])
-            if not np.all(a == np.arange(len(genes))):
-                genes = tuple(genes[i] for i in a)
-                X = X[a,:]
+        if sort_genes:
+            gene_names = [g.name for g in genome.genes]
+            a = np.lexsort([gene_names])
+            genome = ExpGenome(genome[gene_names[i]] for i in a)
+            X = X[a,:]
+        else:
+            genome = copy.deepcopy(genome)
+            X = X.copy()
 
-        self.genes = genes
+        self.genome = genome
         self.samples = samples
+        X.flags.writeable = False
         self.X = X
+
+    def __repr__(self):
+        return '<%s (p=%d; n=%d; hash=%d)>' \
+                %(self.__class__.__name__, self.p, self.n, hash(self))
+
+    def __str__(self):
+        return '<%s (p=%d; n=%d)>' \
+                %(self.__class__.__name__, self.p, self.n)
+
+    def __hash__(self):
+        data = []
+        data.append(self.genome)
+        data.append(self.samples)
+        data.append(self.X.data)
+        return hash(tuple(data))
+
+    def __eq__(self, other):
+        if self is other:
+            return True
+        elif type(self) != type(other):
+            return False
+        else:
+            repr(self) == repr(other):
+
+    def __ne__(self, other):
+        return not (self == other)
+
+    def __setstate__(self, d):
+        self.__dict__ = d
+        self.X.flags.writeable = False
 
     @property
     def p(self):
-        return len(self.genes)
+        return self.genome.p
 
     @property
     def n(self):
@@ -78,32 +115,10 @@ class ExpMatrix(object):
 
     @property
     def shape(self):
-        return (len(self.genes), len(self.samples))
-
-    def __repr__(self):
-        self.X.flags.writeable = False
-        h = hash((self.genes, self.samples, self.X.data))
-        self.X.flags.writeable = True
-        return '<ExprMatrix with %d genes, %d samples (hash = %d)>' \
-                %(self.p,self.n,h)
-
-    def __str__(self):
-        return '<ExprMatrix with %d genes, %d samples>' \
-                %(self.p,self.n)
-
-    def __hash__(self):
-        return hash(repr(self))
-
-    def __eq__(self,other):
-        if type(self) != type(other):
-            return False
-        elif repr(self) == repr(other):
-            return True
-        else:
-            return False
+        return (self.p, self.n)
 
     @classmethod
-    def read_tsv(cls, path, genome = None, preserve_gene_order = False, enc = 'utf-8'):
+    def read_tsv(cls, path, ref_genome = None, sort_genes = True, enc = 'utf-8'):
         """Read expression matrix from a tab-delimited text file.
 
         Unicode is supported, thanks to the `unicodecsv` module.
@@ -112,11 +127,11 @@ class ExpMatrix(object):
         ----------
         path: str
             The path of the text file.
-        genome: `ExpGenome`, optional
+        ref_genome: `ExpGenome`, optional
             The set of valid genes. If given, the genes in the text file will
-            be filtered against the set of genes in the genome.
-        preserve_gene_order: bool
-            Do not sort the genes alphabetically.
+            be filtered against this set of genes.
+        sort_genes: bool
+            Sort the genes alphabetically by their name.
         enc: str
             The file encoding.
         """
@@ -130,7 +145,7 @@ class ExpMatrix(object):
             samples = reader.next()[1:] # samples are in first row
             for l in reader:
                 g = l[0]
-                if genome is not None and not genome.has_gene(g):
+                if ref_genome is not None and not g in ref_genome:
                     unknown += 1
                     continue
                 if 'NA' in l[1:]:
@@ -147,9 +162,9 @@ class ExpMatrix(object):
             logger.warning('Ignored %d / %d genes with missing data (%.1f%%).',
                     missing, len(genes), 100*(missing/float(len(genes))))
 
+        genome = ExpGenome(genes)
         X = np.float64(expr)
-        return cls(genes, samples, X,
-                preserve_gene_order = preserve_gene_order)
+        return cls(genes, samples, X, sort_genes = sort_genes)
 
     def write_tsv(self, path, enc = 'utf-8'):
         """Write expression matrix to a tab-delimited text file.

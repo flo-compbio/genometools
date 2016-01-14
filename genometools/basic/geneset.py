@@ -21,18 +21,19 @@
 from collections import Iterable
 
 class GeneSet(object):
-    """A gene set."""
+    """A gene set.
+
+    Class accepts str or unicode values."""
 
     def __init__(self, id_, name, genes, source = None,
             collection = None, description = None):
 
+        assert isinstance(id_, (str, unicode))
         assert isinstance(name, (str, unicode))
         assert isinstance(genes, Iterable)
         for g in genes:
             assert isinstance(g, (str, unicode))
 
-        if id_ is not None:
-            assert isinstance(id_, (str, unicode))
         if source is not None:
             assert isinstance(source, (str, unicode))
         if collection is not None:
@@ -47,27 +48,58 @@ class GeneSet(object):
         self.collection = collection
         self.description = description
 
-    def __eq__(self):
-        return '<%s (hash = %d)>' %(self.__class__.__name__, hash(self))
+    def __repr__(self):
+
+        src_str = str(self.source)
+        coll_str = str(self.collection)
+        desc_str = str(self.description)
+
+        return '<%s "%s" (id=%s; source=%s; collection=%s; size=%d; hash=%d)>' \
+                %(self.__class__.__name__, self.name,
+                    self.id, self.source, self.collection,
+                    self.size, hash(self))
 
     def __str__(self):
-        return '<%s with %d genes>' %(self.__class__.__name__, self.size)
+        return '<%s "%s" (id=%s; source=%s; collection=%s; size=%d)>' \
+                %(self.__class__.__name__, self.name,
+                    self.id, self.source, self.collection, self.size)
+
+    def __eq__(self, other):
+        if self is other:
+            return True
+        elif type(self) != type(other):
+            return False
+        else:
+            return repr(self) == repr(other)
+
+    def __ne__(self, other):
+        return not (self == other)
 
     def __hash__(self):
-        return hash(tuple(self.to_list()))
+        data = []
+        data.append(self.id)
+        data.append(self.name)
+        data.append(self.genes)
+        data.append(self.source)
+        data.append(self.collection)
+        data.append(self.description)
+        return hash(tuple(data))
 
     @property
     def size(self):
         return len(self.genes)
 
+    @property
+    def gene_hash(self):
+        return hash(self.genes)
+
     def to_list(self):
         l = []
         src = self.source or ''
         coll = self.collection or ''
-        id_ = self.id or ''
         desc = self.description or ''
 
-        l.append(id_)
+        l.append(self.id_)
         l.append(src)
         l.append(coll)
         l.append(self.name)

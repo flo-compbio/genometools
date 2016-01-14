@@ -33,35 +33,55 @@ class ExpGenome(object):
 
     Parameters
     ----------
-    genes: list (tuple, set) of ExpGene objects
+    genes: list or tuple of ExpGene objects
         The genes in the analysis.
+
+    Notes
+    -----
+    Implementation is very similar to `genometools.basic.GeneSetDB` class.
     """
     def __init__(self, genes):
 
         assert isinstance(genes, Iterable)
+        for g in genes:
+            assert isinstance(g, (str, unicode))
 
-        genes = sorted(genes, key = lambda g: g.name)
         self._genes = OrderedDict([g.name, g] for g in genes)
+        self._gene_names = tuple(self._genes.keys())
         self._gene_indices = OrderedDict([g.name, i] for i, g in enumerate(genes))
         logger.debug('Initialized ExpGenome with %d genes.', self.p)
 
     def __repr__(self):
-        return '<ExpGenome (%d genes; hash = %d)>' \
-                %(self.p, hash(self))
+        return '<%s object (%d genes; hash = %d)>' \
+                %(self.__class__.__name__, self.p, hash(self))
 
     def __str__(self):
-        return '<ExpGenome with %d genes>' %(self.p)
+        return '<%s object (%d genes)>' %(self.__class__.__name__, self.p)
+
+    def __getitem__(self, key):
+        """Simple interface for accessing genes.
+
+        Depending on whether key is an integer or not, look up a gene
+        either by index, or by name.
+        """
+        if isinstance(key, int):
+            return self.get_by_index(key)
+        else:
+            return self.get_by_name(key)
 
     def __hash__(self):
         return hash(self.genes)
 
-    def __eq__(self,other):
+    def __eq__(self, other):
         if self is other:
             return True
         elif type(self) != type(other):
             return False
         else:
-            return  repr(self) == repr(other):
+            return repr(self) == repr(other):
+
+    def __ne__(self, other):
+        return not (self == other)
 
     def __contains__(self, gene):
         return gene in self._genes
@@ -71,13 +91,28 @@ class ExpGenome(object):
         """Returns the number of genes."""
         return len(self._genes)
 
+    @property
     def genes(self):
         """Returns the list of genes as a tuple."""
         return tuple(self._genes.values())
 
-    def index(self, gene):
-        """Returns the index of the given gene."""
-        return self.gene_indices[gene]
+    def get_by_name(self, name):
+        """Look up a gene by its name."""
+        try:
+            return self._genes[name]
+        except KeyError:
+            raise ValueError('No gene with name "%s"!' %(id_))
+
+    def get_by_index(self, i):
+        """Look up a gene by its index."""
+        if i >= self.p:
+            raise ValueError('Index %d out of bounds ' %(i) +
+                    'for genome with %d genes.' %(self.p))
+        return self._genes[self._gene_names[i]]
+
+    def index(self, gene_name):
+        """Returns the index of the gene with the given gene."""
+        return self._gene_indices[gene_name]
 
     @classmethod
     def read_tsv(cls, path, enc = 'utf-8'):
@@ -107,9 +142,10 @@ class ExpGenome(object):
         enc: str
             The file encoding.
         """
+
         with open(path, 'wb') as ofh:
             writer = csv.writer(ofh, dialect = 'excel-tab', encoding = enc,
                     lineterminator = os.linesep, quoting = csv.QUOTE_NONE)
-            for g in self._genes.itervalues():
+            for g in genes:
                 writer.writerow(g.to_list())
         logger.info('Wrote %d genes to file "%s".', self.p, path)

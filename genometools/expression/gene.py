@@ -64,8 +64,8 @@ class ExpGene(object):
         self.ensembl_ids = ensembl_ids
 
     def __repr__(self):
-        return '<ExpGene "%s" (%s; %s)>' \
-                %(self.name, repr(self.chromosomes), repr(self.ensembl_ids))
+        return '<%s "%s" (%s; %s)>' %(self.__class__.__name__,
+                self.name, repr(self.chromosomes), repr(self.ensembl_ids))
 
     def __str__(self):
         chrom_str = 'None'
@@ -74,8 +74,8 @@ class ExpGene(object):
         ens_str = 'None'
         self.ensembl_ids is not None:
             ens_str = ','.join(self.ensembl_ids)
-        return '<ExpGene "%s" (Chromosome(s): %s, EnsemblID(s): %s)>' \
-                %(self.name, chrom_str, ens_str)
+        return '<%s "%s" (Chromosome(s): %s, EnsemblID(s): %s)>' \
+                %(self.__class__.__name__, self.name, chrom_str, ens_str)
 
     def __hash__(self):
         data = []
@@ -100,6 +100,9 @@ class ExpGene(object):
             return False
         else:
             return repr(self) == repr(other)
+
+    def __ne__(self, other):
+        return not (self == other)
 
     def to_list(self):
         return [self.name, ','.join(self.chromosomes),
