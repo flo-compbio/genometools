@@ -43,9 +43,9 @@ class GeneSetDB(object):
             assert isinstance(gs, GeneSet)
 
         self._gene_sets = OrderedDict([gs.id, gs] for gs in gene_sets)
-        self._gene_set_ids = tuple(self._gene_set.keys())
+        self._gene_set_ids = tuple(self._gene_sets.keys())
         self._gene_set_indices = OrderedDict([gs.id, i]
-                for i, gs in enumerate(gene_sets))
+                for i, gs in enumerate(self._gene_sets.itervalues()))
 
     def __repr__(self):
         return '<%s object (n=%d; hash=%d)>' \
@@ -61,9 +61,9 @@ class GeneSetDB(object):
         either by index, or by ID.
         """
         if isinstance(key, int):
-            return self.get_by_index(self, key)
+            return self.get_by_index(key)
         else:
-            return self.get_by_id(self, key)
+            return self.get_by_id(key)
 
     def __eq__(self, other):
         if self is other:

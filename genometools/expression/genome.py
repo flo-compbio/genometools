@@ -31,6 +31,8 @@ logger = logging.getLogger(__name__)
 class ExpGenome(object):
     """A complete set of genes in a gene expression analysis.
 
+    This class represents a "genome" in the form of an ordered set of genes.
+
     Parameters
     ----------
     genes: list or tuple of ExpGene objects
@@ -44,7 +46,7 @@ class ExpGenome(object):
 
         assert isinstance(genes, Iterable)
         for g in genes:
-            assert isinstance(g, (str, unicode))
+            assert isinstance(g, ExpGene)
 
         self._genes = OrderedDict([g.name, g] for g in genes)
         self._gene_names = tuple(self._genes.keys())
@@ -78,7 +80,7 @@ class ExpGenome(object):
         elif type(self) != type(other):
             return False
         else:
-            return repr(self) == repr(other):
+            return repr(self) == repr(other)
 
     def __ne__(self, other):
         return not (self == other)
@@ -112,7 +114,10 @@ class ExpGenome(object):
 
     def index(self, gene_name):
         """Returns the index of the gene with the given gene."""
-        return self._gene_indices[gene_name]
+        try:
+            return self._gene_indices[gene_name]
+        except KeyError:
+            raise ValueError('No gene with name "%s"!' %(gene_name))
 
     @classmethod
     def read_tsv(cls, path, enc = 'utf-8'):

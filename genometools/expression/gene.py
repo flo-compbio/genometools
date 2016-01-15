@@ -72,7 +72,7 @@ class ExpGene(object):
         if self.chromosomes is not None:
             chrom_str = ','.join(self.chromosomes)
         ens_str = 'None'
-        self.ensembl_ids is not None:
+        if self.ensembl_ids is not None:
             ens_str = ','.join(self.ensembl_ids)
         return '<%s "%s" (Chromosome(s): %s, EnsemblID(s): %s)>' \
                 %(self.__class__.__name__, self.name, chrom_str, ens_str)

@@ -99,7 +99,7 @@ class GeneSet(object):
         coll = self.collection or ''
         desc = self.description or ''
 
-        l.append(self.id_)
+        l.append(self.id)
         l.append(src)
         l.append(coll)
         l.append(self.name)
