@@ -182,7 +182,7 @@ class GeneSetDB(object):
                         name, id_)
                 return True
 
-            gs = GeneSet(name, genes, id_ = id_, source = src,
+            gs = GeneSet(id_, name, genes, source = src,
                     collection = coll, description = desc)
             gene_sets.append(gs)
             i[0] += 1
