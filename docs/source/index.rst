@@ -6,9 +6,10 @@
 GenomeTools |version|
 =====================
 
-GenomeTools is a collection of Python 2.7 scripts and functions that perform
-general tasks encountered in the analysis of genomic data. GenomeTools is free
-and open-source software (see `License <license>`).
+GenomeTools is a collection of Python 2.7 scripts, classes and functions that
+perform general tasks encountered in the analysis of genomic data.
+
+GenomeTools is free and open-source software (see `License <license>`).
 
 Main Features
 -------------

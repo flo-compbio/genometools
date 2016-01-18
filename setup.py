@@ -49,7 +49,7 @@ class CleanCommand(Command):
 setup(
     name='genometools',
 
-    version='1.2rc4',
+    version='1.2rc5',
 
     description=description,
     long_description=long_description,
