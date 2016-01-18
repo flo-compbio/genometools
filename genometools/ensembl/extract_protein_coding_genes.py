@@ -18,10 +18,10 @@
 
 """Script for extracting lists of protein-coding genes.
 
-The script (see `main` function) parses an Ensembl GTF file containing gene
-annotations, extracts information about all protein-coding genes contained in
-it, and writes the results to a tab-delimited text file. Each row in the output
-file corresponds to one protein-coding gene.
+This script parses an Ensembl GTF file containing genome annotations, extracts
+information about all protein-coding genes contained in it, and writes the
+results to a tab-delimited text file. Each row in the output file corresponds
+to one protein-coding gene.
 
 The columns of the output file are:
     1) gene symbol,
@@ -77,7 +77,7 @@ def get_argument_parser():
     This function is used by the `sphinx-argparse` extension for sphinx.
 
     """
-    desc = 'Extracts all protein-coding genes from an Ensembl GTF file.'
+    desc = 'Extract all protein-coding genes from an Ensembl GTF file.'
     parser = get_gtf_argument_parser(desc)
     return parser
 

@@ -16,13 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Command-line interface to extract a mapping of Entrez IDs to gene symbols.
+"""Script to extract a mapping of Entrez IDs to gene symbols.
 
-The script contained in the `main` function parses the gene2accession.gz file
-from the `NCBI FTP server`__ (or a filtered version thereof), extracts a
-mapping of Entrez IDs to gene symbols, and writes this mapping to a
-tab-delimited text file. Each row in the output file contains one Entrez ID
-and its associated gene symbol.
+This script parses the gene2accession.gz file from the `NCBI FTP server`__
+(or a filtered version thereof), extracts a mapping of Entrez IDs to gene
+symbols, and writes this mapping to a tab-delimited text file. Each row in the
+output file contains one Entrez ID and its associated gene symbol.
 
 __ ncbi_ftp_
 
@@ -76,7 +75,7 @@ def get_argument_parser():
 
     str_type = cli.str_type
 
-    desc = 'Generating a mapping of Entrez IDs to gene symbols.'
+    desc = 'Generate a mapping of Entrez IDs to gene symbols.'
 
     parser = cli.get_argument_parser(desc = desc)
 
