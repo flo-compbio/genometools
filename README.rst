@@ -3,7 +3,8 @@ GenomeTools
 
 |docs-latest| |docs-develop|
 
-GenomeTools is a collection of Python scripts and functions for working with genomic data.
+GenomeTools is a collection of Python 2.7 scripts, classes, and functions for
+working with genomic data.
 
 Installation
 ------------
@@ -27,7 +28,7 @@ __ gtdocs_
 Copyright and License
 ---------------------
 
-Copyright (c) 2015 Florian Wagner
+Copyright (c) 2015, 2016 Florian Wagner
 
 ::
 

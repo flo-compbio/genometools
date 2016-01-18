@@ -19,17 +19,19 @@
 Changelog
 =========
 
-Version 1.2.0
--------------
+Version 1.2.0 (under development)
+---------------------------------
 
-- added basic classes for handling expression data (see
+- added classes for handling gene sets (see `genometools.basic`)
+- added classes for handling expression data (see
   `genometools.expression`)
-- reorganized package structure, created sub-packages  based on data source
+- reorganized package structure, created sub-packages based on data source
   (e.g., `genometools.ensembl`) or method (e.g., `genometools.rnaseq`)
-- added script for downloading all SRA data for a given expermient accession
-  number (``sra_download_experiment.py``)
+- added script for finding all SRA run IDs for a given SRA experiment ID
+  (``sra_find_experiment_runs.py``)
 - added functions for obtaining URLs for GEO data series (see
   `genometools.geo`)
+- added unicode support for all scripts
 
 Version 1.1.0
 -------------

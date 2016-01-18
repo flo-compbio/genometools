@@ -16,10 +16,15 @@
 
 """Module containing the `ExpMatrix` class."""
 
-import csv
+import os
 import logging
+import copy
+from collections import Iterable
 
+import unicodecsv as csv
 import numpy as np
+
+from .. import misc
 
 logger = logging.getLogger(__name__)
 
@@ -38,32 +43,60 @@ class ExpMatrix(object):
     Attributes
     ----------
     genes: tuple of str
-        The names of the genes (rows) in the matrix.
+        The genes (rows) in the matrix.
     samples: tuple of str
         The names of the samples (columns) in the matrix.
     X: `numpy.ndarray`
         The matrix of expression values.
     """
 
-    def __init__(self, genes, samples, X, preserve_gene_order = False):
+    def __init__(self, genes, samples, X):
 
+        assert isinstance(genes, Iterable)
+        for g in genes:
+            assert isinstance(g, (str, unicode))
+        assert isinstance(samples, Iterable)
+        for s in samples:
+            assert isinstance(s, (str, unicode))
+        assert isinstance(X, np.ndarray)
         assert len(genes) == X.shape[0]
         assert len(samples) == X.shape[1]
 
-        genes = tuple(genes)
-        samples = tuple(samples)
-        X = X.copy()
+        self.genes = tuple(genes)
+        self.samples = tuple(samples)
+        self.X = X.copy()
+        self.X.flags.writeable = False
 
-        if (not preserve_gene_order):
-            # make sure genes are in alphabetical order
-            a = np.lexsort([genes])
-            if not np.all(a == np.arange(len(genes))):
-                genes = tuple(genes[i] for i in a)
-                X = X[a,:]
+    def __repr__(self):
+        return '<%s (p=%d; n=%d; hash=%d)>' \
+                %(self.__class__.__name__, self.p, self.n, hash(self))
 
-        self.genes = genes
-        self.samples = samples
-        self.X = X
+    def __str__(self):
+        return '<%s (p=%d; n=%d)>' \
+                %(self.__class__.__name__, self.p, self.n)
+
+    def __hash__(self):
+        data = []
+        data.append(self.genes)
+        data.append(self.samples)
+        data.append(self.X.data)
+        return hash(tuple(data))
+
+    def __eq__(self, other):
+        if self is other:
+            return True
+        elif type(self) != type(other):
+            return False
+        else:
+            return repr(self) == repr(other)
+
+    def __ne__(self, other):
+        return not (self == other)
+
+    def __setstate__(self, d):
+        self.__dict__ = d
+        # ndarray flags are not stored in pickle
+        self.X.flags.writeable = False
 
     @property
     def p(self):
@@ -75,53 +108,43 @@ class ExpMatrix(object):
 
     @property
     def shape(self):
-        return (len(self.genes),len(self.samples))
+        return (self.p, self.n)
 
-    def __repr__(self):
-        self.X.flags.writable = False
-        h = hash((self.genes,self.samples,self.E))
-        self.X.flags.writable = True
-        return '<ExprMatrix with %d genes, %d samples (hash = %d)>' \
-                %(self.p,self.n,h)
-
-    def __str__(self):
-        return '<ExprMatrix with %d genes, %d samples>' \
-                %(self.p,self.n)
-
-    def __hash__(self):
-        return hash(repr(self))
-
-    def __eq__(self,other):
-        if type(self) != type(other):
-            return False
-        elif repr(self) == repr(other):
-            return True
-        else:
-            return False
+    def sort(self):
+        """Sort the rows of the matrix alphabeticaly by gene name."""
+        a = np.lexsort([self.genes])
+        self.genes = tuple(self.genes[i] for i in a)
+        self.X = self.X[a,:]
 
     @classmethod
-    def read_tsv(cls, path, genome = None, preserve_gene_order = False):
+    def read_tsv(cls, path, genome = None, sort_genes = True, enc = 'UTF-8'):
         """Read expression matrix from a tab-delimited text file.
+
+        Unicode is supported, thanks to the `unicodecsv` module.
 
         Parameters
         ----------
         path: str
             The path of the text file.
-        genome: `ExpGenome`, optional
+        genome: `ExpGenome` object, optional
             The set of valid genes. If given, the genes in the text file will
-            be filtered against the set of genes in the genome.
+            be filtered against this set of genes.
+        sort_genes: bool
+            Sort the genes alphabetically by their name.
+        enc: str
+            The file encoding.
         """
         genes = []
         samples = None
         expr = []
         unknown = 0
         missing = 0
-        with open(path) as fh:
-            reader = csv.reader(fh,dialect='excel-tab')
+        with open(path, 'rb') as fh:
+            reader = csv.reader(fh, dialect = 'excel-tab', encoding = enc)
             samples = reader.next()[1:] # samples are in first row
             for l in reader:
                 g = l[0]
-                if genome is not None and not genome.has_gene(g):
+                if genome is not None and not g in genome:
                     unknown += 1
                     continue
                 if 'NA' in l[1:]:
@@ -139,20 +162,22 @@ class ExpMatrix(object):
                     missing, len(genes), 100*(missing/float(len(genes))))
 
         X = np.float64(expr)
-        return cls(genes, samples, X,
-                preserve_gene_order = preserve_gene_order)
+        logger.debug('Expression matrix shape: %s', str(X.shape))
+        return cls(genes, samples, X)
 
-    def write_tsv(self, path):
+    def write_tsv(self, path, enc = 'UTF-8'):
         """Write expression matrix to a tab-delimited text file.
 
         Parameters
         ----------
         path: str
             The path of the output file.
+        enc: str
+            The file encoding.
         """
-        with open(path, 'w') as ofh:
-            writer = csv.writer(ofh, dialect = 'excel-tab',
-                    lineterminator = '\n', quoting = csv.QUOTE_NONE)
+        with open(path, 'wb') as ofh:
+            writer = csv.writer(ofh, dialect = 'excel-tab', encoding = enc,
+                    lineterminator = os.linesep, quoting = csv.QUOTE_NONE)
             writer.writerow(['.'] + list(self.samples)) # write samples
             for i,g in enumerate(self.genes):
                 writer.writerow([g] +

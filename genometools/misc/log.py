@@ -62,7 +62,6 @@ def configure_logger(name, log_stream = sys.stdout, log_file = None,
     .. _loglvl: https://docs.python.org/2/library/logging.html#logging-levels
 
     """
-
     # create a child logger
     logger = logging.getLogger(name)
 
@@ -101,27 +100,23 @@ def configure_logger(name, log_stream = sys.stdout, log_file = None,
       
     return logger
 
-def add_logging_params(parser):
-    """Adds logging parameters to an argument parser.
+def get_logger(name = '', log_stream = None, log_file = None,
+        quiet = False, verbose = False):
+    """Convenience function for getting a logger."""
 
-    Parameters
-    ----------
-    parser: `argparse.ArgumentParser`
-        The argument parser.
+    # configure root logger
+    log_level = logging.INFO
+    if quiet:
+        log_level = logging.WARNING
+    elif verbose:
+        log_level = logging.DEBUG
 
-    Returns:
-    `argparse.ArgumentParser`
-        The argument parser with the parameters added.
-    """
+    if log_stream is None:
+        log_stream = sys.stdout
 
-    rep = parser.add_argument_group('Reporting options')
-    rep.add_argument('-l','--log-file', default=None,
-        help='Path of log file. If not specified, print to stdout.')
+    new_logger = configure_logger(name, log_stream = log_stream,
+            log_file = log_file, log_level = log_level)
 
-    rep.add_argument('-q','--quiet', action='store_true',
-        help='Suppress all output except warnings and errors.')
+    return new_logger
 
-    rep.add_argument('-v','--verbose', action='store_true',
-        help='Enable verbose output. Ignored if ``--quiet`` is specified.')
 
-    return parser

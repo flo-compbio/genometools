@@ -6,16 +6,19 @@
 GenomeTools |version|
 =====================
 
-GenomeTools is a collection of scripts and functions that perform general
-tasks encountered in the analysis of genomic data. GenomeTools is free
-and open-source software (see `License <license>`).
+GenomeTools is a collection of Python 2.7 scripts, classes and functions that
+perform general tasks encountered in the analysis of genomic data.
+
+GenomeTools is free and open-source software (see `License <license>`).
 
 Main Features
 -------------
 
 - Script to extract a list of all protein-coding genes from Ensembl GTF files: :ref:`extract_genes`
 - Script to extract a mapping from Entrez IDs to gene symbols: :ref:`extract_e2g`
-- Convenience function for configuring a logger: `misc.configure_logger`
+- Basic classes for working with genomic data: `genometools.basic <basic>`
+- Classes for working with expression data: `genometools.expression <expression>`
+- Miscellaneous convenience functions: :doc:`genometools.misc <misc>`
 
 Demo Notebooks
 --------------
@@ -52,6 +55,8 @@ GenomeTools can be installed from `PyPI <https://pypi.python.org/pypi>`_ using `
     :hidden:
 
     self
-    Modules <modules>
     Scripts <scripts>
+    Basic classes <basic>
+    Expression data <expression>
+    Miscellaneous <misc>
     license

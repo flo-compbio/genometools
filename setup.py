@@ -49,7 +49,7 @@ class CleanCommand(Command):
 setup(
     name='genometools',
 
-    version='1.2rc4',
+    version='1.2rc5',
 
     description=description,
     long_description=long_description,
@@ -83,7 +83,7 @@ setup(
 
 	#libraries = [],
 
-    install_requires = [],
+    install_requires = ['unicodecsv', 'xmltodict'],
 
     extras_require = {
             'docs': ['sphinx','sphinx-rtd-theme','sphinx-argparse','mock']
@@ -99,6 +99,7 @@ setup(
     entry_points = {
         'console_scripts': [
             # Ensembl scripts
+            'ensembl_filter_fasta.py = genometools.ensembl.filter_fasta:main',
             'ensembl_extract_protein_coding_genes.py = genometools.ensembl.extract_protein_coding_genes:main',
             'ensembl_extract_protein_coding_gene_ids.py = genometools.ensembl.extract_protein_coding_gene_ids:main',
             'ensembl_extract_protein_coding_exon_annotations.py = genometools.ensembl.extract_protein_coding_exon_annotations:main',
@@ -106,14 +107,20 @@ setup(
             # NCBI scripts
             'ncbi_extract_entrez2gene.py = genometools.ncbi.extract_entrez2gene:main',
 
+            # GEO scripts
+            'geo_generate_sample_sheet.py = genometools.geo.generate_sample_sheet:main',
+
             # SRA scripts
-            'sra_download_experiment.py = genometools.sra.download_experiment:main',
+            'sra_find_experiment_runs.py = genometools.sra.find_experiment_runs:main',
 
             # sequencing scripts
             'seq_trim_fastq.py = genometools.seq.trim_fastq:main',
 
             # RNA-Seq scripts
             'rnaseq_stringtie_gene_level_expression.py = genometools.rnaseq.stringtie_gene_level_expression:main',
+
+            # expression scripts
+            'exp_convert_entrez2gene.py = genometools.expression.convert_entrez2gene:main',
         ],
     },
 
