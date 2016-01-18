@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Module containing the ``sra_find_experiment_runs.py`` script.
+"""Script to find all SRA run IDs (SRR*) for a given SRA experiment ID (SRX*).
 
 """
 
