@@ -47,6 +47,6 @@ def get_gtf_argument_parser(desc, default_field_name = 'gene'):
                 Rows in the GTF file that do not contain this value
                 in the third column are ignored."""))
 
-    parser = cli.add_reporting_args(parser)
+    cli.add_reporting_args(parser)
 
     return parser

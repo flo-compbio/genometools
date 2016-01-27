@@ -53,11 +53,11 @@ def get_argument_parser(prog = None, desc = None, formatter_class = None):
             formatter_class = formatter_class, add_help = False)
 
     g = parser.add_argument_group('Help')
-    parser.add_argument('-h', '--help', action='help',
+    g.add_argument('-h', '--help', action='help',
             help='Show this help message and exit.')
 
     v = genometools.__version__
-    parser.add_argument('--version', action='version', version='GenomeTools ' + v,
+    g.add_argument('--version', action='version', version='GenomeTools ' + v,
             help='Output the GenomeTools version and exit.')
 
     return parser
