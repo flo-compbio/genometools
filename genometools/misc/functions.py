@@ -110,9 +110,9 @@ def smart_open_write(path = None, mode = 'wb', encoding = None):
     Adapted from StackOverflow user "Wolph"
     (http://stackoverflow.com/a/17603000).
     """
-    if filename is not None:
+    if path is not None:
         # open a file
-        fh = io.open(filename, mode = mode, encoding = encoding)
+        fh = io.open(path, mode = mode, encoding = encoding)
     else:
         # open stdout
         fh = io.open(sys.stdout.fileno(), mode = mode, encoding = encoding)

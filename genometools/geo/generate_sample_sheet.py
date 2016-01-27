@@ -60,10 +60,12 @@ def get_argument_parser():
 
 def read_series_matrix(path):
     """Read the series matrix."""
+    assert isinstance(path, (str, unicode))
+
     accessions = None
     titles = None
     celfile_urls = None
-    with misc.open_plain_or_gzip(path) as fh:
+    with misc.smart_open_read(path, mode = 'rb', try_gzip = True) as fh:
         reader = csv.reader(fh, dialect = 'excel-tab')
         for l in reader:
             if not l: continue
@@ -73,6 +75,9 @@ def read_series_matrix(path):
                 titles = l[1:]
             elif l[0] == '!Sample_supplementary_file' and celfile_urls is None:
                 celfile_urls = l[1:]
+            elif l[0] == '!series_matrix_table_begin':
+                # we've read the end of the section containing metadata
+                break
     return accessions,titles,celfile_urls
 
 def write_sample_sheet(path, accessions, names, celfile_urls, sel = None):

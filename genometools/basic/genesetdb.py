@@ -28,15 +28,29 @@ from collections import Iterable, OrderedDict
 import xmltodict
 import unicodecsv as csv
 
-from genometools.basic import GeneSet
+from . import GeneSet
 
 logger = logging.getLogger(__name__)
 
 class GeneSetDB(object):
     """A gene set database.
 
-    Class uses UTF-8 to read and write text files."""
+    This is a class that basically just contains a list of gene sets, and
+    supports different ways of accessing individual gene sets. The gene sets
+    are ordered, so each gene set has a unique position (index) in the
+    database.
 
+    Parameters
+    ----------
+    gene_sets: list or tuple of `genometools.expression.basic.GeneSet`
+        See :attr:`gene_sets` attribute.
+
+    Attributes
+    ----------
+    gene_sets: tuple of `genometools.expression.basic.GeneSet`
+        The list of gene sets in the database. Note that this is a read-only
+        property.
+    """
     def __init__(self, gene_sets):
         
         assert isinstance(gene_sets, Iterable)
@@ -82,7 +96,6 @@ class GeneSetDB(object):
 
     @property
     def gene_sets(self):
-        """Returns a tuple of all gene sets in the database."""
         return tuple(self._gene_sets.values())
 
     @property
@@ -91,21 +104,69 @@ class GeneSetDB(object):
         return len(self._gene_sets)
 
     def get_by_id(self, id_):
-        """Look up a gene set by its ID."""
+        """Look up a gene set by its ID.
+
+        Parameters
+        ----------
+        id_: str or unicode
+            The ID of the gene set.
+
+        Returns
+        -------
+        GeneSet
+            The gene set.
+
+        Raises
+        ------
+        ValueError
+            If the given ID is not in the database.
+        """
         try:
             return self._gene_sets[id_]
         except KeyError:
             raise ValueError('No gene set with ID "%s"!' %(id_))
 
     def get_by_index(self, i):
-        """Look up a gene set by its index."""
+        """Look up a gene set by its index.
+
+        Parameters
+        ----------
+        i: int
+            The index of the gene set.
+
+        Returns
+        -------
+        GeneSet
+            The gene set.
+
+        Raises
+        ------
+        ValueError
+            If the given index is out of bounds.
+        """
         if i >= self.n:
             raise ValueError('Index %d out of bounds ' %(i) +
                     'for database with %d gene sets.' %(self.n))
         return self._gene_sets[self._gene_set_ids[i]]
 
     def index(self, id_):
-        """Get the index corresponding to a gene set, identified by its ID."""
+        """Get the index corresponding to a gene set, identified by its ID.
+
+        Parameters
+        ----------
+        id_: str or unicode
+            The ID of the gene set.
+
+        Returns
+        -------
+        int
+            The index of the gene set.
+
+        Raises
+        ------
+        ValueError
+            If the given ID is not in the database.
+        """
         try:
             return self._gene_set_indices[id_]
         except KeyError:
@@ -113,7 +174,17 @@ class GeneSetDB(object):
 
     @classmethod
     def read_tsv(cls, path):
-        """Read the database from a tab-delimited text file."""
+        """Read a gene set database from a tab-delimited text file.
+
+        Parameters
+        ----------
+        path: str or unicode
+            The path name of the the file.
+
+        Returns
+        -------
+        None
+        """
         gene_sets = []
         with open(path, 'rb') as fh:
             reader = csv.reader(fh, dialect = 'excel-tab')
@@ -123,7 +194,17 @@ class GeneSetDB(object):
         return cls(gene_sets)
 
     def write_tsv(self, path):
-        """Write the database to a tab-delimited text file."""
+        """Write the database to a tab-delimited text file.
+
+        Parameters
+        ----------
+        path: str or unicode
+            The path name of the file.
+
+        Returns
+        -------
+        None
+        """
         with open(path, 'wb') as ofh:
             writer = csv.writer(ofh, dialect = 'excel-tab',
                 quoting = csv.QUOTE_NONE, lineterminator = os.linesep)
@@ -136,7 +217,25 @@ class GeneSetDB(object):
 
         The XML file can be downloaded from here:
         http://software.broadinstitute.org/gsea/msigdb/download_file.jsp?filePath=/resources/msigdb/5.0/msigdb_v5.0.xml
+
+        Parameters
+        ----------
+        path: str or unicode
+            The path name of the XML file.
+        entrez2gene: dict or OrderedDict (str: unicode or str)
+            A dictionary mapping Entrez Gene IDs to gene symbols (names).
+        species: str or unicode, optional
+            A species name (e.g., "Homo_sapiens"). Only gene sets for that
+            species will be retained. (None)
+
+        Returns
+        -------
+        GeneSetDB
+            The gene set database containing the MSigDB gene sets.
         """
+        assert isinstance(path, (str, unicode))
+        assert isinstance(entrez2gene, (dict, OrderedDict))
+        assert species is None or isinstance(species, (str, unicode))
 
         logger.debug('Path: %s', path)
         logger.debug('entrez2gene type: %s', str(type(entrez2gene)))

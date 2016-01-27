@@ -17,9 +17,9 @@
 """Module containing the `ExpMatrix` class."""
 
 import os
+import io
 import logging
 import copy
-from collections import Iterable
 
 import unicodecsv as csv
 import numpy as np
@@ -51,10 +51,10 @@ class ExpMatrix(object):
     """
     def __init__(self, genes, samples, X):
 
-        assert isinstance(genes, Iterable)
+        assert isinstance(genes, (list, tuple))
         for g in genes:
             assert isinstance(g, (str, unicode))
-        assert isinstance(samples, Iterable)
+        assert isinstance(samples, (list, tuple))
         for s in samples:
             assert isinstance(s, (str, unicode))
         assert isinstance(X, np.ndarray)
