@@ -1,4 +1,4 @@
-# Copyright (c) 2015 Florian Wagner
+# Copyright (c) 2015, 2016 Florian Wagner
 #
 # This file is part of GenomeTools.
 #
@@ -27,41 +27,51 @@ class ExpGene(object):
 
     Parameters
     ----------
-    name: str
+    name: str or unicode
         See :attr:`name` attribute.
-    chromosomes: list of str, optional
+    chromosomes: list or tuple of (str or unicode), optional
         See :attr:`chromosomes` attribute.
-    ensembl_ids: list of str, optional
+    ensembl_ids: list or tuple of (str or unicode), optional
         See :attr:`ensembl_ids` attribute.
 
     Attributes
     ----------
-    name: str
+    name: str or unicode
         The gene name (use the official gene symbol, if available).
-    chromosomes: list of str
+    chromosomes: None or tuple of (str or unicode)
         The chromosome(s) that the gene is located on.
-    ensembl_ids: list of str
+    ensembl_ids: None or tuple of (str or unicode)
         The Ensembl ID(s) of the gene.
 
     Notes
     -----
-    The reason :attr:`chromosomes` and :attr:`ensembl_ids` are lists is mainly
-    to accommodate genes located on the pseudoautosomal region of the X/Y
-    chromosomes. Although these genes have separate Ensembl IDs depending
+    The reason :attr:`chromosomes` and :attr:`ensembl_ids` are lists / tuples
+    is mainly to accommodate genes located on the pseudoautosomal region of
+    the X/Y chromosomes. Although these genes have separate Ensembl IDs
     for their X and Y "versions", in gene expression analyses they should be
     treated as the same gene. This class therefore represents a more "abstract"
     idea of a gene, not its physical manifestation in the genome.
     """
     def __init__(self, name, chromosomes = None, ensembl_ids = None):
 
-        self.name = name
-
         if chromosomes is None:
             chromosomes = []
-        self.chromosomes = chromosomes
         if ensembl_ids is None:
             ensembl_ids = []
-        self.ensembl_ids = ensembl_ids
+
+        # checks
+        assert isinstance(name, (str, unicode))
+        assert isinstance(chromosomes, (list, tuple))
+        for chrom in chromosomes:
+            assert isinstance(chrom, (str, unicode))
+
+        assert isinstance(ensembl_ids, (list, tuple))
+        for id_ in ensembl_ids:
+            assert isinstance(id_, (str, unicode))
+
+        self.name = name
+        self.chromosomes = tuple(chromosomes)
+        self.ensembl_ids = tuple(ensembl_ids)
 
     def __repr__(self):
         return '<%s "%s" (%s; %s)>' %(self.__class__.__name__,
@@ -80,16 +90,8 @@ class ExpGene(object):
     def __hash__(self):
         data = []
         data.append(self.name)
-
-        if self.chromosomes is None:
-            data.append(None)
-        else:
-            data.append(tuple(self.chromosomes))
-
-        if self.ensembl_ids is None:
-            data.append(None)
-        else:
-            data.append(tuple(self.ensembl_ids))
+        data.append(self.chromosomes)
+        data.append(self.ensembl_ids)
 
         return hash(tuple(data))
 
@@ -110,15 +112,31 @@ class ExpGene(object):
 
     @classmethod
     def from_list(cls, l):
+        """Generate an ExpGene object from a list of strings.
+
+        Parameters
+        ----------
+        l: list or tuple of (str or unicode)
+            A list of strings representing gene name, chromosome(s), and
+            Ensembl ID(s), respectively. See also :meth:`to_list`.
+
+        Returns
+        -------
+        `genometools.expression.ExpGene`
+        """
+        assert isinstance(l, (list, tuple))
         assert len(l) == 3
-        assert l[0]
+        for i in range(3):
+            assert isinstance(l[i], (str, unicode))
+
+        assert l[0] is not None # name has to be set
 
         chrom = None
-        if l[1]:
+        if l[1] is not None and l[1]:
             chrom = l[1].split(',')
 
         ens = None
-        if l[2]:
+        if l[2] is not None and l[2]:
             ens = l[2].split(',')
 
         return cls(l[0], chromosomes = chrom, ensembl_ids = ens)

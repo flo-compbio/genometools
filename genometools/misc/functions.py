@@ -1,4 +1,4 @@
-# Copyright (c) 2015 Florian Wagner
+# Copyright (c) 2015, 2016 Florian Wagner
 #
 # This file is part of GenomeTools.
 #
@@ -19,6 +19,7 @@
 """
 
 import os
+import io
 import errno
 import shutil
 import urllib2
@@ -30,44 +31,99 @@ import contextlib
 
 import unicodecsv as csv
 
+logger = logging.getLogger(__name__)
+
+def try_open_gzip(path):
+    fh = None
+    try:
+        gzip.open(path).next()
+    except IOError:
+        pass
+    else:
+        fh = gzip.open(path)
+    return fh
+
 @contextlib.contextmanager
-def smart_open(filename = None, mode = 'rb', try_gzip = False):
+def smart_open_read(path = None, mode = 'r', encoding = None, try_gzip = False):
     """Open a file for reading or return ``stdin``.
 
     Adapted from StackOverflow user "Wolph"
     (http://stackoverflow.com/a/17603000).
     """
+
+    assert mode in ('r', 'rb')
+    assert path is None or isinstance(path, (str, unicode))
+    assert isinstance (mode, str)
+    assert encoding is None or isinstance(encoding, str)
+    assert isinstance(try_gzip, bool)
+
     fh = None
-    if filename and filename != '-':
-        if try_gzip:
-            fh = open_plain_or_gzip(filename, mode)
-        else:
-            fh = open(filename, mode)
+    binfh = None
+    gzfh = None
+    if path is None:
+        # open stdin
+        fh = io.open(sys.stdin.fileno(), mode = mode, encoding = encoding)
+
     else:
-        fh = sys.stdin
+        # open an actual file
+
+        if try_gzip:
+            # gzip.open defaults to mode 'rb'
+            gzfh = try_open_gzip(path)
+
+        if gzfh is not None:
+            logger.debug('Opening gzip''ed file.')
+            # wrap gzip stream
+            binfh = io.BufferedReader(gzfh)
+            if 'b' not in mode:
+                # add a text wrapper on top
+                logger.debug('Adding text wrapper.')
+                fh = io.TextIOWrapper(binfh, encoding = encoding)
+
+        else:
+            fh = io.open(path, mode = mode, encoding = encoding)
+
+    yield_fh = fh
+    if fh is None:
+        yield_fh = binfh
 
     try:
-        yield fh
-    finally:
-        if fh is not sys.stdin:
-            fh.close()
+        yield yield_fh
 
+    finally:
+        # close all open files
+        if fh is not None:
+            # make sure we don't close stdin
+            if fh.fileno() != sys.stdin.fileno():
+                fh.close()
+
+        if binfh is not None:
+            binfh.close()
+
+        if gzfh is not None:
+            gzfh.close()
+        
 @contextlib.contextmanager
-def smart_open_write(filename = None, mode = 'wb'):
+def smart_open_write(path = None, mode = 'wb', encoding = None):
     """Open a file for writing or return ``stdout``.
 
     Adapted from StackOverflow user "Wolph"
     (http://stackoverflow.com/a/17603000).
     """
-    if filename and filename != '-':
-        fh = open(filename, mode)
+    if filename is not None:
+        # open a file
+        fh = io.open(filename, mode = mode, encoding = encoding)
     else:
-        fh = sys.stdout
+        # open stdout
+        fh = io.open(sys.stdout.fileno(), mode = mode, encoding = encoding)
+        #fh = sys.stdout
 
     try:
         yield fh
+
     finally:
-        if fh is not sys.stdout:
+        # make sure we don't close stdout
+        if fh.fileno() != sys.stdout.fileno():
             fh.close()
 
 def test_dir_writable(path):
@@ -151,7 +207,7 @@ def open_plain_or_gzip(fn, mode = 'rb'):
     try:
         gzip.open(fn, 'rb').next()
     except IOError:
-        return open(fn, mode)
+        return io.open(fn, mode)
     else:
         return gzip.open(fn, 'rb')
 

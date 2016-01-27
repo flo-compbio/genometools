@@ -21,6 +21,7 @@ Class supports unicode using UTF-8.
 """
 
 import os
+import io
 import logging
 from collections import Iterable, OrderedDict
 
@@ -189,7 +190,7 @@ class GeneSetDB(object):
             return True
 
         # parse the XML file using the xmltodict package
-        with open(path, 'rb') as fh:
+        with io.open(path, 'rb') as fh:
             xmltodict.parse(fh.read(), encoding = 'UTF-8', item_depth = 2,
                     item_callback = handle_item)
 

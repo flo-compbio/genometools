@@ -1,4 +1,4 @@
-# Copyright (c) 2015 Florian Wagner
+# Copyright (c) 2015, 2016 Florian Wagner
 #
 # This file is part of GenomeTools.
 #
@@ -17,6 +17,7 @@
 """Module containing the `ExpGenome` class."""
 
 import os
+import io
 import logging
 from collections import OrderedDict, Iterable
 
@@ -31,7 +32,9 @@ logger = logging.getLogger(__name__)
 class ExpGenome(object):
     """A complete set of genes in a gene expression analysis.
 
-    This class represents a "genome" in the form of an ordered set of genes.
+    The class represents a "genome" in the form of an ordered set of genes.
+    This means that each gene has an index value, i.e. an integer indicating its
+    0-based position in the genome.
 
     Parameters
     ----------
@@ -40,7 +43,9 @@ class ExpGenome(object):
 
     Notes
     -----
-    Implementation is very similar to `genometools.basic.GeneSetDB` class.
+    The implementation is very similar to the `genometools.basic.GeneSetDB`
+    class. It uses ordered dictionaries to support efficient access by gene
+    name or index, as well as looking up the index of specific gene.
     """
     def __init__(self, genes):
 
@@ -95,60 +100,106 @@ class ExpGenome(object):
 
     @property
     def genes(self):
-        """Returns the list of genes as a tuple."""
+        """Returns a tuple with all gene names."""
         return tuple(self._genes.values())
 
     def get_by_name(self, name):
-        """Look up a gene by its name."""
+        """Look up a gene by its name.
+
+        Parameters
+        ----------
+        name: str or unicode
+            The gene name.
+        
+        Returns
+        -------
+        `genometools.expression.ExpGene`
+            The gene.
+        """
         try:
             return self._genes[name]
         except KeyError:
             raise ValueError('No gene with name "%s"!' %(id_))
 
     def get_by_index(self, i):
-        """Look up a gene by its index."""
+        """Look up a gene by its index.
+
+        Parameters
+        ----------
+        i: int
+            The index.
+        
+        Returns
+        -------
+        `genometools.expression.ExpGene`
+            The gene.
+        """
         if i >= self.p:
-            raise ValueError('Index %d out of bounds ' %(i) +
-                    'for genome with %d genes.' %(self.p))
+            raise ValueError('Index %d out of bounds '
+                    'for genome with %d genes.' %(i, self.p))
+
         return self._genes[self._gene_names[i]]
 
     def index(self, gene_name):
-        """Returns the index of the gene with the given gene."""
+        """Returns the index of the gene with the given gene.
+
+        The index is 0-based, so the first gene in the genome has the index 0,
+        and the last one has index p-1.
+
+        Parameters
+        ----------
+        gene_name: str or unicode
+            The gene name.
+
+        Returns
+        -------
+        int
+            The gene index.
+        """
+        assert isinstance(gene_name, (str, unicode))
+
         try:
             return self._gene_indices[gene_name]
         except KeyError:
             raise ValueError('No gene with name "%s"!' %(gene_name))
 
     @classmethod
-    def read_tsv(cls, path, enc = 'utf-8'):
+    def read_tsv(cls, path, enc = 'UTF-8'):
         """Read genes from tab-delimited text file.
 
         Parameters
         ----------
         path: str
             The path of the text file.
-        enc: str
-            The file encoding.
+        enc: str, optional
+            The file encoding. ("UTF-8")
+
+        Returns
+        -------
+        None
         """
         genes = []
-        with open(path, 'rb') as fh:
+        with io.open(path, 'rb') as fh:
             reader = csv.reader(fh, dialect = 'excel-tab', encoding = enc)
             for l in reader:
                 genes.append(ExpGene.from_list(l))
         return cls(genes)
 
-    def write_tsv(self, path, enc = 'utf-8'):
+    def write_tsv(self, path, enc = 'UTF-8'):
         """Write genes to tab-delimited text file in alphabetical order.
 
         Parameters
         ----------
         path: str
             The path of the output file.
-        enc: str
-            The file encoding.
-        """
+        enc: str, optional
+            The file encoding. ("UTF-8")
 
-        with open(path, 'wb') as ofh:
+        Returns
+        -------
+        None
+        """
+        with io.open(path, 'wb') as ofh:
             writer = csv.writer(ofh, dialect = 'excel-tab', encoding = enc,
                     lineterminator = os.linesep, quoting = csv.QUOTE_NONE)
             for g in genes:

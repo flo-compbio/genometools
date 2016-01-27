@@ -27,19 +27,23 @@ class Species(object):
 
     Parameters
     ----------
-    name: str
+    name: str or unicode
         See :attr:`name` attribute.
-    common_name: str
-        See :attr:`short_name` attribute.
+    common_name: str or unicode, optional
+        See :attr:`common_name` attribute. (None)
 
     Attributes
     ----------
     name: str
         The scientific name of the species (e.g., "Homo sapiens").
-    common_name: str, optional
+    common_name: None or (str or unicode)
         The common name of the species (e.g., "human")
     """
     def __init__(self, name, common_name = None):
+        # checks
+        assert isinstance(name, (str, unicode))
+        assert common_name is None or isinstance(common_name, (str, unicode))
+
         self.name = name
         self.common_name = common_name
 
@@ -49,16 +53,18 @@ class Species(object):
     def __str__(self):
         common = ''
         if self.common_name is not None:
-            common = ' (%s)' %(self.common_name)
+            common = ' ("%s")' %(self.common_name)
         return '<Species "%s"%s>' %(self.name, common)
 
     def __hash__(self):
         data = []
         data.append(self.name)
-        return hash(frozenset(data))
+        return hash(tuple(data))
 
-    def __eq__(self,other):
-        if type(self) != type(other):
+    def __eq__(self, other):
+        if self is other:
+            return True
+        elif type(self) != type(other):
             return False
         else:
             return repr(self) == repr(other)
