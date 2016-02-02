@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 
-# Copyright (c) 2015 Florian Wagner
+# Copyright (c) 2015, 2016 Florian Wagner
 #
 # This file is part of GenomeTools.
 #
@@ -81,7 +81,7 @@ def get_argument_parser():
     parser = get_gtf_argument_parser(desc)
     return parser
 
-def main(args=None):
+def main(args = None):
     """Extract protein-coding genes and store in tab-delimited text file.
 
     Parameters
@@ -152,7 +152,7 @@ def main(args=None):
         input_file = None
     with misc.smart_open_read(input_file, mode = 'rb', try_gzip = True) as fh:
         #if i >= 500000: break
-        reader = csv.reader(fh, dialect='excel-tab')
+        reader = csv.reader(fh, dialect = 'excel-tab')
         for l in reader:
             i += 1
             #if i % int(1e5) == 0:
@@ -243,8 +243,8 @@ def main(args=None):
     logger.info('')
     logger.info('Total protein-coding genes: %d', len(genes))
 
-    with misc.smart_open_write(output_file) as ofh:
-        writer = csv.writer(ofh, dialect='excel-tab',
+    with misc.smart_open_write(output_file, mode = 'wb') as ofh:
+        writer = csv.writer(ofh, dialect = 'excel-tab',
                 lineterminator = os.linesep, quoting = csv.QUOTE_NONE)
         for name in sorted(genes):
             chroms = ','.join(sorted(gene_chroms[name]))

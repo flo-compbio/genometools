@@ -116,7 +116,7 @@ def read_gene2acc(file_path, logger):
         A mapping of Entrez IDs to gene symbols.
     """
     gene2acc = {}
-    with misc.smart_open(file_path, try_gzip = True) as fh:
+    with misc.smart_open_read(file_path, mode = 'rb', try_gzip = True) as fh:
         reader = csv.reader(fh, dialect = 'excel-tab')
         reader.next() # skip header
         for i,l in enumerate(reader):
@@ -157,11 +157,11 @@ def write_entrez2gene(file_path, entrez2gene, logger):
     None
 
     """
-    with misc.smart_open_write(file_path) as ofh:
-        writer = csv.writer(ofh, dialect='excel-tab',
+    with misc.smart_open_write(file_path, mode = 'wb') as ofh:
+        writer = csv.writer(ofh, dialect = 'excel-tab',
                 lineterminator = os.linesep)
-        for k in sorted(entrez2gene.keys(),key=lambda x:int(x)):
-            writer.writerow([k,entrez2gene[k]])
+        for k in sorted(entrez2gene.keys(), key = lambda x: int(x)):
+            writer.writerow([k, entrez2gene[k]])
     logger.info('Output written to file "%s".', file_path)
 
 def main(args=None):
