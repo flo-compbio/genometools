@@ -1,4 +1,4 @@
-# Copyright (c) 2015 Florian Wagner
+# Copyright (c) 2015, 2016 Florian Wagner
 #
 # This file is part of GenomeTools.
 #
@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Functions for configuring command-line parameters of GO-PCA scripts.
+"""Functions for configuring command-line arguments of GenomeTools scripts.
 """
 
 import sys
@@ -86,4 +86,4 @@ def add_reporting_args(parser):
     g.add_argument('-v', '--verbose', action='store_true',
             help = 'Enable verbose output. Ignored if --quiet is specified.')
 
-    return parser
+    return g

@@ -18,19 +18,52 @@
 
 """
 
-from collections import Iterable
-
 class GeneSet(object):
     """A gene set.
 
-    Class accepts str or unicode values."""
+    A gene set is just what the name implies: A set of genes. Usually, gene
+    sets are used to group genes that share a certain property (e.g., genes
+    that perform related functions, or genes that are frequently co-expressed).
+    The genes in the gene set are not ordered.
+    
+    Parameters
+    ----------
+    id_: str or unicode
+        See :attr:`id` attribute.
+    name: str or unicode
+        See :attr:`name` attribute.
+    genes: set, frozenset, list or tuple of (str or unicode)
+        See :attr:`genes` attribute.
+    source: str or unicode, optional
+        See :attr:`source` attribute. (None)
+    collection: str or unicode, optional
+        See :attr:`collection` attribute. (None)
+    description: str or unicode, optional
+        See :attr:`description` attribute. (None)
+
+    Attributes
+    ----------
+    id_: str or unicode
+        The (unique) ID of the gene set.
+    name: str or unicode
+        The name of the gene set.
+    genes: frozenset of (str or unicode)
+        The list of genes in the gene set.
+    source: None or (str or unicode)
+        The source / origin of the gene set (e.g., "MSigDB")
+    collection: None or (str or unicode)
+        The collection that the gene set belongs to (e.g., "c4" for gene sets
+        from MSigDB).
+    description: None or (str or unicode)
+        The description of the gene set.
+    """
 
     def __init__(self, id_, name, genes, source = None,
             collection = None, description = None):
 
         assert isinstance(id_, (str, unicode))
         assert isinstance(name, (str, unicode))
-        assert isinstance(genes, Iterable)
+        assert isinstance(genes, (list, tuple, set, frozenset))
         for g in genes:
             assert isinstance(g, (str, unicode))
 
@@ -87,13 +120,23 @@ class GeneSet(object):
 
     @property
     def size(self):
+        """The size of the gene set (i.e., the number of genes in it)."""
         return len(self.genes)
 
-    @property
-    def gene_hash(self):
-        return hash(self.genes)
-
     def to_list(self):
+        """Converts the GeneSet object to a flat list of strings.
+
+        Note: see also :meth:`from_list`.
+
+        Parameters
+        ----------
+        None
+        
+        Returns
+        -------
+        list of str
+            The data from the GeneSet object as a flat list.
+        """
         l = []
         src = self.source or ''
         coll = self.collection or ''
@@ -109,7 +152,22 @@ class GeneSet(object):
 
     @classmethod
     def from_list(cls, l):
+        """Generate an GeneSet object from a list of strings.
 
+        Note: See also :meth:`to_list`.
+
+        Parameters
+        ----------
+        l: list or tuple of (str or unicode)
+            A list of strings representing gene set ID, name, genes,
+            source, collection, and description. The genes must be
+            comma-separated. See also :meth:`to_list`.
+
+        Returns
+        -------
+        `genometools.basic.GeneSet`
+            The gene set.
+        """
         id_ = l[0]
         name = l[3]
         genes = l[4].split(',')

@@ -1,4 +1,4 @@
-# Copyright (c) 2015 Florian Wagner
+# Copyright (c) 2015, 2016 Florian Wagner
 #
 # This file is part of GenomeTools.
 #
@@ -17,14 +17,16 @@
 """Module containing the `ExpMatrix` class."""
 
 import os
+import io
 import logging
 import copy
-from collections import Iterable
 
 import unicodecsv as csv
 import numpy as np
 
 from .. import misc
+from .gene import ExpGene
+from .genome import ExpGenome
 
 logger = logging.getLogger(__name__)
 
@@ -33,29 +35,28 @@ class ExpMatrix(object):
 
     Parameters
     ----------
-    genes: list or tuple of str
+    genes: list or tuple of (str or unicode)
         See :attr:`genes` attribute.
-    samples: list or tuple of str
+    samples: list or tuple of (str or unicode)
         See :attr:`samples` attribute.
-    X: `numpy.ndarray`
+    X: 2-dimensional `numpy.ndarray`
         See :attr:`X` attribute.
 
     Attributes
     ----------
-    genes: tuple of str
-        The genes (rows) in the matrix.
-    samples: tuple of str
+    genes: tuple of (str or unicode)
+        The names of the genes (rows) in the matrix.
+    samples: tuple of (str or unicode)
         The names of the samples (columns) in the matrix.
-    X: `numpy.ndarray`
+    X: 2-dimensional `numpy.ndarray`
         The matrix of expression values.
     """
-
     def __init__(self, genes, samples, X):
 
-        assert isinstance(genes, Iterable)
+        assert isinstance(genes, (list, tuple))
         for g in genes:
             assert isinstance(g, (str, unicode))
-        assert isinstance(samples, Iterable)
+        assert isinstance(samples, (list, tuple))
         for s in samples:
             assert isinstance(s, (str, unicode))
         assert isinstance(X, np.ndarray)
@@ -95,29 +96,81 @@ class ExpMatrix(object):
 
     def __setstate__(self, d):
         self.__dict__ = d
-        # ndarray flags are not stored in pickle
+        # values of ndarray flags are not stored in pickle
         self.X.flags.writeable = False
 
     @property
     def p(self):
+        """The number of genes."""
         return len(self.genes)
 
     @property
     def n(self):
+        """The number of samples."""
         return len(self.samples)
 
     @property
     def shape(self):
+        """The shape of the matrix (# genes, # samples)."""
         return (self.p, self.n)
 
+    def get_genome(self):
+        """Get a ExpGenome representation of the genes in the matrix.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        `genometools.expression.ExpGenome`
+            The genome.
+        """
+
+        genes = [ExpGene(g) for g in self.genes]
+        genome = ExpGenome(genes)
+        return genome
+
     def sort(self):
-        """Sort the rows of the matrix alphabeticaly by gene name."""
+        """Sort the rows of the matrix alphabetically by gene name.
+
+        Parameters
+        ----------
+        None
+        
+        Returns
+        -------
+        None
+        """
         a = np.lexsort([self.genes])
         self.genes = tuple(self.genes[i] for i in a)
         self.X = self.X[a,:]
 
+    def filter_against_genome(self, genome):
+        """Filter the expression matrix against a genome (set of genes).
+
+        Parameters
+        ----------
+        genome: `genometools.expression.ExpGenome`
+            The genome to filter the genes against.
+
+        Returns
+        -------
+        ExpMatrix
+            The filtered expression matrix.
+        """
+        sel = []
+        for i, g in enumerate(self.genes):
+            if g in genome:
+                sel.append(i)
+        sel = np.int64(sel)
+        X = self.X[sel,:]
+        genes = [self.genes[i] for i in sel]
+        filtered = ExpMatrix(genes, self.samples, X)
+        return filtered
+
     @classmethod
-    def read_tsv(cls, path, genome = None, sort_genes = True, enc = 'UTF-8'):
+    def read_tsv(cls, path, genome = None, sort_genes = False, enc = 'UTF-8'):
         """Read expression matrix from a tab-delimited text file.
 
         Unicode is supported, thanks to the `unicodecsv` module.
@@ -128,18 +181,23 @@ class ExpMatrix(object):
             The path of the text file.
         genome: `ExpGenome` object, optional
             The set of valid genes. If given, the genes in the text file will
-            be filtered against this set of genes.
-        sort_genes: bool
-            Sort the genes alphabetically by their name.
+            be filtered against this set of genes. (None)
+        sort_genes: bool, optional
+            Also sort the genes alphabetically by their name. (False)
         enc: str
-            The file encoding.
+            The file encoding. ("UTF-8")
+
+        Returns
+        -------
+        `genometools.expression.ExpMatrix`
+            The expression matrix.
         """
         genes = []
         samples = None
         expr = []
         unknown = 0
         missing = 0
-        with open(path, 'rb') as fh:
+        with io.open(path, 'rb') as fh:
             reader = csv.reader(fh, dialect = 'excel-tab', encoding = enc)
             samples = reader.next()[1:] # samples are in first row
             for l in reader:
@@ -172,10 +230,14 @@ class ExpMatrix(object):
         ----------
         path: str
             The path of the output file.
-        enc: str
-            The file encoding.
+        enc: str, optional
+            The file encoding. ("UTF-8")
+
+        Returns
+        -------
+        None
         """
-        with open(path, 'wb') as ofh:
+        with io.open(path, 'wb') as ofh:
             writer = csv.writer(ofh, dialect = 'excel-tab', encoding = enc,
                     lineterminator = os.linesep, quoting = csv.QUOTE_NONE)
             writer.writerow(['.'] + list(self.samples)) # write samples

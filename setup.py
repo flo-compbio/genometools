@@ -1,4 +1,4 @@
-# Copyright (c) 2015 Florian Wagner
+# Copyright (c) 2015, 2016 Florian Wagner
 #
 # This file is part of GenomeTools.
 #
@@ -22,6 +22,9 @@ from codecs import open
 from os import path
 
 root = 'genometools'
+
+name = 'genometools'
+version = '1.2.0'
 
 here = path.abspath(path.dirname(__file__))
 description = 'GenomeTools: Scripts and Classes For Working With Genomic Data.'
@@ -47,12 +50,12 @@ class CleanCommand(Command):
         os.system ('rm -rf ./dist ./build ./*.egg-info ')
 
 setup(
-    name='genometools',
+    name = name,
 
-    version='1.2rc5',
+    version = version,
 
-    description=description,
-    long_description=long_description,
+    description = description,
+    long_description = long_description,
 
     # homepage
     url='https://github.com/flo-compbio/genometools',
@@ -78,12 +81,12 @@ setup(
     keywords='genome genes tools analysis expression sequencing',
 
     #packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
-    packages=find_packages(exclude=['docs']),
+    packages = find_packages(exclude = ['docs']),
     #packages=find_packages(root),
 
 	#libraries = [],
 
-    install_requires = ['unicodecsv', 'xmltodict'],
+    install_requires = ['unicodecsv', 'xmltodict', 'requests'],
 
     extras_require = {
             'docs': ['sphinx','sphinx-rtd-theme','sphinx-argparse','mock']

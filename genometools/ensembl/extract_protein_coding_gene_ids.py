@@ -120,7 +120,9 @@ def main(args=None):
     i = 0
     missing = 0
     logger.info('Parsing data...')
-    with misc.smart_open(input_file,try_gzip=True) as fh:
+    if input_file == '-':
+        input_file = None
+    with misc.smart_open_read(input_file, mode = 'rb', try_gzip = True) as fh:
         #if i >= 500000: break
         reader = csv.reader(fh, dialect = 'excel-tab')
         for l in reader:
