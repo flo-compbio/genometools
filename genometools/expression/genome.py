@@ -49,7 +49,7 @@ class ExpGenome(object):
     """
     def __init__(self, genes):
 
-        assert isinstance(genes, Iterable)
+        assert isinstance(genes, (list, tuple))
         for g in genes:
             assert isinstance(g, ExpGene)
 
@@ -102,6 +102,27 @@ class ExpGenome(object):
     def genes(self):
         """Returns a tuple with all gene names."""
         return tuple(self._genes.values())
+
+    @classmethod
+    def from_gene_names(cls, genes):
+        """Generate a genome from a list of gene names.
+
+        Parameters
+        ----------
+        genes: list or tuple of (str, unicode)
+            The list of gene names.
+        
+        Returns
+        -------
+        ExpGenome
+            The genome.
+        """
+        assert isinstance(genes, (list, tuple))
+        for g in genes:
+            assert isinstance(g, (str, unicode))
+
+        genome = cls([ExpGene(g) for g in genes])
+        return genome
 
     def get_by_name(self, name):
         """Look up a gene by its name.

@@ -25,6 +25,8 @@ import unicodecsv as csv
 import numpy as np
 
 from .. import misc
+from .gene import ExpGene
+from .genome import ExpGenome
 
 logger = logging.getLogger(__name__)
 
@@ -112,8 +114,25 @@ class ExpMatrix(object):
         """The shape of the matrix (# genes, # samples)."""
         return (self.p, self.n)
 
+    def get_genome(self):
+        """Get a ExpGenome representation of the genes in the matrix.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        `genometools.expression.ExpGenome`
+            The genome.
+        """
+
+        genes = [ExpGene(g) for g in self.genes]
+        genome = ExpGenome(genes)
+        return genome
+
     def sort(self):
-        """Sort the rows of the matrix alphabeticaly by gene name.
+        """Sort the rows of the matrix alphabetically by gene name.
 
         Parameters
         ----------
@@ -126,6 +145,29 @@ class ExpMatrix(object):
         a = np.lexsort([self.genes])
         self.genes = tuple(self.genes[i] for i in a)
         self.X = self.X[a,:]
+
+    def filter_against_genome(self, genome):
+        """Filter the expression matrix against a genome (set of genes).
+
+        Parameters
+        ----------
+        genome: `genometools.expression.ExpGenome`
+            The genome to filter the genes against.
+
+        Returns
+        -------
+        ExpMatrix
+            The filtered expression matrix.
+        """
+        sel = []
+        for i, g in enumerate(self.genes):
+            if g in genome:
+                sel.append(i)
+        sel = np.int64(sel)
+        X = self.X[sel,:]
+        genes = [self.genes[i] for i in sel]
+        filtered = ExpMatrix(genes, self.samples, X)
+        return filtered
 
     @classmethod
     def read_tsv(cls, path, genome = None, sort_genes = False, enc = 'UTF-8'):

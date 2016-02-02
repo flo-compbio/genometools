@@ -1,4 +1,4 @@
-# Copyright (c) 2015 Florian Wagner
+# Copyright (c) 2015, 2016 Florian Wagner
 #
 # This file is part of GenomeTools.
 #
@@ -24,7 +24,7 @@ from os import path
 root = 'genometools'
 
 name = 'genometools'
-version = '1.2rc6'
+version = '1.2.0'
 
 here = path.abspath(path.dirname(__file__))
 description = 'GenomeTools: Scripts and Classes For Working With Genomic Data.'
@@ -86,7 +86,7 @@ setup(
 
 	#libraries = [],
 
-    install_requires = ['unicodecsv', 'xmltodict'],
+    install_requires = ['unicodecsv', 'xmltodict', 'requests'],
 
     extras_require = {
             'docs': ['sphinx','sphinx-rtd-theme','sphinx-argparse','mock']

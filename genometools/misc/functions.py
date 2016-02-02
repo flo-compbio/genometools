@@ -28,8 +28,10 @@ import bisect
 import gzip
 import logging
 import contextlib
+import subprocess as subproc
 
 import unicodecsv as csv
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -128,6 +130,16 @@ def smart_open_write(path = None, mode = 'wb', encoding = None):
 
 def test_dir_writable(path):
     """Test if we can write to a directory.
+
+    Parameters
+    ----------
+    dir: str or unicode
+        The directory path.
+
+    Returns
+    -------
+    bool
+        Whether the directory is writable or not.
     """
     dir_ = os.path.dirname(path)
     if dir_ == '':
@@ -135,7 +147,18 @@ def test_dir_writable(path):
     return os.access(dir_, os.W_OK)
 
 def test_file_writable(path):
-    """Test if we can write to a file."""
+    """Test if we can write to a file.
+
+    Parameters
+    ----------
+    path: str or unicode
+        The file path.
+
+    Returns
+    -------
+    bool
+        Whether the file is writable or not.
+    """
     if os.path.isfile(path):
         # file exists, can we modify it?
         try:
@@ -149,6 +172,69 @@ def test_file_writable(path):
         # file does not exist, can we write to the directory?
         return test_dir_writable(path)
 
+def get_fize_size(path):
+    """The the size of a file.
+
+    Parameters
+    ----------
+    path: str or unicode
+        The file path.
+
+    Returns
+    -------
+    int
+        The size of the file in bytes.
+    """
+    return os.path.getsize(path)
+
+def get_url_size(url):
+    """Get the size of a URL.
+
+    Note: Uses requests, so it does not work for FTP URLs.
+
+    Source: StackOverflow user "Burhan Khalid".
+    (http://stackoverflow.com/a/24585314/5651021)
+
+    Parameters
+    ----------
+    url: str or unicode
+        The URL.
+
+    Returns
+    -------
+    int
+        The size of the URL in bytes.
+    """
+    r = requests.head(url, headers = {'Accept-Encoding': 'identity'})
+    size = int(r.headers['content-length'])
+    return size
+
+@contextlib.contextmanager
+def open_url(url):
+    """Open a URL using urllib2.
+
+    Note: In contrast to using `requests`, this function also works for FTP
+    URLs.
+
+    Parameters
+    ----------
+    url: str or unicode
+        The URL.
+
+    Returns
+    -------
+    file-like object
+        The file-like object returned by urllib2.urlopen.
+    """
+    assert isinstance(url, (str, unicode))
+
+    uh = urllib2.urlopen(url)
+    try:
+        yield uh
+    finally:
+        # close the handler 
+        uh.close()
+
 def download_url(url, download_file):
     """Downloads a file from a given URL.
 
@@ -157,29 +243,141 @@ def download_url(url, download_file):
 
     Parameters
     ----------
-    url: str
+    url: str or unicode
         The URL (source).
-    output_file: str
-        The path of the output file.
+    download_file: str or unicode
+        The path of the download file (destination).
     """
+    assert isinstance(url, (str, unicode))
+    assert isinstance(url, (str, unicode))
+
+    logging.debug('Downloading URL "%s" to "%s".', url, download_file)
     with contextlib.closing(urllib2.urlopen(url)) as fh:
-        with open(download_file, 'wb') as ofh:
+        with io.open(download_file, mode = 'wb') as ofh:
             shutil.copyfileobj(fh, ofh)
 
-def make_sure_dir_exists(d, create_subfolders = False):
+def make_sure_dir_exists(dir_, create_subfolders = False):
     """Ensures that a directory exists.
 
     Adapted from StackOverflow users "Bengt" and "Heikki Toivonen"
     (http://stackoverflow.com/a/5032238).
+
+    Parameters
+    ----------
+    dir: str or unicode
+        The directory path.
+    create_subfolders: bool
+        Whether to create any inexistent subfolders. (False)
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    OSError
+        If a file system error occurs.
     """
+    assert isinstance(dir_, (str, unicode))
+    assert isinstance(create_subfolders, bool)
+
+    uf 
+
     try:
         if create_subfolders:
-            os.makedirs(d)
+            os.makedirs(dir_)
         else:
-            os.mkdir(d)
+            os.mkdir(dir_)
     except OSError as exception:
         if exception.errno != errno.EEXIST:
             raise
+
+def get_file_size(path):
+    """The the size of a file in bytes.
+
+    Parameters
+    ----------
+    path: str or unicode
+        The path of the file.
+
+    Returns
+    -------
+    int
+        The size of the file in bytes.
+
+    Raises
+    ------
+    IOError
+        If the file does not exist.
+    OSError
+        If a file system error occurs.
+    """
+    assert isinstance(path, (str, unicode))
+
+    if not os.path.isfile(path):
+        raise IOError('File "%s" does not exist.', path)
+
+    return os.path.getsize(path)
+
+def get_file_checksum(path):
+    """Get the checksum of a file (using ``sum``, Unix-only).
+
+    Parameters
+    ----------
+    path: str or unicode
+        The path of the file.
+
+    Returns
+    -------
+    int
+        The checksum.
+
+    Raises
+    ------
+    IOError
+        If the file does not exist.
+    """
+    assert isinstance(path, (str, unicode))
+
+    if not os.path.isfile(path): # not a file
+        raise IOError('File "%s" does not exist.' %(path))
+
+    # calculate checksum
+    sub = subproc.Popen('sum "%s"' %(path), bufsize = -1, shell = True, stdout = subproc.PIPE)
+    stdoutdata = sub.communicate()[0]
+    assert sub.returncode == 0
+    file_checksum = int(stdoutdata.split(' ')[0])
+    logger.debug('Checksum of file "%s": %d', path, file_checksum)
+    return file_checksum
+
+def test_file_checksum(path, checksum):
+    """Test if a file has a given checksum (using ``sum``, Unix-only).
+
+    Parameters
+    ----------
+    path: str or unicode
+        The path of the file.
+    checksum: int
+        The checksum to compare.
+    
+    Returns
+    -------
+    bool
+        Whether or not the file has the given checksum.
+
+    Raises
+    ------
+    IOError
+        If the file does not exist.
+    """
+    assert isinstance(path, (str, unicode))
+    assert isinstance(checksum, int)
+
+    # calculate file checksum and compare to given checksum
+    file_checksum = get_file_checksum(path)
+    logger.debug('File checksum: %d. Reference checksum: %d. Match: %s.',
+            file_checksum, checksum, str(file_checksum == checksum))
+    return file_checksum == checksum
 
 def open_plain_or_gzip(fn, mode = 'rb'):
     """Returns a handle for a file that is either gzip'ed or not.
@@ -304,14 +502,14 @@ def argmax(seq):
     """
     return argsort(seq)[-1]
 
-def read_single(fn, enc = 'utf-8'):
+def read_single(path, encoding = 'UTF-8'):
     """ Reads the first column of a tab-delimited text file.
 
     The file can either be uncompressed or gzip'ed.
 
     Parameters
     ----------
-    fn: str
+    path: str or unicode
         The path of the file.
     enc: str, optional
         The file encoding.
@@ -322,21 +520,22 @@ def read_single(fn, enc = 'utf-8'):
         A list containing the elements in the first column.
 
     """
+    assert isinstance(path, (str, unicode))
     data = []
-    with open_plain_or_gzip(fn) as fh:
-        reader = csv.reader(fh, dialect = 'excel-tab', encoding = enc)
+    with smart_open_read(path, mode = 'rb', try_gzip = True) as fh:
+        reader = csv.reader(fh, dialect = 'excel-tab', encoding = encoding)
         for l in reader:
             data.append(l[0])
     return data
 
-def read_all(fn, enc = 'utf-8'):
+def read_all(path, encoding = 'UTF-8'):
     """ Reads a tab-delimited text file.
 
     The file can either be uncompressed or gzip'ed.
 
     Parameters
     ----------
-    fn: str
+    path: str or unicode
         The path of the file.
     enc: str, optional
         The file encoding.
@@ -347,9 +546,10 @@ def read_all(fn, enc = 'utf-8'):
         A list, which each element containing the contents of a row
         (as a list).
     """
+    assert isinstance(path, (str, unicode))
     data = []
     with open_plain_or_gzip(fn) as fh:
-        reader = csv.reader(fh, dialect='excel-tab', encoding = enc)
+        reader = csv.reader(fh, dialect='excel-tab', encoding = encoding)
         for l in reader:
             data.append(l)
     return data
