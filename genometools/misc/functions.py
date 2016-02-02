@@ -46,7 +46,7 @@ def try_open_gzip(path):
     return fh
 
 @contextlib.contextmanager
-def smart_open_read(path = None, mode = 'r', encoding = None, try_gzip = False):
+def smart_open_read(path = None, mode = 'rb', encoding = None, try_gzip = False):
     """Open a file for reading or return ``stdin``.
 
     Adapted from StackOverflow user "Wolph"
@@ -516,7 +516,7 @@ def read_single(path, encoding = 'UTF-8'):
 
     Returns
     -------
-    List[str]
+    List of str
         A list containing the elements in the first column.
 
     """
@@ -542,14 +542,14 @@ def read_all(path, encoding = 'UTF-8'):
 
     Returns
     -------
-    List[List[str]]
+    List of (tuple of str)
         A list, which each element containing the contents of a row
-        (as a list).
+        (as a tuple).
     """
     assert isinstance(path, (str, unicode))
     data = []
-    with open_plain_or_gzip(fn) as fh:
-        reader = csv.reader(fh, dialect='excel-tab', encoding = encoding)
+    with smart_open_read(path, mode = 'rb', try_gzip = True) as fh:
+        reader = csv.reader(fh, dialect = 'excel-tab', encoding = encoding)
         for l in reader:
-            data.append(l)
+            data.append(tuple(l))
     return data
