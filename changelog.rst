@@ -19,8 +19,13 @@
 Changelog
 =========
 
-Version 1.2.0 (under development)
----------------------------------
+Version 1.2.2 (2016-02-26)
+--------------------------
+- Improved quantile normalization method (it now has a smaller memory
+  footprint and handles missing data)
+
+Version 1.2.0
+-------------
 
 - added classes for handling gene sets (see `genometools.basic`)
 - added classes for handling expression data (see

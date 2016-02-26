@@ -19,60 +19,141 @@
 Note: Currently, only quantile normalization is implemented.
 """
 
+import logging
+
 import numpy as np
 
-def _reorder_matrix(X, A):
-    """Reorder matrix (column-by-column) according to an index matrix.
+logger = logging.getLogger(__name__)
 
-    For each column in ``X``, the column elements are re-ordered according to
-    the indices contained in the corresponding column in ``A``.
+def quantile_normalize(X, copy_matrix = True):
+    """Quantile normalization, allowing for missing values (NaN).
+
+    In case of nan values, this implementation will calculate evenly
+    distributed quantiles and fill in the missing data with those values.
+    Quantile normalization is then performed on the filled-in matrix,
+    and the nan values are restored afterwards.
 
     Parameters
     ----------
-    X: 2-dimensional `numpy.ndarray`
-        The matrix to be reordered.
-    A: 2-dimensional `numpy.ndarray`
-        The index matrix.
-
+    X: numpy.ndarray (ndim = 2)
+        The expression matrix (rows = genes, columns = samples).
+    copy_matrix: bool
+        Whether or not to make a copy of the expression matrix. If set to
+        False, the expression data will be modified in-place.
+        
+    Returns
+    -------
+    numpy.ndarray (ndim = 2)
+        The normalized matrix.
     """
-    assert isinstance(X, np.ndarray)
-    assert isinstance(A, np.ndarray)
-    assert X.shape[1] == A.shape[1]
 
-    n = X.shape[1]
+    assert isinstance(X, np.ndarray)
+    assert isinstance(copy_matrix, bool)
+
+    if copy_matrix:
+        # make a copy of the original data
+        X = X.copy()
+
+    p, n = X.shape
+
+    nan = []
+
+     # fill in missing values with evenly spaced quantiles
     for j in range(n):
-        X[:,j] = X[A[:,j],j]
-    return X
+        nan.append(np.nonzero(np.isnan(X[:,j]))[0])
+        if nan[j].size > 0:
+            q = np.arange(1, nan[j].size + 1, dtype = np.float64) / (nan[j].size + 1.0)
+            fill = np.nanpercentile(X[:,j], 100 * q)
+            X[nan[j],j] = fill
 
-def quantile_normalize(X):
-    """Quantile-normalize a matrix.
-
-    Performs quantile normalization as described in Bolstad et al.
-    (PubMed ID: 12538238; DOI: 10.1093/bioinformatics/19.2.185).
-    """
-
-    assert isinstance(X, np.ndarray)
-
-    # make a copy of X
-    X = X.copy()
-
-    # perform column-wise argsort on X
+    # generate sorting indices
     A = np.argsort(X, axis = 0)
 
-    # calculate inverse operation
-    A_inv = np.argsort(A, axis = 0)
+    # reorder matrix
+    for j in range(n):
+        X[:,j] = X[A[:,j],j]
+
+    # calculate target distribution
+    target = np.mean(X, axis = 1)
     
-    # sort X column-wise
-    X = _reorder(X, A)
+    # generate indices to reverse sorting
+    A = np.argsort(A, axis = 0)
 
-    # calculate row-wise means
-    mean = np.mean(X, axis = 1)
-    n = X.shape[1]
+    # quantile-normalize
+    for j in range(n):
+        X[:,j] = target[A[:,j]]
 
-    # set all values in each row to the row mean
-    X = np.tile(mean, (n, 1)).T
+    # set missing values to NaN again
+    for j in range(n):
+        if nan[j].size > 0:
+            X[nan[j],j] = np.nan
 
-    # apply inverse operation
-    X = _reorder(X, A_inv)
+    return X
 
+def quantile_normalize_exact(X, copy_matrix = True):
+    """Quantile normalization, allowing for missing values.
+
+    This implementation estimates exact quantiles for each column with missing
+    values. This is VERY slow. DO NOT USE for matrices with more than a handful
+    of rows.
+
+    Parameters
+    ----------
+    X: numpy.ndarray (ndim = 2)
+        The expression matrix (rows = genes, columns = samples).
+    copy_matrix: bool
+        Whether or not to make a copy of the expression matrix. If set to
+        False, the expression data will be modified in-place.
+        
+    Returns
+    -------
+    numpy.ndarray (ndim = 2)
+        The normalized matrix.
+    """
+
+    assert isinstance(X, np.ndarray)
+    assert isinstance(copy_matrix, bool)
+
+    logger.warning('The function quantile_normalize_exact() is painfully '
+                   'slow! Use quantile_normalize() instead!')
+
+    p,n = X.shape
+    M = np.isnan(X) # indicator matrix for missing values
+    num_missing = np.sum(M, axis = 0, dtype = np.int64)
+    
+    if copy_matrix:
+        # make a copy of the original data
+        X = X.copy()
+
+    # generate sorting indices
+    A = np.argsort(X, axis = 0)
+    
+    # calculate which percentiles (quantiles) to use
+    # (we only need these for columns with missing values)
+    perc = 100.0 * (np.arange(p, dtype = np.float64) / (p - 1.0))
+
+    # calculate the quantiles for each column
+    Q = np.empty((p, n), dtype = np.float64)
+    for j in range(n):
+        if num_missing[j] == 0:
+            # no missing values, the percentiles correspond exactly to the sorted column vector as the quantiles
+            Q[:,j] = X[A[:,j],j]
+        else:
+            # this column has missing values, we have to interpolate the quantiles
+            Q[:,j] = np.nanpercentile(X[:,j], perc)
+
+    target = np.mean(Q, axis = 1) # this is the target distribution
+    
+    for j in range(n):
+        if num_missing[j] == 0:
+            X[A[:,j],j] = target
+        else:
+            # - this column has missing values, we have to interpolate the quantiles
+            # - we have to calculate the specific percentiles (quantiles) to use, given the number of missing values
+            # - we then use interpolation to calculate those quantiles for the target distribution
+            num_pres = p - num_missing[j]
+            perc = 100.0 * (np.arange(num_pres, dtype = np.float64) / (num_pres - 1.0))
+            ind = np.arange(num_pres, dtype = np.int64)
+            X[A[:num_pres,j],j] = np.percentile(target, perc)
+            
     return X

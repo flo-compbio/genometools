@@ -24,7 +24,7 @@ from os import path
 root = 'genometools'
 
 name = 'genometools'
-version = '1.2.1'
+version = '1.2.2'
 
 here = path.abspath(path.dirname(__file__))
 description = 'GenomeTools: Scripts and Classes For Working With Genomic Data.'
