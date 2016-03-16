@@ -19,6 +19,15 @@
 Changelog
 =========
 
+Version 1.2.3 (2016-03-16)
+--------------------------
+
+- Fixed a bug in class basic.GeneSet (basic/geneset.py) that occured when
+  calling repr() on GeneSet objects containing unicode strings.
+- basic.GeneSetDB.read_tsv() now takes the file encoding as an argument.
+- Made quantile normalization use a stable sorting algorithm (merge sort),
+  which is important if there are many identical values (e.g., 0) in the data.
+
 Version 1.2.2 (2016-02-26)
 --------------------------
 - Improved quantile normalization method (it now has a smaller memory
