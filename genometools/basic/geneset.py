@@ -83,9 +83,9 @@ class GeneSet(object):
 
     def __repr__(self):
 
-        src_str = str(self.source)
-        coll_str = str(self.collection)
-        desc_str = str(self.description)
+        src_str = unicode(self.source)
+        coll_str = unicode(self.collection)
+        desc_str = unicode(self.description)
 
         return '<%s "%s" (id=%s; source=%s; collection=%s; size=%d; hash=%d)>' \
                 %(self.__class__.__name__, self.name,

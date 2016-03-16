@@ -67,7 +67,8 @@ def quantile_normalize(X, copy_matrix = True):
             X[nan[j],j] = fill
 
     # generate sorting indices
-    A = np.argsort(X, axis = 0)
+    #A = np.argsort(X, axis = 0)
+    A = np.argsort(X, axis = 0, kind = 'mergesort') # mergesort is stable
 
     # reorder matrix
     for j in range(n):
@@ -77,7 +78,8 @@ def quantile_normalize(X, copy_matrix = True):
     target = np.mean(X, axis = 1)
     
     # generate indices to reverse sorting
-    A = np.argsort(A, axis = 0)
+    #A = np.argsort(A, axis = 0)
+    A = np.argsort(A, axis = 0, kind = 'mergesort') # mergesort is stable
 
     # quantile-normalize
     for j in range(n):
