@@ -86,7 +86,7 @@ setup(
 
 	#libraries = [],
 
-    install_requires = ['pandas >= 0.18', 'bokeh >= 0.11.1',
+    install_requires = ['pandas >= 0.18', 'scipy', 'bokeh >= 0.11.1',
                         'unicodecsv', 'xmltodict', 'requests'],
 
     extras_require = {
