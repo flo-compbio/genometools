@@ -181,6 +181,16 @@ class ExpMatrix(pd.DataFrame):
             kind = 'mergesort'
         self.sort_index(kind = kind)
 
+    def center_genes(self):
+        """Center the expression of each gene (row)."""
+        self.X = self.X - np.tile(np.mean(self.X, axis = 1), (self.n, 1)).T
+
+    def standardize_genes(self):
+        """Standardize the expression of each gene (row)."""
+        self.center_genes()
+        self.X = self.X / np.tile(np.std(self.X, axis = 1, ddof = 1), 
+                                  (self.n, 1)).T
+
     def filter_against_genome(self, genome):
         """Filter the expression matrix against a genome (set of genes).
 

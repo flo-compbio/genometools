@@ -37,7 +37,7 @@ default_cmap_file = _root.rstrip(os.sep) + os.sep + \
 def plot_heatmap(E, cmap = None, title = None, vmin = None, vmax = None,
                  width = 800, height = 400,
                  yaxis_label = 'Genes', xaxis_label = 'Samples',
-                 font = None, font_size = None,
+                 font = None, font_size = None, title_font_size = None,
                  show_sample_labels = None):
     
     if cmap is None:
@@ -55,6 +55,9 @@ def plot_heatmap(E, cmap = None, title = None, vmin = None, vmax = None,
 
     if font_size is None:
         font_size = '10pt'
+
+    if title_font_size is None:
+        title_font_size = '14pt'
 
     if show_sample_labels is None:
         show_sample_labels = False
@@ -111,6 +114,7 @@ def plot_heatmap(E, cmap = None, title = None, vmin = None, vmax = None,
     p.axis.axis_line_color = None
     
     p.title_text_font = font
+    p.title_text_font_size = title_font_size
     p.axis.axis_label_text_font = font
     p.axis.major_label_text_font = font
     
