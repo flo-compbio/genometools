@@ -1,4 +1,4 @@
-# Copyright (c) 2015, 2016 Florian Wagner
+# Copyright (c) 2016 Florian Wagner
 #
 # This file is part of GenomeTools.
 #
@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Module containing the `ExpMatrix` class."""
+"""Module containing the `ExpProfile` class."""
 
 import os
 import io
@@ -26,129 +26,123 @@ import numpy as np
 import unicodecsv as csv
 
 from .. import misc
-from . import ExpGene, ExpGenome
-from . import ExpProfile
+from . import ExpGene
+from . import ExpGenome
 
 logger = logging.getLogger(__name__)
 
-class ExpMatrix(pd.DataFrame):
-    """A gene expression matrix.
+class ExpProfile(pd.Series):
+    """A gene expression profile.
 
     Parameters
     ----------
-    X: 2-dimensional `numpy.ndarray`
-        See :attr:`X` attribute.
-
+    x: 1-dimensional `numpy.ndarray`
+        See :attr:`x` attribute.
+        
     Keyword-only Parameters
     -----------------------
     genes: list or tuple of (str or unicode)
         See :attr:`genes` attribute.
-    samples: list or tuple of (str or unicode)
-        See :attr:`samples` attribute.
-
+    name: str or unicode
+        See :attr:`name` attribute.
+        
     Additional Parameters
     ---------------------
-    All `pandas.DataFrame` parameters.
+    All `pandas.Series` parameters.
 
     Attributes
     ----------
+    x: 1-dimensional `numpy.ndarray`
+        The vector with expression values.
     genes: tuple of (str or unicode)
         The names of the genes (rows) in the matrix.
-    samples: tuple of (str or unicode)
-        The names of the samples (columns) in the matrix.
-    X: 2-dimensional `numpy.ndarray`
-        The matrix of expression values.
+    label: str or unicode
+        The sample label.
     """
     def __init__(self, *args, **kwargs):
         
-        # check if user provided "X" keyword argument
-        X = kwargs.pop('X', None)
-        if X is not None:
-            assert isinstance(X, np.ndarray)
-            kwargs['data'] = X
-
+        # check if user provided "x" keyword argument
+        x = kwargs.pop('x', None)
+        if x is not None:
+            assert isinstance(x, np.ndarray)
+            kwargs['data'] = x
+        
         # check if user provided "genes" keyword argument
         genes = kwargs.pop('genes', None)
         if genes is not None:
             assert isinstance(genes, (list, tuple))
             for g in genes:
                 assert isinstance(g, (str, unicode))
-            
-        # check if user provided "samples" keyword argument
-        samples = kwargs.pop('samples', None)
-        if samples is not None:
-            assert isinstance(samples, (list, tuple))
-            for s in samples:
-                assert isinstance(s, (str, unicode))
         
+        # check if user provided "label" keyword argument
+        label = kwargs.pop('label', None)
+        if label is not None:
+            assert isinstance(label, (str, unicode))
+         
         # call base class constructor
-        pd.DataFrame.__init__(self, *args, **kwargs)
+        pd.Series.__init__(self, *args, **kwargs)
         
         if genes is not None:
             # set (overwrite) index with user-provided list
             self.index = genes
-            
-        if samples is not None:
-            # set (overwrite) index with user-provided list
-            self.columns = samples
-        
+
+        if label is not None:
+            # set (overwrite) series name with user-provided sample label
+            self.name = label
+                        
     def __hash__(self):
         # warning: involves copying all the data
         data = []
         data.append(tuple(self.genes))
-        data.append(tuple(self.samples))
-        X = self.X.copy()
-        X.flags.writeable = False
-        data.append(X.data)
+        data.append(tuple(self.label))
+        x = self.x.copy()
+        x.flags.writeable = False
+        data.append(x.data)
         return hash(tuple(data))
 
     @property
     def _constructor(self):
-        return ExpMatrix
-    
-    @property
-    def _constructor_sliced(self):
         return ExpProfile
 
     @property
+    def _constructor_expanddim(self):
+        return ExpMatrix
+    
+    @property
     def p(self):
         """The number of genes."""
+        #return len(self.genes)
         return self.shape[0]
 
     @property
-    def n(self):
-        """The number of samples."""
-        return self.shape[1]
-
-    @property
     def genes(self):
-        """Returns the gene (row) names as a list."""
+        """Returns the gene names (= series index) as a list."""
         return self.index.values.tolist()
 
     @genes.setter
-    def genes(self, gene_list):
-        self.index = gene_list
+    def genes(self, genes):
+        self.index = genes
 
     @property
-    def samples(self):
-        """Returns the sample (column) names as a list."""
-        return self.columns.values.tolist()
+    def label(self):
+        """Returns the sample label (= series name)."""
+        return self.name
 
-    @samples.setter
-    def samples(self, sample_list):
-        self.columns = sample_list
+    @label.setter
+    def label(self, label):
+        self.name = label
 
     @property
-    def X(self):
-        """Returns the expression values as a numpy array."""
+    def x(self):
+        """Returns the expression values as a numpy vector."""
         return self.values
 
-    @X.setter
-    def X(self, X):
-        self.values[:,:] = X
+    @x.setter
+    def x(self, x):
+        self.x[:] = x
 
     def get_genome(self):
-        """Get a ExpGenome representation of the genes in the matrix.
+        """Get an ExpGenome representation of the genes in the profile.
 
         Parameters
         ----------
@@ -159,13 +153,12 @@ class ExpMatrix(pd.DataFrame):
         `genometools.expression.ExpGenome`
             The genome.
         """
-
         genes = [ExpGene(g) for g in self.genes]
         genome = ExpGenome(genes)
         return genome
 
     def sort_genes(self, stable = False):
-        """Sort the rows of the matrix alphabetically by gene name.
+        """Sort the rows of the profile alphabetically by gene name.
 
         Parameters
         ----------
@@ -200,7 +193,7 @@ class ExpMatrix(pd.DataFrame):
 
     @classmethod
     def read_tsv(cls, path, genome = None, encoding = 'UTF-8'):
-        """Read expression matrix from a tab-delimited text file.
+        """Read expression profile from a tab-delimited text file.
 
         Parameters
         ----------
@@ -214,8 +207,8 @@ class ExpMatrix(pd.DataFrame):
 
         Returns
         -------
-        `ExpMatrix`
-            The expression matrix.
+        `ExpProfile`
+            The expression profile.
         """
         # checks
         assert isinstance(path, (str, unicode))
@@ -223,14 +216,16 @@ class ExpMatrix(pd.DataFrame):
             assert isinstance(genome, ExpGenome)
         assert isinstance(encoding, (str, unicode))
 
-        # use pd.read_csv to parse the tsv file into a DataFrame
-        E = cls(pd.read_csv(path, sep = '\t', index_col = 0, header = 0, encoding = encoding))
+        # "squeeze = True" ensures that a pd.read_tsv returns a series
+        # as long as there is only one column
+        e = cls.read_csv(path, sep = '\t', index_col = 0, header = 0,
+                         encoding = encoding, squeeze = True)
 
         if genome is not None:
             # filter genes
-            E = E.filter_against_genome(genome)
+            e = e.filter_against_genome(genome)
 
-        return E
+        return e
 
     def write_tsv(self, path, encoding = 'UTF-8'):
         """Write expression matrix to a tab-delimited text file.
@@ -254,5 +249,5 @@ class ExpMatrix(pd.DataFrame):
             encoding = encoding, quoting = csv.QUOTE_NONE
         )
 
-        logger.info('Wrote %d x %d expression matrix to "%s".',
-                self.p, self.n, path)
+        logger.info('Wrote expression profile "%s" with %d genes to "%s".',
+                self.name, self.p, path)
