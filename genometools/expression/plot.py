@@ -16,33 +16,57 @@
 
 """Methods for plotting expression data."""
 
+import os
 import logging
 
 import pandas as pd
 import numpy as np
 
+from bokeh.plotting import ColumnDataSource, figure, show
 from bokeh.models import HoverTool
 
+from .. import _root
 from .. import misc
 from . import ExpMatrix
 
 logger = logging.getLogger(__name__)
 
-def plot_heatmap(E, cmap, title = None, vmin = None, vmax = None, width = 800, height = 400, yaxis_label = 'Genes', xaxis_label = 'Samples',
-                 font = 'Computer Modern Roman', show_sample_labels = False, font_size = '10pt'):
-    from bokeh.plotting import ColumnDataSource, figure, show
+default_cmap_file = _root.rstrip(os.sep) + os.sep + \
+                    os.sep.join(['data', 'RdBu_r_colormap.tsv'])
+
+def plot_heatmap(E, cmap = None, title = None, vmin = None, vmax = None,
+                 width = 800, height = 400,
+                 yaxis_label = 'Genes', xaxis_label = 'Samples',
+                 font = None, font_size = None,
+                 show_sample_labels = None):
     
-    # create color mapping
+    if cmap is None:
+        # load default colormap
+        cmap = np.loadtxt(default_cmap_file)
+
+    # vmin and/or vmax are unspecified, set to data min/max values
     if vmax is None:
         vmax = E.X.max()
     if vmin is None:
         vmin = E.X.min()
+
+    if font is None:
+        font = 'Computer Modern Roman'
+
+    if font_size is None:
+        font_size = '10pt'
+
+    if show_sample_labels is None:
+        show_sample_labels = False
+    
+    # create color mapping
     C = np.int64(np.round(255 * (E.X - vmin) / (vmax - vmin)))
     C[C<0] = 0
     C[C>255] = 255
-    
-    genes = [g.replace(':','.') for g in tuple(E.genes)]
-    samples = [s.replace(':','.') for s in tuple(E.samples)]
+
+    # colons are not allowed in category names
+    genes = [g.replace(':', '.') for g in E.genes]
+    samples = [s.replace(':', '.') for s in E.samples]
     
     data_genes = []
     data_samples = []
@@ -105,10 +129,10 @@ def plot_heatmap(E, cmap, title = None, vmin = None, vmax = None, width = 800, h
     p.min_border_bottom = 10
     
     # set hover tooltips
-    hover = p.select(dict(type=HoverTool))
+    hover = p.select(dict(type = HoverTool))
     hover.tooltips = [
-        (yaxis_label[:-1] + ' (y)', '$y'),
         (xaxis_label[:-1] + ' (x)', '$x'),
+        (yaxis_label[:-1] + ' (y)', '$y'),
         ('Value', '@data_expr'),
     ]
     

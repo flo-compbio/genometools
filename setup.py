@@ -27,7 +27,7 @@ name = 'genometools'
 version = '2.0rc1'
 
 here = path.abspath(path.dirname(__file__))
-description = 'GenomeTools: Scripts and Classes For Working With Genomic Data.'
+description = 'GenomeTools: A Python Framework For Analyzing Genomic Data.'
 
 # get long description from file
 long_description = ''
@@ -94,7 +94,7 @@ setup(
     },
 
 	# data
-    #package_data={},
+    package_data = {'genometools': ['data/RdBu_r_colormap.tsv']},
 
 	# data outside the package
     #data_files=[('my_data', ['data/data_file'])],
