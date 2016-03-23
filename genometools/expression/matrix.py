@@ -81,16 +81,22 @@ class ExpMatrix(pd.DataFrame):
             for s in samples:
                 assert isinstance(s, (str, unicode))
         
+        if genes is not None:
+            kwargs['index'] = genes
+
+        if samples is not None:
+            kwargs['columns'] = samples
+
         # call base class constructor
         pd.DataFrame.__init__(self, *args, **kwargs)
         
-        if genes is not None:
-            # set (overwrite) index with user-provided list
-            self.index = genes
+        #if genes is not None:
+        #    # set (overwrite) index with user-provided list
+        #    self.index = genes
             
-        if samples is not None:
-            # set (overwrite) index with user-provided list
-            self.columns = samples
+        #if samples is not None:
+        #    # set (overwrite) index with user-provided list
+        #    self.columns = samples
         
     def __hash__(self):
         # warning: involves copying all the data
