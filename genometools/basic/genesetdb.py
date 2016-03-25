@@ -23,7 +23,7 @@ Class supports unicode using UTF-8.
 import os
 import io
 import logging
-from collections import Iterable, OrderedDict
+from collections import OrderedDict
 
 import xmltodict
 import unicodecsv as csv
@@ -42,18 +42,18 @@ class GeneSetDB(object):
 
     Parameters
     ----------
-    gene_sets: list or tuple of `genometools.expression.basic.GeneSet`
+    gene_sets: list or tuple of `GeneSet`
         See :attr:`gene_sets` attribute.
 
     Attributes
     ----------
-    gene_sets: tuple of `genometools.expression.basic.GeneSet`
+    gene_sets: tuple of `GeneSet`
         The list of gene sets in the database. Note that this is a read-only
         property.
     """
     def __init__(self, gene_sets):
         
-        assert isinstance(gene_sets, Iterable)
+        assert isinstance(gene_sets, (list, tuple))
         for gs in gene_sets:
             assert isinstance(gs, GeneSet)
 
