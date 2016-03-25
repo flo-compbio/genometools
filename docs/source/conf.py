@@ -16,6 +16,8 @@ import sys
 import os
 import shlex
 
+import pkg_resources
+
 import sphinx_rtd_theme
 
 import genometools
@@ -81,9 +83,8 @@ author = u'Florian Wagner'
 #import re
 #prerel_pat = re.compile(r'(?:a|b|rc)\d+$')
 #version = 'v' + prerel_pat.sub('',genometools.__version__)
-import pkg_resources
-version = pkg_resources.parse_version(genometools.__version__)
-version = '%d.%d' %(int(version[0]),int(version[1]))
+rel = pkg_resources.parse_version(genometools.__version__)._version.release
+version = '%d.%d' %(rel[0], rel[1])
 
 # release = The full version, including alpha/beta/rc tags.
 release = genometools.__version__
