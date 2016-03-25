@@ -1,5 +1,5 @@
 # Copyright (c) 2016 Florian Wagner
-#
+
 # This file is part of GenomeTools.
 #
 # GenomeTools is free software: you can redistribute it and/or modify
@@ -22,8 +22,7 @@ import logging
 import pandas as pd
 import numpy as np
 
-from bokeh.plotting import ColumnDataSource, figure, show
-from bokeh.models import HoverTool
+import plotly.graph_objs as go
 
 from .. import _root
 from .. import misc
@@ -34,111 +33,109 @@ logger = logging.getLogger(__name__)
 default_cmap_file = _root.rstrip(os.sep) + os.sep + \
                     os.sep.join(['data', 'RdBu_r_colormap.tsv'])
 
-def plot_heatmap(E, cmap = None, title = None, vmin = None, vmax = None,
-                 width = 800, height = 400,
-                 yaxis_label = 'Genes', xaxis_label = 'Samples',
-                 font = None, font_size = None, title_font_size = None,
-                 show_sample_labels = None):
-    
-    if cmap is None:
-        # load default colormap
-        cmap = np.loadtxt(default_cmap_file)
+def _read_colorscale(cmap_file):
+    """Return a colorscale in the format that plotly expects it.
 
-    # vmin and/or vmax are unspecified, set to data min/max values
-    if vmax is None:
-        vmax = E.X.max()
-    if vmin is None:
-        vmin = E.X.min()
+    Specifically, the scale should be a list containing pairs consisting of
+    a normalized value x (between 0 and 1) and a corresponding "rgb(r,g,b)"
+    string, where r,g,b are integers from 0 to 255.
 
-    if font is None:
-        font = 'Computer Modern Roman'
+    The ``cmap_file`` is a tab-separated text file containing four columns
+    (x,r,g,b), so that each row corresponds to an entry in the list described
+    above.
+    """
+    assert isinstance(cmap_file, (str, unicode))
 
-    if font_size is None:
-        font_size = '10pt'
-
-    if title_font_size is None:
-        title_font_size = '14pt'
-
-    if show_sample_labels is None:
-        show_sample_labels = False
-    
-    # create color mapping
-    C = np.int64(np.round(255 * (E.X - vmin) / (vmax - vmin)))
-    C[C<0] = 0
-    C[C>255] = 255
-
-    # colons are not allowed in category names
-    genes = [g.replace(':', '.') for g in E.genes]
-    samples = [s.replace(':', '.') for s in E.samples]
-    
-    data_genes = []
-    data_samples = []
-    data_colors = []
-    data_expr = []
-    for i, g in enumerate(genes):
-        for j, s in enumerate(samples):
-            data_genes.append(g)
-            data_samples.append(s)
-            col = cmap[C[i,j],:]
-            data_colors.append('#%02x%02x%02x' % (col[0], col[1], col[2]))
-            data_expr.append(E.X[i,j])
-    
-    tools = 'reset,wheel_zoom,pan,save,hover,box_zoom,undo,redo'
-    p=figure(
-        title = title,
-        x_range = samples,
-        y_range = list(reversed(genes)), # reverse Y axis
-        tools = tools
-    )
-    
-    #p.add_tools(HoverTool())
-    
-    source = ColumnDataSource(
-        data = dict(
-            data_genes = data_genes,
-            data_samples = data_samples,
-            data_colors = data_colors,
-            data_expr = data_expr
+    cm = np.loadtxt(cmap_file, delimiter = '\t', dtype = np.float64)
+    x = cm[:,0]
+    rgb = np.int64(cm[:,1:]) # normalize to 0-1?
+    n = cm.shape[0]
+    colorscale = []
+    for i in range(n):
+        colorscale.append(
+            [i / float(n - 1),
+             'rgb(%d, %d, %d)' %(rgb[i,0], rgb[i,1], rgb[i,2])]
         )
-    )
-    
-    p.rect('data_samples', 'data_genes', 1.0, 1.0, source = source, color = data_colors, line_color = None,
-          dilate = True)
-    
-    p.plot_width = width
-    p.plot_height = height
-    
-    p.toolbar_location = 'left'
-    
-    p.grid.grid_line_color = None
-    p.axis.axis_line_color = None
-    
-    p.title_text_font = font
-    p.title_text_font_size = title_font_size
-    p.axis.axis_label_text_font = font
-    p.axis.major_label_text_font = font
-    
-    p.axis.major_label_text_font_size = font_size
-    if not show_sample_labels:
-        p.xaxis.major_tick_line_color = None
-        p.xaxis.major_label_text_font_size = '0pt'
+    return colorscale
 
-    p.xaxis.axis_label = xaxis_label + ' (n = %d)' %(len(samples))
-    p.yaxis.axis_label = yaxis_label
-    #p.yaxis.major_label_standoff = 100
-    p.xaxis.major_label_orientation = np.pi/3
+def get_heatmap(E, colorscale = None, title = None, emin = None, emax = None,
+                 width = 800, height = 400,
+                 margin_left = 100, margin_bottom = 60, margin_top = 30,
+                 colorbar_label = 'Expression', colorbar_size = 0.4,
+                 yaxis_label = 'Genes', xaxis_label = 'Samples',
+                 yaxis_nticks = None, xaxis_nticks = None,
+                 xtick_angle = 30,
+                 font = '"Droid Serif", "Open Serif", serif',
+                 font_size = 12, title_font_size = 14,
+                 show_sample_labels = True):
     
-    p.min_border_right = 10
-    p.min_border_top = 10
-    p.min_border_bottom = 10
-    
-    # set hover tooltips
-    hover = p.select(dict(type = HoverTool))
-    hover.tooltips = [
-        (xaxis_label[:-1] + ' (x)', '$x'),
-        (yaxis_label[:-1] + ' (y)', '$y'),
-        ('Value', '@data_expr'),
+    assert isinstance(E, ExpMatrix)
+
+    if colorscale is None:
+        # load default colorscale
+        colorscale = _read_colorscale(default_cmap_file)
+
+    # emin and/or emax are unspecified, set to data min/max values
+    if emax is None:
+        emax = E.X.max()
+    if emin is None:
+        emin = E.X.min()
+
+    colorbar = dict(
+        lenmode = 'fraction',
+        len = colorbar_size,
+        title = colorbar_label,
+        titleside = 'right',
+        xpad = 0,
+        ypad = 0,
+        outlinewidth = 0, # no border
+        thickness = 20, # in pixels
+        #outlinecolor = '#000000',
+    )
+
+    data = [
+        go.Heatmap(
+            z = E.X,
+            x = E.samples,
+            y = E.genes,
+            zmin = emin,
+            zmax = emax,
+            colorscale = colorscale,
+            colorbar = colorbar,
+            hoverinfo = 'x+y+z',
+        ),
     ]
-    
-    hm = show(p)
-    return hm
+
+    xticks = 'outside'
+    if not show_sample_labels:
+        xticks = ''
+
+    if xaxis_label is not None:
+        xaxis_label = xaxis_label + ' (n = %d)' %(E.n)
+
+    layout = go.Layout(
+        width = width,
+        height = height,
+        title = title,
+        titlefont = dict(size = title_font_size),
+
+        font = dict(size = font_size, family = font),
+
+        xaxis = dict(title = xaxis_label,
+                     titlefont = dict(size = title_font_size),
+                     showticklabels = show_sample_labels, ticks = xticks,
+                     nticks = xaxis_nticks, tickangle = xtick_angle,
+                     showline = True),
+
+        yaxis = dict(title = yaxis_label,
+                     titlefont = dict(size = title_font_size),
+                     nticks = yaxis_nticks, autorange = 'reversed',
+                     showline = True),
+
+        margin = dict(l = margin_left, t = margin_top, b = margin_bottom, r = 0,
+                      pad = 0),
+    )
+
+    fig = go.Figure(data = data, layout = layout)
+
+    return fig
