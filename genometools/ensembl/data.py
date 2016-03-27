@@ -74,7 +74,7 @@ class UniProtGOAnnotationData(object):
     def path(self):
         return u'%s/%s' %(self.dir_, self.file_name)
 
-     @property
+    @property
     def file_size(self):
         return os.path.getsize(self.path)
 

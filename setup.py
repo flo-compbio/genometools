@@ -91,7 +91,8 @@ setup(
                         'plotly >= 1.9.6, < 2',
                         'unicodecsv',
                         'xmltodict',
-                        'requests'],
+                        'requests',
+                        'xlmhg'],
 
     extras_require = {
             'docs': ['sphinx','sphinx-rtd-theme','sphinx-argparse','mock']
