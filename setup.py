@@ -38,6 +38,7 @@ install_requires = [
 # do not require installation if built by ReadTheDocs
 # (we mock these modules in docs/source/conf.py)
 print 'Avocado:', os.environ
+print >> sys.stderr, 'Avocado2:', os.environ
 if 'READTHEDOCS' not in os.environ or \
         os.environ['READTHEDOCS'] != 'True':
     install_requires.extend([
