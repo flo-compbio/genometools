@@ -29,6 +29,24 @@ version = '2.0rc1'
 here = path.abspath(path.dirname(__file__))
 description = 'GenomeTools: A Python Framework For Analyzing Genomic Data.'
 
+install_requires = [
+    'unicodecsv',
+    'xmltodict',
+    'requests'
+]
+
+# do not require installation if built by ReadTheDocs
+# (we mock these modules in docs/source/conf.py)
+if 'READTHEDOCS' not in os.environ or \
+        os.environ['READTHEDOCS'] != 'True':
+    install_requires.extend([
+        'numpy >= 1.8, < 2',
+        'pandas >= 0.18, < 1',
+        'scipy >= 0.14, < 1',
+        'plotly >= 1.9.6, < 2',
+        'xlmhg',
+    ]),
+
 # get long description from file
 long_description = ''
 with io.open(path.join(here, 'README.rst'), mode = 'r', encoding = 'UTF-8') as fh:
