@@ -106,13 +106,7 @@ setup(
 
 	#libraries = [],
 
-    install_requires = ['pandas >= 0.18, < 1',
-                        'scipy >= 0.14, < 1',
-                        'plotly >= 1.9.6, < 2',
-                        'unicodecsv',
-                        'xmltodict',
-                        'requests',
-                        'xlmhg'],
+    install_requires = install_requires,
 
     extras_require = {
             'docs': ['sphinx','sphinx-rtd-theme','sphinx-argparse','mock']
