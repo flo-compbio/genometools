@@ -14,6 +14,7 @@
 
 import sys
 import os
+import re
 import shlex
 
 import pkg_resources
@@ -31,6 +32,12 @@ class Mock(MagicMock):
 
 MOCK_MODULES = ['cython','xlmhg','plotly']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+
+def get_version():
+    ver_pat = re.compile(r'(\d+)\.(\d+)')
+    m = ver_pat.match(genometools.__version__)
+    ver = (int(m.group(1)), int(m.group(2)))
+    return ver
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -83,8 +90,9 @@ author = u'Florian Wagner'
 #import re
 #prerel_pat = re.compile(r'(?:a|b|rc)\d+$')
 #version = 'v' + prerel_pat.sub('',genometools.__version__)
-rel = pkg_resources.parse_version(genometools.__version__)._version.release
-version = '%d.%d' %(rel[0], rel[1])
+#rel = pkg_resources.parse_version(genometools.__version__)._version.release
+ver = get_version()
+version = '%d.%d' %(ver[0], ver[1])
 
 # release = The full version, including alpha/beta/rc tags.
 release = genometools.__version__
