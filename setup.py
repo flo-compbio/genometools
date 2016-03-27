@@ -45,7 +45,7 @@ if 'READTHEDOCS' not in os.environ or \
         'scipy >= 0.14, < 1',
         'plotly >= 1.9.6, < 2',
         'xlmhg',
-    ]),
+    ])
 
 # get long description from file
 long_description = ''
