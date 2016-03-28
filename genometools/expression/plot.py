@@ -66,7 +66,7 @@ def get_heatmap(E, colorscale = None, title = None, emin = None, emax = None,
                  yaxis_nticks = None, xaxis_nticks = None,
                  xtick_angle = 30,
                  font = '"Droid Serif", "Open Serif", serif',
-                 font_size = 12, title_font_size = 14,
+                 font_size = 12, title_font_size = None,
                  show_sample_labels = True):
     
     assert isinstance(E, ExpMatrix)
@@ -80,6 +80,9 @@ def get_heatmap(E, colorscale = None, title = None, emin = None, emax = None,
         emax = E.X.max()
     if emin is None:
         emin = E.X.min()
+
+    if title_font_size is None:
+        title_font_size = font_size
 
     colorbar = dict(
         lenmode = 'fraction',
