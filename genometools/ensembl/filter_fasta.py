@@ -109,8 +109,8 @@ def main(args = None):
     # filter the FASTA file
     # note: each chromosome sequence is temporarily read into memory,
     # so this script has a large memory footprint
-    with misc.smart_open(fasta_file, mode = 'r', try_gzip = True) as fh, \
-            misc.smart_open_write(output_file, mode = 'w') as ofh:
+    with misc.smart_open_read(fasta_file, mode = 'r', encoding = 'ascii', try_gzip = True) as fh, \
+            misc.smart_open_write(output_file, mode = 'w', encoding = 'ascii') as ofh:
 
         inside = False
         reader = FastaReader(fh)

@@ -16,6 +16,10 @@
 
 """Methods for clustering expression data."""
 
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 import sys
 import logging
 
@@ -36,8 +40,8 @@ def bicluster(E, sample_cluster_metric = 'euclidean'):
 
 def _cluster_ndarray(X, metric, method, reverse):
     assert isinstance(X, np.ndarray)
-    assert isinstance(metric, (str, unicode))
-    assert isinstance(method, (str, unicode))
+    assert isinstance(metric, str)
+    assert isinstance(method, str)
     assert isinstance(reverse, bool)
 
     distxy = squareform(pdist(X, metric = metric))

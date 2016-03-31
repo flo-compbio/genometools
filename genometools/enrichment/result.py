@@ -64,6 +64,8 @@ class GSEResult(object):
         assert isinstance(indices, np.ndarray)
         assert isinstance(gene_set, GeneSet)
         assert isinstance(genes, (tuple, list))
+        for g in genes:
+            assert isinstance(g, (str, unicode))
 
         self.n = n
         self.stat = stat
@@ -175,7 +177,7 @@ class GSEResult(object):
                              max_name_length = 0):
         # accepts a GOParser object ("GO")
         # TO-DO: clean up, commenting
-        term = GO.terms[self.term[0]]
+        term = GO.terms[self.gene_set.id]
         term_name = term.get_pretty_format(omit_acc = omit_acc,
                                            max_name_length = max_name_length)
         term_str = term_name + ' (%d)' %(len(self.genes))

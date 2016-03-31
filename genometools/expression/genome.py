@@ -16,6 +16,10 @@
 
 """Module containing the `ExpGenome` class."""
 
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 import os
 import io
 import logging
@@ -109,7 +113,7 @@ class ExpGenome(object):
 
         Parameters
         ----------
-        genes: list or tuple of (str, unicode)
+        genes: list or tuple of str
             The list of gene names.
         
         Returns
@@ -119,7 +123,7 @@ class ExpGenome(object):
         """
         assert isinstance(genes, (list, tuple))
         for g in genes:
-            assert isinstance(g, (str, unicode))
+            assert isinstance(g, str)
 
         genome = cls([ExpGene(g) for g in genes])
         return genome
@@ -140,7 +144,7 @@ class ExpGenome(object):
         try:
             return self._genes[name]
         except KeyError:
-            raise ValueError('No gene with name "%s"!' %(id_))
+            raise ValueError('No gene with name "%s"!' %(name))
 
     def get_by_index(self, i):
         """Look up a gene by its index.
@@ -169,7 +173,7 @@ class ExpGenome(object):
 
         Parameters
         ----------
-        gene_name: str or unicode
+        gene_name: str
             The gene name.
 
         Returns
@@ -177,7 +181,7 @@ class ExpGenome(object):
         int
             The gene index.
         """
-        assert isinstance(gene_name, (str, unicode))
+        assert isinstance(gene_name, str)
 
         try:
             return self._gene_indices[gene_name]
@@ -223,6 +227,6 @@ class ExpGenome(object):
         with io.open(path, 'wb') as ofh:
             writer = csv.writer(ofh, dialect = 'excel-tab', encoding = enc,
                     lineterminator = os.linesep, quoting = csv.QUOTE_NONE)
-            for g in genes:
+            for g in self.genes:
                 writer.writerow(g.to_list())
         logger.info('Wrote %d genes to file "%s".', self.p, path)

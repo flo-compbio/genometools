@@ -16,18 +16,27 @@
 
 """Module containing the `ExpMatrix` class."""
 
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 import os
 import io
 import logging
 import copy
+import importlib
 
 import pandas as pd
 import numpy as np
 import unicodecsv as csv
+import six
 
 from .. import misc
 from . import ExpGene, ExpGenome
-from . import ExpProfile
+profile = importlib.import_module('.profile', package='genometools.expression')
+# - "import profile" is not possible, since a "profile" module exists
+#    in the standard library
+# - "from . import profile" fails due to cyclical imports
 
 logger = logging.getLogger(__name__)
 
@@ -41,9 +50,9 @@ class ExpMatrix(pd.DataFrame):
 
     Keyword-only Parameters
     -----------------------
-    genes: list or tuple of (str or unicode)
+    genes: list or tuple of str
         See :attr:`genes` attribute.
-    samples: list or tuple of (str or unicode)
+    samples: list or tuple of str
         See :attr:`samples` attribute.
 
     Additional Parameters
@@ -52,9 +61,9 @@ class ExpMatrix(pd.DataFrame):
 
     Attributes
     ----------
-    genes: tuple of (str or unicode)
+    genes: tuple of str
         The names of the genes (rows) in the matrix.
-    samples: tuple of (str or unicode)
+    samples: tuple of str
         The names of the samples (columns) in the matrix.
     X: 2-dimensional `numpy.ndarray`
         The matrix of expression values.
@@ -72,14 +81,15 @@ class ExpMatrix(pd.DataFrame):
         if genes is not None:
             assert isinstance(genes, (list, tuple))
             for g in genes:
-                assert isinstance(g, (str, unicode))
+                assert isinstance(g, str)
             
         # check if user provided "samples" keyword argument
         samples = kwargs.pop('samples', None)
         if samples is not None:
             assert isinstance(samples, (list, tuple))
             for s in samples:
-                assert isinstance(s, (str, unicode))
+                assert isinstance(s, str)
+
         
         if genes is not None:
             kwargs['index'] = genes
@@ -114,7 +124,7 @@ class ExpMatrix(pd.DataFrame):
     
     @property
     def _constructor_sliced(self):
-        return ExpProfile
+        return profile.ExpProfile
 
     @property
     def p(self):
@@ -220,12 +230,12 @@ class ExpMatrix(pd.DataFrame):
 
         Parameters
         ----------
-        path: str or unicode
+        path: str
             The path of the text file.
         genome: `ExpGenome` object, optional
             The set of valid genes. If given, the genes in the text file will
             be filtered against this set of genes. (None)
-        encoding: str or unicode, optional
+        encoding: str, optional
             The file encoding. ("UTF-8")
 
         Returns
@@ -234,10 +244,10 @@ class ExpMatrix(pd.DataFrame):
             The expression matrix.
         """
         # checks
-        assert isinstance(path, (str, unicode))
+        assert isinstance(path, str)
         if genome is not None:
             assert isinstance(genome, ExpGenome)
-        assert isinstance(encoding, (str, unicode))
+        assert isinstance(encoding, str)
 
         # use pd.read_csv to parse the tsv file into a DataFrame
         E = cls(pd.read_csv(path, sep = '\t', index_col = 0, header = 0, encoding = encoding))
@@ -253,20 +263,25 @@ class ExpMatrix(pd.DataFrame):
 
         Parameters
         ----------
-        path: str or unicode
+        path: str
             The path of the output file.
-        encoding: str or unicode, optional
+        encoding: str, optional
             The file encoding. ("UTF-8")
 
         Returns
         -------
         None
         """
-        assert isinstance(path, (str, unicode))
-        assert isinstance(encoding, (str, unicode))
+        assert isinstance(path, str)
+        assert isinstance(encoding, str)
+
+        #sep = str('\t')
+        sep = '\t'
+        if six.PY2:
+            sep = sep.encode('UTF-8')
 
         self.to_csv(
-            path, sep = '\t', float_format = '%.5f', mode = 'wb',
+            path, sep = sep, float_format = '%.5f', mode = 'w',
             encoding = encoding, quoting = csv.QUOTE_NONE
         )
 

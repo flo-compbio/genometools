@@ -16,6 +16,10 @@
 
 """Functions for GTF files."""
 
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 import re
 
 def parse_attributes(s):
@@ -39,7 +43,7 @@ def parse_attributes(s):
     """
     # use regular expression with negative lookbehind to make sure we don't
     # split on escaped semicolons ("\;")
-    attr_sep = re.compile(ur'(?<!\\)\s*;\s*')
+    attr_sep = re.compile(r'(?<!\\)\s*;\s*')
     attr = {}
     atts = attr_sep.split(s)
     for a in atts:

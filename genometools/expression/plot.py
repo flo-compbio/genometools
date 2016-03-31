@@ -16,6 +16,10 @@
 
 """Methods for plotting expression data."""
 
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 import os
 import logging
 
@@ -44,7 +48,7 @@ def _read_colorscale(cmap_file):
     (x,r,g,b), so that each row corresponds to an entry in the list described
     above.
     """
-    assert isinstance(cmap_file, (str, unicode))
+    assert isinstance(cmap_file, str)
 
     cm = np.loadtxt(cmap_file, delimiter = '\t', dtype = np.float64)
     x = cm[:,0]
@@ -58,10 +62,10 @@ def _read_colorscale(cmap_file):
         )
     return colorscale
 
-def get_heatmap(E, colorscale = None, title = None, emin = None, emax = None,
-                 width = 800, height = 400,
-                 margin_left = 100, margin_bottom = 60, margin_top = 30,
-                 colorbar_label = 'Expression', colorbar_size = 0.4,
+def get_heatmap(E, colorscale=None, title=None, emin=None, emax=None,
+                 width=800, height=400,
+                 margin_left=100, margin_bottom=60, margin_top=30,
+                 colorbar_label='Expression', colorbar_size=0.4,
                  yaxis_label = 'Genes', xaxis_label = 'Samples',
                  yaxis_nticks = None, xaxis_nticks = None,
                  xtick_angle = 30,

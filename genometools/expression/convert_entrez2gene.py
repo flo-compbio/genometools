@@ -126,7 +126,7 @@ def main(args = None):
 
     # convert Entrez IDs to gene names
     f = 0
-    genes = OrderedDict()
+    genes = []
     X = []
     g = None
     for i,e in enumerate(entrez):
@@ -136,10 +136,10 @@ def main(args = None):
         except KeyError:
             f += 1
         else:
-            assert g not in genes # check if there are multiple entrez IDs pointing to the same gene
-            genes[g] = None
+            #assert g not in genes # check if there are multiple entrez IDs pointing to the same gene
+            genes.append(g)
             X.append(E.X[i,:])
-    genes = genes.keys()
+    assert len(genes) == len(set(genes))
     if f > 0:
         logger.warning('Failed to convert %d / %d entrez IDs ' +
                 'to gene symbols (%.1f%%).',

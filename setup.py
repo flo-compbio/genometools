@@ -30,6 +30,8 @@ here = path.abspath(path.dirname(__file__))
 description = 'GenomeTools: A Python Framework For Analyzing Genomic Data.'
 
 install_requires = [
+    'future >= 0.15.2, < 1',
+    'six >= 1.10.0, < 2',
     'unicodecsv',
     'xmltodict',
     'requests'
@@ -40,6 +42,7 @@ install_requires = [
 if 'READTHEDOCS' not in os.environ or \
         os.environ['READTHEDOCS'] != 'True':
     install_requires.extend([
+        'six
         'numpy >= 1.8, < 2',
         'pandas >= 0.18, < 1',
         'scipy >= 0.14, < 1',
@@ -76,12 +79,12 @@ setup(
     long_description = long_description,
 
     # homepage
-    url='https://github.com/flo-compbio/genometools',
+    url = 'https://github.com/flo-compbio/genometools',
 
-    author='Florian Wagner',
-    author_email='florian.wagner@duke.edu',
+    author = 'Florian Wagner',
+    author_email = 'florian.wagner@duke.edu',
 
-    license='GPLv3',
+    license = 'GPLv3',
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
@@ -93,21 +96,26 @@ setup(
 
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
 
+        'Programming Language :: Python :: 2 :: Only',
         'Programming Language :: Python :: 2.7',
     ],
 
     keywords='genome genes tools analysis expression sequencing',
 
     #packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
-    packages = find_packages(exclude = ['docs']),
+    packages = find_packages(exclude=['docs']),
     #packages=find_packages(root),
 
 	#libraries = [],
 
     install_requires = install_requires,
 
+    tests_require = [
+        'pytest >= 2.8.5, < 3'
+    ],
+
     extras_require = {
-            'docs': ['sphinx','sphinx-rtd-theme','sphinx-argparse','mock']
+        'docs': ['sphinx', 'sphinx-rtd-theme', 'sphinx-argparse', 'mock']
     },
 
 	# data

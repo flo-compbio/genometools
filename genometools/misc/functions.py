@@ -22,7 +22,6 @@ import os
 import io
 import errno
 import shutil
-import urllib2
 import sys
 import bisect
 import gzip
@@ -209,53 +208,6 @@ def get_url_size(url):
     size = int(r.headers['content-length'])
     return size
 
-@contextlib.contextmanager
-def open_url(url):
-    """Open a URL using urllib2.
-
-    Note: In contrast to using `requests`, this function also works for FTP
-    URLs.
-
-    Parameters
-    ----------
-    url: str or unicode
-        The URL.
-
-    Returns
-    -------
-    file-like object
-        The file-like object returned by urllib2.urlopen.
-    """
-    assert isinstance(url, (str, unicode))
-
-    uh = urllib2.urlopen(url)
-    try:
-        yield uh
-    finally:
-        # close the handler 
-        uh.close()
-
-def download_url(url, download_file):
-    """Downloads a file from a given URL.
-
-    Source: StackOverflow user "J.F. Sebastian"
-    (http://stackoverflow.com/a/11768443)
-
-    Parameters
-    ----------
-    url: str or unicode
-        The URL (source).
-    download_file: str or unicode
-        The path of the download file (destination).
-    """
-    assert isinstance(url, (str, unicode))
-    assert isinstance(url, (str, unicode))
-
-    logging.debug('Downloading URL "%s" to "%s".', url, download_file)
-    with contextlib.closing(urllib2.urlopen(url)) as fh:
-        with io.open(download_file, mode = 'wb') as ofh:
-            shutil.copyfileobj(fh, ofh)
-
 def make_sure_dir_exists(dir_, create_subfolders = False):
     """Ensures that a directory exists.
 
@@ -280,8 +232,6 @@ def make_sure_dir_exists(dir_, create_subfolders = False):
     """
     assert isinstance(dir_, (str, unicode))
     assert isinstance(create_subfolders, bool)
-
-    uf 
 
     try:
         if create_subfolders:

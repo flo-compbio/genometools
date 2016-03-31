@@ -1,3 +1,7 @@
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 from collections import OrderedDict
 
 species_names = OrderedDict([
@@ -11,7 +15,7 @@ species_names = OrderedDict([
 """Dictionary mapping scientific species names to their common names."""
 
 species_scientific = OrderedDict(
-        [b, a] for a, b in species_names.iteritems()
+        [b, a] for a, b in species_names.items()
 )
 """Reverse mapping of ``species_names``."""
 

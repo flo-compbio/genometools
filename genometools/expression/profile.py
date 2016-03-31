@@ -16,18 +16,25 @@
 
 """Module containing the `ExpProfile` class."""
 
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 import os
 import io
 import logging
 import copy
+import importlib
 
 import pandas as pd
 import numpy as np
 import unicodecsv as csv
+import six
 
 from .. import misc
-from . import ExpGene
-from . import ExpGenome
+from . import ExpGene, ExpGenome
+matrix = importlib.import_module('.matrix', package='genometools.expression')
+# "from . import matrix" does not work, due to cyclical imports
 
 logger = logging.getLogger(__name__)
 
@@ -41,9 +48,9 @@ class ExpProfile(pd.Series):
         
     Keyword-only Parameters
     -----------------------
-    genes: list or tuple of (str or unicode)
+    genes: list or tuple of str
         See :attr:`genes` attribute.
-    name: str or unicode
+    name: str
         See :attr:`name` attribute.
         
     Additional Parameters
@@ -54,9 +61,9 @@ class ExpProfile(pd.Series):
     ----------
     x: 1-dimensional `numpy.ndarray`
         The vector with expression values.
-    genes: tuple of (str or unicode)
+    genes: tuple of str
         The names of the genes (rows) in the matrix.
-    label: str or unicode
+    label: str
         The sample label.
     """
     def __init__(self, *args, **kwargs):
@@ -72,12 +79,12 @@ class ExpProfile(pd.Series):
         if genes is not None:
             assert isinstance(genes, (list, tuple))
             for g in genes:
-                assert isinstance(g, (str, unicode))
+                assert isinstance(g, str)
         
         # check if user provided "label" keyword argument
         label = kwargs.pop('label', None)
         if label is not None:
-            assert isinstance(label, (str, unicode))
+            assert isinstance(label, str)
          
         # call base class constructor
         pd.Series.__init__(self, *args, **kwargs)
@@ -106,7 +113,7 @@ class ExpProfile(pd.Series):
 
     @property
     def _constructor_expanddim(self):
-        return ExpMatrix
+        return matrix.ExpMatrix
     
     @property
     def p(self):
@@ -197,12 +204,12 @@ class ExpProfile(pd.Series):
 
         Parameters
         ----------
-        path: str or unicode
+        path: str
             The path of the text file.
         genome: `ExpGenome` object, optional
             The set of valid genes. If given, the genes in the text file will
             be filtered against this set of genes. (None)
-        encoding: str or unicode, optional
+        encoding: str, optional
             The file encoding. ("UTF-8")
 
         Returns
@@ -211,15 +218,15 @@ class ExpProfile(pd.Series):
             The expression profile.
         """
         # checks
-        assert isinstance(path, (str, unicode))
+        assert isinstance(path, str)
         if genome is not None:
             assert isinstance(genome, ExpGenome)
-        assert isinstance(encoding, (str, unicode))
+        assert isinstance(encoding, str)
 
         # "squeeze = True" ensures that a pd.read_tsv returns a series
         # as long as there is only one column
-        e = cls.read_csv(path, sep = '\t', index_col = 0, header = 0,
-                         encoding = encoding, squeeze = True)
+        e = cls(pd.read_csv(path, sep = '\t', index_col = 0, header = 0,
+                         encoding = encoding, squeeze = True))
 
         if genome is not None:
             # filter genes
@@ -232,21 +239,25 @@ class ExpProfile(pd.Series):
 
         Parameters
         ----------
-        path: str or unicode
+        path: str
             The path of the output file.
-        encoding: str or unicode, optional
+        encoding: str, optional
             The file encoding. ("UTF-8")
 
         Returns
         -------
         None
         """
-        assert isinstance(path, (str, unicode))
-        assert isinstance(encoding, (str, unicode))
+        assert isinstance(path, str)
+        assert isinstance(encoding, str)
+
+        sep = '\t'
+        if six.PY2:
+            sep = sep.encode('UTF-8')
 
         self.to_csv(
-            path, sep = '\t', float_format = '%.5f', mode = 'wb',
-            encoding = encoding, quoting = csv.QUOTE_NONE
+            path, sep = sep, float_format = '%.5f', mode = 'w',
+            encoding = encoding, header = True
         )
 
         logger.info('Wrote expression profile "%s" with %d genes to "%s".',
