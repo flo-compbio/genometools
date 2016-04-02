@@ -42,7 +42,6 @@ install_requires = [
 if 'READTHEDOCS' not in os.environ or \
         os.environ['READTHEDOCS'] != 'True':
     install_requires.extend([
-        'six
         'numpy >= 1.8, < 2',
         'pandas >= 0.18, < 1',
         'scipy >= 0.14, < 1',
