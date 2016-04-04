@@ -16,12 +16,12 @@
 
 """Logging-related functions."""
 
-import sys
-import logging
-
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import *
+
+import sys
+import logging
 
 def configure_logger(name, log_stream = sys.stdout, log_file = None,
         log_level = logging.INFO, keep_old_handlers = False,
