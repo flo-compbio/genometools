@@ -16,12 +16,16 @@
 
 """Module containing the `GSEAnalysis` class."""
 
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 import logging
 from math import ceil
 
 import numpy as np
 
-import xlmhg
+from xlmhg import xlmhg_test
 
 from ..basic import GeneSet, GeneSetDB
 from ..expression import ExpGenome
@@ -97,7 +101,7 @@ class GSEAnalysis(object):
         # checks
         assert isinstance(ranked_genes, (list, tuple))
         for g in ranked_genes:
-            assert isinstance(g, (str, unicode))
+            assert isinstance(g, str)
         assert isinstance(pval_thresh, float)
         assert isinstance(X_frac, float)
         assert isinstance(X_min, int)
@@ -108,7 +112,7 @@ class GSEAnalysis(object):
         if gene_set_ids is not None:
             assert isinstance(gene_set_ids, (list, tuple))
             for id_ in gene_set_ids:
-                assert isinstance(id_, (str, unicode))
+                assert isinstance(id_, str)
         if mat is not None:
             assert isinstance(mat, np.ndarray)
         
@@ -168,8 +172,8 @@ class GSEAnalysis(object):
                 # gene set genes at or above L'th rank (otherwise, pval = 1.0)
                 if K_lim[j] >= X:
                     v = np.ascontiguousarray(A[:,j]) # copy
-                    n, stat, pval = xlmhg.test(v, X, L, K = int(K[j]),
-                            mat = mat, pval_thresh = pval_thresh)
+                    stat, n, pval = xlmhg_test(v, X, L, K = int(K[j]),
+                            table = mat, pval_thresh = pval_thresh)
 
                     # check if gene set is significantly enriched
                     if pval <= pval_thresh:

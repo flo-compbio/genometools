@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+#from __future__ import print_function, unicode_literals
+
 import sys
 import os
 import io
@@ -70,20 +72,20 @@ class CleanCommand(Command):
         os.system ('rm -rf ./dist ./build ./*.egg-info ')
 
 setup(
-    name = name,
+    name=name,
 
-    version = version,
+    version=version,
 
-    description = description,
-    long_description = long_description,
+    description=description,
+    long_description=long_description,
 
     # homepage
-    url = 'https://github.com/flo-compbio/genometools',
+    url='https://github.com/flo-compbio/genometools',
 
-    author = 'Florian Wagner',
-    author_email = 'florian.wagner@duke.edu',
+    author='Florian Wagner',
+    author_email='florian.wagner@duke.edu',
 
-    license = 'GPLv3',
+    license='GPLv3',
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
@@ -107,24 +109,25 @@ setup(
 
 	#libraries = [],
 
-    install_requires = install_requires,
+    install_requires=install_requires,
 
-    tests_require = [
+    tests_require=[
         'pytest >= 2.8.5, < 3'
     ],
 
-    extras_require = {
+    extras_require={
         'docs': ['sphinx', 'sphinx-rtd-theme', 'sphinx-argparse', 'mock']
     },
 
 	# data
-    package_data = {'genometools': ['data/RdBu_r_colormap.tsv']},
+    #package_data={'genometools': ['data/RdBu_r_colormap.tsv']},
+    package_data={'genometools': ['data/*.tsv']},
 
 	# data outside the package
     #data_files=[('my_data', ['data/data_file'])],
 
 	# executable scripts
-    entry_points = {
+    entry_points={
         'console_scripts': [
             # Ensembl scripts
             'ensembl_filter_fasta.py = genometools.ensembl.filter_fasta:main',
@@ -152,7 +155,7 @@ setup(
         ],
     },
 
-    cmdclass = {
+    cmdclass={
         'clean': CleanCommand,
     },
 

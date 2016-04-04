@@ -20,6 +20,10 @@ Class supports unicode using UTF-8.
 
 """
 
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 import os
 import io
 import logging
@@ -108,7 +112,7 @@ class GeneSetDB(object):
 
         Parameters
         ----------
-        id_: str or unicode
+        id_: str
             The ID of the gene set.
 
         Returns
@@ -154,7 +158,7 @@ class GeneSetDB(object):
 
         Parameters
         ----------
-        id_: str or unicode
+        id_: str
             The ID of the gene set.
 
         Returns
@@ -178,7 +182,7 @@ class GeneSetDB(object):
 
         Parameters
         ----------
-        path: str or unicode
+        path: str
             The path name of the the file.
 
         Returns
@@ -203,7 +207,7 @@ class GeneSetDB(object):
 
         Parameters
         ----------
-        path: str or unicode
+        path: str
             The path name of the file.
 
         Returns
@@ -225,11 +229,11 @@ class GeneSetDB(object):
 
         Parameters
         ----------
-        path: str or unicode
+        path: str
             The path name of the XML file.
-        entrez2gene: dict or OrderedDict (str: unicode or str)
+        entrez2gene: dict or OrderedDict (str: str)
             A dictionary mapping Entrez Gene IDs to gene symbols (names).
-        species: str or unicode, optional
+        species: str, optional
             A species name (e.g., "Homo_sapiens"). Only gene sets for that
             species will be retained. (None)
 
@@ -238,9 +242,10 @@ class GeneSetDB(object):
         GeneSetDB
             The gene set database containing the MSigDB gene sets.
         """
-        assert isinstance(path, (str, unicode))
+        # note: is XML file really encoded in UTF-8?
+        assert isinstance(path, str)
         assert isinstance(entrez2gene, (dict, OrderedDict))
-        assert species is None or isinstance(species, (str, unicode))
+        assert species is None or isinstance(species, str)
 
         logger.debug('Path: %s', path)
         logger.debug('entrez2gene type: %s', str(type(entrez2gene)))

@@ -133,7 +133,7 @@ class ExpGenome(object):
 
         Parameters
         ----------
-        name: str or unicode
+        name: str
             The gene name.
         
         Returns

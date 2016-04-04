@@ -20,6 +20,10 @@
 # * GSEResult should inherit from "mHGResult" (new class in XL-mHG package)?
 # * E-score calculation should be part of XL-mHG package
 
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 import logging
 
 import numpy as np
@@ -65,7 +69,7 @@ class GSEResult(object):
         assert isinstance(gene_set, GeneSet)
         assert isinstance(genes, (tuple, list))
         for g in genes:
-            assert isinstance(g, (str, unicode))
+            assert isinstance(g, str)
 
         self.n = n
         self.stat = stat

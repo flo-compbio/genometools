@@ -1,4 +1,4 @@
-# Copyright (c) 2015 Florian Wagner
+# Copyright (c) 2015, 2016 Florian Wagner
 #
 # This file is part of GenomeTools.
 #
@@ -18,6 +18,10 @@
 
 import sys
 import logging
+
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
 
 def configure_logger(name, log_stream = sys.stdout, log_file = None,
         log_level = logging.INFO, keep_old_handlers = False,

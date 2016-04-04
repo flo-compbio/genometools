@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 
 # Copyright (c) 2015, 2016 Florian Wagner
 #
@@ -19,6 +19,10 @@
 """Script to Convert Entrez IDs to gene symbols in a gene expression matrix.
 
 """
+
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
 
 import sys
 import os
@@ -90,6 +94,11 @@ def get_argument_parser():
 
 def main(args = None):
 
+    vinfo = sys.version_info
+    if not (vinfo >= (2, 7)):
+        raise SystemError('Python interpreter version >= 2.7 required, '
+                          'found %d.%d instead.' %(vinfo.major, vinfo.minor))
+
     if args is None:
         parser = get_argument_parser()
         args = parser.parse_args()
@@ -130,7 +139,7 @@ def main(args = None):
     X = []
     g = None
     for i,e in enumerate(entrez):
-        #print e
+        #print(e)
         try:
             g = e2g[e]
         except KeyError:

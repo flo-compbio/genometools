@@ -47,7 +47,7 @@ def parse_attributes(s):
     attr = {}
     atts = attr_sep.split(s)
     for a in atts:
-        #print a
+        #print(a)
         kv = a.split(' ')
         if len(kv) == 2:
             k,v = kv
