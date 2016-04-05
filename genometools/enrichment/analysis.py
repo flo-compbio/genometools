@@ -149,7 +149,7 @@ class GSEAnalysis(object):
         # prepare matrix for XL-mHG p-value calculation
         p, m = A.shape
         if mat is None:
-            mat = np.empty((K_max + 1, p + 1), dtype = np.longdouble)
+            mat = np.empty((K_max + 1, p + 1), dtype = np.float64)
 
         # find enriched GO terms
         logger.info('Testing %d gene sets for enrichment...', m)
