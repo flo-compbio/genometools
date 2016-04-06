@@ -159,7 +159,7 @@ class ExpMatrix(pd.DataFrame):
 
     @X.setter
     def X(self, X):
-        self.values[:,:] = X
+        self.values[:, :] = X
 
     def get_genome(self):
         """Get a ExpGenome representation of the genes in the matrix.
@@ -195,14 +195,17 @@ class ExpMatrix(pd.DataFrame):
             kind = 'mergesort'
         self.sort_index(kind = kind)
 
-    def center_genes(self):
+    def center_genes(self, use_median=False):
         """Center the expression of each gene (row)."""
-        self.X = self.X - np.tile(np.mean(self.X, axis = 1), (self.n, 1)).T
+        if use_median:
+            self.X = self.X - np.tile(np.median(self.X, axis=1), (self.n, 1)).T
+        else:
+            self.X = self.X - np.tile(np.mean(self.X, axis=1), (self.n, 1)).T
 
     def standardize_genes(self):
         """Standardize the expression of each gene (row)."""
         self.center_genes()
-        self.X = self.X / np.tile(np.std(self.X, axis = 1, ddof = 1), 
+        self.X = self.X / np.tile(np.std(self.X, axis=1, ddof=1), 
                                   (self.n, 1)).T
 
     def filter_against_genome(self, genome):
@@ -223,7 +226,7 @@ class ExpMatrix(pd.DataFrame):
         return self.loc[self.index & genome.genes]
 
     @classmethod
-    def read_tsv(cls, path, genome = None, encoding = 'UTF-8'):
+    def read_tsv(cls, path, genome=None, encoding='UTF-8'):
         """Read expression matrix from a tab-delimited text file.
 
         Parameters
@@ -248,7 +251,7 @@ class ExpMatrix(pd.DataFrame):
         assert isinstance(encoding, str)
 
         # use pd.read_csv to parse the tsv file into a DataFrame
-        E = cls(pd.read_csv(path, sep = '\t', index_col = 0, header = 0, encoding = encoding))
+        E = cls(pd.read_csv(path, sep='\t', index_col=0, header=0, encoding=encoding))
 
         if genome is not None:
             # filter genes
@@ -256,7 +259,7 @@ class ExpMatrix(pd.DataFrame):
 
         return E
 
-    def write_tsv(self, path, encoding = 'UTF-8'):
+    def write_tsv(self, path, encoding='UTF-8'):
         """Write expression matrix to a tab-delimited text file.
 
         Parameters
@@ -279,8 +282,8 @@ class ExpMatrix(pd.DataFrame):
             sep = sep.encode('UTF-8')
 
         self.to_csv(
-            path, sep = sep, float_format = '%.5f', mode = 'w',
-            encoding = encoding, quoting = csv.QUOTE_NONE
+            path, sep=sep, float_format='%.5f', mode='w',
+            encoding=encoding, quoting=csv.QUOTE_NONE
         )
 
         logger.info('Wrote %d x %d expression matrix to "%s".',

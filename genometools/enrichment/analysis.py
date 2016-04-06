@@ -75,7 +75,7 @@ class GSEAnalysis(object):
 
         # generate annotation matrix by going over all gene sets
         logger.info('Generating gene x GO term matrix...')
-        self.A = np.zeros((genome.p, gene_set_db.n), dtype = np.uint8)
+        self.A = np.zeros((genome.p, gene_set_db.n), dtype=np.uint8)
         for j, gs in enumerate(self.gene_set_db.gene_sets):
             for g in gs.genes:
                 try:
@@ -83,7 +83,7 @@ class GSEAnalysis(object):
                 except ValueError:
                     pass
                 else:
-                    self.A[idx,j] = 1
+                    self.A[idx, j] = 1
 
     @property
     def genes(self):
@@ -91,7 +91,7 @@ class GSEAnalysis(object):
 
     def get_enriched_gene_sets(
             self, ranked_genes, pval_thresh, X_frac, X_min, L,
-            escore_pval_thresh = None, gene_set_ids = None, mat = None):
+            escore_pval_thresh=None, gene_set_ids=None, mat=None):
         """Tests gene set enrichment given a ranked list of genes.
 
         This function also calculates XL-mHG E-scores for the enriched gene
@@ -138,22 +138,22 @@ class GSEAnalysis(object):
         # reorder rows in annotation matrix to match the given gene ranking
         # also exclude genes not in the ranking
         gene_indices = np.int64([self.genome.index(g) for g in ranked_genes])
-        A = A[gene_indices,:] # not a view either!
+        A = A[gene_indices, :] # not a view either!
 
         # determine largest K
-        K_lim = np.sum(A[:L,:], axis = 0, dtype = np.int64)
-        K_rem = np.sum(A[L:,:], axis = 0, dtype = np.int64)
+        K_lim = np.sum(A[:L, :], axis=0, dtype=np.int64)
+        K_rem = np.sum(A[L:, :], axis=0, dtype=np.int64)
         K = K_lim + K_rem
         K_max = np.amax(K)
 
         # prepare matrix for XL-mHG p-value calculation
         p, m = A.shape
         if mat is None:
-            mat = np.empty((K_max + 1, p + 1), dtype = np.float64)
+            mat = np.empty((K_max+1, p+1), dtype=np.longdouble)
 
         # find enriched GO terms
         logger.info('Testing %d gene sets for enrichment...', m)
-        logger.debug('(N = %d, X_frac = %.2f, X_min = %d, L = %d; K_max = %d)', \
+        logger.debug('(N=%d, X_frac=%.2f, X_min=%d, L=%d; K_max=%d)', \
                     len(ranked_genes), X_frac, X_min, L, K_max)
 
         enriched = []
@@ -161,7 +161,7 @@ class GSEAnalysis(object):
         N,m = A.shape
         for j in range(m):
             # determine gene set-specific value for X (based on K[j])
-            X = max(X_min, int(ceil(X_frac * float(K[j]))))
+            X = max(X_min, int(ceil(X_frac*float(K[j]))))
 
             # determine significance of gene set enrichment using XL-mHG test
             # (only if there are at least X gene set genes in the list)
@@ -171,15 +171,17 @@ class GSEAnalysis(object):
                 # we only need to perform the XL-mHG test if there are enough
                 # gene set genes at or above L'th rank (otherwise, pval = 1.0)
                 if K_lim[j] >= X:
-                    v = np.ascontiguousarray(A[:,j]) # copy
-                    stat, n, pval = xlmhg_test(v, X, L, K = int(K[j]),
-                            table = mat, pval_thresh = pval_thresh)
+                    v = np.ascontiguousarray(A[:, j]) # copy
+                    stat, n, pval = xlmhg_test(
+                        v, X, L, K=int(K[j]),
+                        table=mat, pval_thresh=pval_thresh
+                    )
 
                     # check if gene set is significantly enriched
                     if pval <= pval_thresh:
                         # generate GSEResult
-                        sel = np.nonzero(A[:,j])[0] # indices of all the 1's
-                        k_n = np.sum(sel < n) 
+                        sel = np.nonzero(A[:, j])[0] # indices of all the 1's
+                        k_n = np.sum(sel<n) 
                         sel_genes = [ranked_genes[i] for i in sel]
                         result = GSEResult(n, stat, pval, N, X, L, sel,
                                            gene_set_db[j], sel_genes)
@@ -193,11 +195,11 @@ class GSEAnalysis(object):
 
         # report results
         q = len(enriched)
-        ignored = m - tested
+        ignored = m-tested
         if ignored > 0:
             logger.debug('%d / %d gene sets (%.1f%%) had less than X genes ' +
                     'annotated with them and were ignored.',
-                    ignored, m, 100 * (ignored / float(m)))
+                    ignored, m, 100 * (ignored/float(m)))
 
         logger.info('%d / %d gene sets were found to be significantly ' +
                 'enriched (p-value <= %.1e).', q, m, pval_thresh)
