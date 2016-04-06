@@ -102,9 +102,7 @@ class ExpProfile(pd.Series):
         data = []
         data.append(tuple(self.genes))
         data.append(tuple(self.label))
-        x = self.x.copy()
-        x.flags.writeable = False
-        data.append(x.data)
+        data.append(self.x.tobytes())
         return hash(tuple(data))
 
     @property

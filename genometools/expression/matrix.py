@@ -113,9 +113,7 @@ class ExpMatrix(pd.DataFrame):
         data = []
         data.append(tuple(self.genes))
         data.append(tuple(self.samples))
-        X = self.X.copy()
-        X.flags.writeable = False
-        data.append(X.data)
+        data.append(self.X.tobytes())
         return hash(tuple(data))
 
     @property

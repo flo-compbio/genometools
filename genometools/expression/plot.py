@@ -62,7 +62,7 @@ def _read_colorscale(cmap_file):
         )
     return colorscale
 
-def get_heatmap(E, colorscale=None, title=None, emin=None, emax=None,
+def plot_heatmap(E, colorscale=None, title=None, emin=None, emax=None,
                  width=800, height=400,
                  margin_left=100, margin_bottom=60, margin_top=30,
                  colorbar_label='Expression', colorbar_size=0.4,
