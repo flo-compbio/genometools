@@ -71,7 +71,7 @@ def plot_heatmap(E, colorscale=None, title=None, emin=None, emax=None,
                  xtick_angle = 30,
                  font = '"Droid Serif", "Open Serif", serif',
                  font_size = 12, title_font_size = None,
-                 show_sample_labels = True):
+                 show_sample_labels = True, **kwargs):
     
     assert isinstance(E, ExpMatrix)
 
@@ -110,6 +110,7 @@ def plot_heatmap(E, colorscale=None, title=None, emin=None, emax=None,
             colorscale = colorscale,
             colorbar = colorbar,
             hoverinfo = 'x+y+z',
+            **kwargs
         ),
     ]
 

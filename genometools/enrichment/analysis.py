@@ -64,7 +64,6 @@ class GSEAnalysis(object):
     geneset_db: `genometools.basic.GeneSetDB` object
         The gene set database.
     """
-
     def __init__(self, genome, gene_set_db):
 
         assert isinstance(genome, ExpGenome)
@@ -74,7 +73,7 @@ class GSEAnalysis(object):
         self.gene_set_db = gene_set_db
 
         # generate annotation matrix by going over all gene sets
-        logger.info('Generating gene x GO term matrix...')
+        logger.info('Generating gene-by-gene set membership matrix...')
         self.A = np.zeros((genome.p, gene_set_db.n), dtype=np.uint8)
         for j, gs in enumerate(self.gene_set_db.gene_sets):
             for g in gs.genes:
@@ -123,8 +122,9 @@ class GSEAnalysis(object):
         if escore_pval_thresh is None:
             # if no separate E-score p-value threshold is specified, use the
             # p-value threshold (this results in very conservative E-scores)
-            logger.warning('Setting the E-score p-value threshold to the ' +
-            'global significance threshold results in conservative E-scores.')
+            logger.warning('Setting the E-score p-value threshold to the '
+                           'global significance threshold results in '
+                           'conservative E-scores.')
             escore_pval_thresh = pval_thresh
 
         # test only some terms?

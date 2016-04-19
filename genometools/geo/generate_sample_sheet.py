@@ -20,6 +20,10 @@
 
 """
 
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 import sys
 import os
 
@@ -60,7 +64,7 @@ def get_argument_parser():
 
 def read_series_matrix(path):
     """Read the series matrix."""
-    assert isinstance(path, (str, unicode))
+    assert isinstance(path, str)
 
     accessions = None
     titles = None

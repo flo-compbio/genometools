@@ -1,5 +1,5 @@
 ..
-    Copyright (c) 2015 Florian Wagner
+    Copyright (c) 2015, 2016 Florian Wagner
     
     This file is part of GenomeTools.
     
