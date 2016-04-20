@@ -23,15 +23,16 @@ from builtins import *
 import os
 import io
 import logging
-from collections import OrderedDict, Iterable
+from collections import OrderedDict
 
 import unicodecsv as csv
-import numpy as np
+# import numpy as np
 
-from genometools import misc
+# from genometools import misc
 from .gene import ExpGene
 
 logger = logging.getLogger(__name__)
+
 
 class ExpGenome(object):
     """A complete set of genes in a gene expression analysis.
@@ -59,15 +60,16 @@ class ExpGenome(object):
 
         self._genes = OrderedDict([g.name, g] for g in genes)
         self._gene_names = tuple(self._genes.keys())
-        self._gene_indices = OrderedDict([g.name, i] for i, g in enumerate(genes))
+        self._gene_indices = OrderedDict([g.name, i]
+                                         for i, g in enumerate(genes))
         logger.debug('Initialized ExpGenome with %d genes.', self.p)
 
     def __repr__(self):
         return '<%s object (%d genes; hash = %d)>' \
-                %(self.__class__.__name__, self.p, hash(self))
+                % (self.__class__.__name__, self.p, hash(self))
 
     def __str__(self):
-        return '<%s object (%d genes)>' %(self.__class__.__name__, self.p)
+        return '<%s object (%d genes)>' % (self.__class__.__name__, self.p)
 
     def __getitem__(self, key):
         """Simple interface for accessing genes.
@@ -144,7 +146,7 @@ class ExpGenome(object):
         try:
             return self._genes[name]
         except KeyError:
-            raise ValueError('No gene with name "%s"!' %(name))
+            raise ValueError('No gene with name "%s"!' % name)
 
     def get_by_index(self, i):
         """Look up a gene by its index.
@@ -161,7 +163,7 @@ class ExpGenome(object):
         """
         if i >= self.p:
             raise ValueError('Index %d out of bounds '
-                    'for genome with %d genes.' %(i, self.p))
+                             'for genome with %d genes.' % (i, self.p))
 
         return self._genes[self._gene_names[i]]
 
@@ -186,10 +188,10 @@ class ExpGenome(object):
         try:
             return self._gene_indices[gene_name]
         except KeyError:
-            raise ValueError('No gene with name "%s"!' %(gene_name))
+            raise ValueError('No gene with name "%s"!' % gene_name)
 
     @classmethod
-    def read_tsv(cls, path, enc = 'UTF-8'):
+    def read_tsv(cls, path, enc='UTF-8'):
         """Read genes from tab-delimited text file.
 
         Parameters
@@ -205,12 +207,12 @@ class ExpGenome(object):
         """
         genes = []
         with io.open(path, 'rb') as fh:
-            reader = csv.reader(fh, dialect = 'excel-tab', encoding = enc)
+            reader = csv.reader(fh, dialect='excel-tab', encoding=enc)
             for l in reader:
                 genes.append(ExpGene.from_list(l))
         return cls(genes)
 
-    def write_tsv(self, path, enc = 'UTF-8'):
+    def write_tsv(self, path, enc='UTF-8'):
         """Write genes to tab-delimited text file in alphabetical order.
 
         Parameters
@@ -225,8 +227,10 @@ class ExpGenome(object):
         None
         """
         with io.open(path, 'wb') as ofh:
-            writer = csv.writer(ofh, dialect = 'excel-tab', encoding = enc,
-                    lineterminator = os.linesep, quoting = csv.QUOTE_NONE)
+            writer = csv.writer(
+                ofh, dialect='excel-tab', encoding=enc,
+                lineterminator=os.linesep, quoting=csv.QUOTE_NONE
+            )
             for g in self.genes:
                 writer.writerow(g.to_list())
         logger.info('Wrote %d genes to file "%s".', self.p, path)

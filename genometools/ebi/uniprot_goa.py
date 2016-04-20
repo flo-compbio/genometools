@@ -1,6 +1,10 @@
 """Functions for working with UniProt-GOA data."""
 
-import io
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
+# import io
 
 from genometools import misc
 
@@ -9,19 +13,18 @@ def get_gaf_gene_ontology_file(path):
 
     Parameters
     ----------
-    path: str or unicode
+    path: str
         The path name of the GO annotation file.
 
     Returns
     -------
-    unicode
+    str
         The URL of the associated gene ontology file.
     """
-    assert isinstance(path, (str, unicode))
+    assert isinstance(path, str)
 
     version = None
-    with misc.smart_open_read(path, mode = 'r', encoding = 'UTF-8',
-            try_gzip = True) as fh:
+    with misc.smart_open_read(path, encoding='UTF-8', try_gzip=True) as fh:
         for l in fh:
             if l[0] != '!':
                 break

@@ -20,6 +20,10 @@ Class supports unicode using UTF-8.
 
 """
 
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 import os
 import io
 import logging
@@ -31,6 +35,7 @@ import unicodecsv as csv
 from . import GeneSet
 
 logger = logging.getLogger(__name__)
+
 
 class GeneSetDB(object):
     """A gene set database.
@@ -59,15 +64,16 @@ class GeneSetDB(object):
 
         self._gene_sets = OrderedDict([gs.id, gs] for gs in gene_sets)
         self._gene_set_ids = tuple(self._gene_sets.keys())
-        self._gene_set_indices = OrderedDict([gs.id, i]
-                for i, gs in enumerate(self._gene_sets.itervalues()))
+        self._gene_set_indices = OrderedDict(
+            [gs.id, i] for i, gs in enumerate(self._gene_sets.values())
+        )
 
     def __repr__(self):
         return '<%s object (n=%d; hash=%d)>' \
-                %(self.__class__.__name__, self.n, hash(self))
+                % (self.__class__.__name__, self.n, hash(self))
 
     def __str__(self):
-        return '<%s object (n=%d)>' %(self.__class__.__name__, self.n)
+        return '<%s object (n=%d)>' % (self.__class__.__name__, self.n)
 
     def __getitem__(self, key):
         """Simple interface for querying the database.
@@ -124,7 +130,7 @@ class GeneSetDB(object):
         try:
             return self._gene_sets[id_]
         except KeyError:
-            raise ValueError('No gene set with ID "%s"!' %(id_))
+            raise ValueError('No gene set with ID "%s"!' % id_)
 
     def get_by_index(self, i):
         """Look up a gene set by its index.
@@ -145,8 +151,8 @@ class GeneSetDB(object):
             If the given index is out of bounds.
         """
         if i >= self.n:
-            raise ValueError('Index %d out of bounds ' %(i) +
-                    'for database with %d gene sets.' %(self.n))
+            raise ValueError('Index %d out of bounds ' % i +
+                             'for database with %d gene sets.' % self.n)
         return self._gene_sets[self._gene_set_ids[i]]
 
     def index(self, id_):
@@ -170,16 +176,18 @@ class GeneSetDB(object):
         try:
             return self._gene_set_indices[id_]
         except KeyError:
-            raise ValueError('No gene set with ID "%s"!' %(id_))
+            raise ValueError('No gene set with ID "%s"!' % id_)
 
     @classmethod
-    def read_tsv(cls, path, encoding = 'utf-8'):
+    def read_tsv(cls, path, encoding='utf-8'):
         """Read a gene set database from a tab-delimited text file.
 
         Parameters
         ----------
-        path: str or unicode
+        path: str
             The path name of the the file.
+        encoding: str
+            The encoding of the text file.
 
         Returns
         -------
@@ -188,8 +196,7 @@ class GeneSetDB(object):
         gene_sets = []
         n = 0
         with open(path, 'rb') as fh:
-            reader = csv.reader(fh, dialect = 'excel-tab',
-                                encoding = encoding)
+            reader = csv.reader(fh, dialect='excel-tab', encoding=encoding)
             for l in reader:
                 n += 1
                 gs = GeneSet.from_list(l)
@@ -211,13 +218,15 @@ class GeneSetDB(object):
         None
         """
         with open(path, 'wb') as ofh:
-            writer = csv.writer(ofh, dialect = 'excel-tab',
-                quoting = csv.QUOTE_NONE, lineterminator = os.linesep)
-            for gs in self._gene_sets.itervalues():
+            writer = csv.writer(
+                ofh, dialect='excel-tab',
+                quoting=csv.QUOTE_NONE, lineterminator=os.linesep
+            )
+            for gs in self._gene_sets.values():
                 writer.writerow(gs.to_list())
 
     @classmethod
-    def read_msigdb_xml(cls, path, entrez2gene, species = None):
+    def read_msigdb_xml(cls, path, entrez2gene, species=None):
         """Read the complete MSigDB database from an XML file.
 
         The XML file can be downloaded from here:
@@ -238,9 +247,9 @@ class GeneSetDB(object):
         GeneSetDB
             The gene set database containing the MSigDB gene sets.
         """
-        assert isinstance(path, (str, unicode))
+        assert isinstance(path, str)
         assert isinstance(entrez2gene, (dict, OrderedDict))
-        assert species is None or isinstance(species, (str, unicode))
+        assert species is None or isinstance(species, str)
 
         logger.debug('Path: %s', path)
         logger.debug('entrez2gene type: %s', str(type(entrez2gene)))
@@ -284,35 +293,35 @@ class GeneSetDB(object):
 
             if not genes:
                 logger.warning('Gene set "%s" (%s) has no known genes!',
-                        name, id_)
+                               name, id_)
                 return True
 
-            gs = GeneSet(id_, name, genes, source = src,
-                    collection = coll, description = desc)
+            gs = GeneSet(id_, name, genes, source=src,
+                         collection=coll, description=desc)
             gene_sets.append(gs)
             i[0] += 1
             return True
 
         # parse the XML file using the xmltodict package
         with io.open(path, 'rb') as fh:
-            xmltodict.parse(fh.read(), encoding = 'UTF-8', item_depth = 2,
-                    item_callback = handle_item)
+            xmltodict.parse(fh.read(), encoding='UTF-8', item_depth=2,
+                            item_callback=handle_item)
 
         # report some statistics
         if species_excl[0] > 0:
             kept = total_gs[0] - species_excl[0]
             perc = 100 * (kept / float(total_gs[0]))
-            logger.info('%d of all %d gene sets (%.1f %%) belonged to the ' +
-                    'specified species.', kept, total_gs[0], perc)
+            logger.info('%d of all %d gene sets (%.1f %%) belonged to the '
+                        'specified species.', kept, total_gs[0], perc)
 
         if unknown_entrezid[0] > 0:
             unkn = unknown_entrezid[0]
-            #known = total_genes[0] - unknown_entrezid[0]
+            # known = total_genes[0] - unknown_entrezid[0]
             perc = 100 * (unkn / float(total_genes[0]))
             logger.warning('%d of a total of %d genes (%.1f %%) had an ' +
-                    'unknown Entrez ID.', unkn, total_genes[0], perc)
+                           'unknown Entrez ID.', unkn, total_genes[0], perc)
 
         logger.info('Parsed %d entries, resulting in %d gene sets.',
-                total_gs[0], len(gene_sets))
+                    total_gs[0], len(gene_sets))
 
         return cls(gene_sets)

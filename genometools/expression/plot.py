@@ -62,16 +62,18 @@ def _read_colorscale(cmap_file):
         )
     return colorscale
 
-def get_heatmap(E, colorscale=None, title=None, emin=None, emax=None,
-                 width=800, height=400,
-                 margin_left=100, margin_bottom=60, margin_top=30,
-                 colorbar_label='Expression', colorbar_size=0.4,
-                 yaxis_label = 'Genes', xaxis_label = 'Samples',
-                 yaxis_nticks = None, xaxis_nticks = None,
-                 xtick_angle = 30,
-                 font = '"Droid Serif", "Open Serif", serif',
-                 font_size = 12, title_font_size = None,
-                 show_sample_labels = True):
+def get_heatmap(
+        E, colorscale=None, title=None, emin=None, emax=None,
+        width=800, height=400,
+        margin_left=100, margin_bottom=60, margin_top=30,
+        colorbar_label='Expression', colorbar_size=0.4,
+        yaxis_label = 'Genes', xaxis_label = 'Samples',
+        yaxis_nticks = None, xaxis_nticks = None,
+        xtick_angle = 30,
+        font = '"Droid Serif", "Open Serif", serif',
+        font_size = 12, title_font_size = None,
+        show_sample_labels = True
+    ):
     
     assert isinstance(E, ExpMatrix)
 

@@ -18,6 +18,10 @@
 
 """
 
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 import os
 import io
 import errno
@@ -37,7 +41,7 @@ logger = logging.getLogger(__name__)
 def try_open_gzip(path):
     fh = None
     try:
-        gzip.open(path).next()
+        next(gzip.open(path))
     except IOError:
         pass
     else:
@@ -53,7 +57,7 @@ def smart_open_read(path = None, mode = 'rb', encoding = None, try_gzip = False)
     """
 
     assert mode in ('r', 'rb')
-    assert path is None or isinstance(path, (str, unicode))
+    assert path is None or isinstance(path, str)
     assert isinstance (mode, str)
     assert encoding is None or isinstance(encoding, str)
     assert isinstance(try_gzip, bool)
@@ -132,7 +136,7 @@ def test_dir_writable(path):
 
     Parameters
     ----------
-    dir: str or unicode
+    dir: str
         The directory path.
 
     Returns
@@ -150,7 +154,7 @@ def test_file_writable(path):
 
     Parameters
     ----------
-    path: str or unicode
+    path: str
         The file path.
 
     Returns
@@ -176,7 +180,7 @@ def get_fize_size(path):
 
     Parameters
     ----------
-    path: str or unicode
+    path: str
         The file path.
 
     Returns
@@ -196,7 +200,7 @@ def get_url_size(url):
 
     Parameters
     ----------
-    url: str or unicode
+    url: str
         The URL.
 
     Returns
@@ -216,7 +220,7 @@ def make_sure_dir_exists(dir_, create_subfolders = False):
 
     Parameters
     ----------
-    dir: str or unicode
+    dir: str
         The directory path.
     create_subfolders: bool
         Whether to create any inexistent subfolders. (False)
@@ -230,7 +234,7 @@ def make_sure_dir_exists(dir_, create_subfolders = False):
     OSError
         If a file system error occurs.
     """
-    assert isinstance(dir_, (str, unicode))
+    assert isinstance(dir_, str)
     assert isinstance(create_subfolders, bool)
 
     try:
@@ -247,7 +251,7 @@ def get_file_size(path):
 
     Parameters
     ----------
-    path: str or unicode
+    path: str
         The path of the file.
 
     Returns
@@ -262,7 +266,7 @@ def get_file_size(path):
     OSError
         If a file system error occurs.
     """
-    assert isinstance(path, (str, unicode))
+    assert isinstance(path, str)
 
     if not os.path.isfile(path):
         raise IOError('File "%s" does not exist.', path)
@@ -274,7 +278,7 @@ def get_file_checksum(path):
 
     Parameters
     ----------
-    path: str or unicode
+    path: str
         The path of the file.
 
     Returns
@@ -287,7 +291,7 @@ def get_file_checksum(path):
     IOError
         If the file does not exist.
     """
-    assert isinstance(path, (str, unicode))
+    assert isinstance(path, str)
 
     if not os.path.isfile(path): # not a file
         raise IOError('File "%s" does not exist.' %(path))
@@ -305,7 +309,7 @@ def test_file_checksum(path, checksum):
 
     Parameters
     ----------
-    path: str or unicode
+    path: str
         The path of the file.
     checksum: int
         The checksum to compare.
@@ -320,7 +324,7 @@ def test_file_checksum(path, checksum):
     IOError
         If the file does not exist.
     """
-    assert isinstance(path, (str, unicode))
+    assert isinstance(path, str)
     assert isinstance(checksum, int)
 
     # calculate file checksum and compare to given checksum
@@ -353,7 +357,7 @@ def open_plain_or_gzip(fn, mode = 'rb'):
     """
 
     try:
-        gzip.open(fn, 'rb').next()
+        next(gzip.open(fn, 'rb'))
     except IOError:
         return io.open(fn, mode)
     else:
@@ -459,7 +463,7 @@ def read_single(path, encoding = 'UTF-8'):
 
     Parameters
     ----------
-    path: str or unicode
+    path: str
         The path of the file.
     enc: str, optional
         The file encoding.
@@ -470,7 +474,7 @@ def read_single(path, encoding = 'UTF-8'):
         A list containing the elements in the first column.
 
     """
-    assert isinstance(path, (str, unicode))
+    assert isinstance(path, str)
     data = []
     with smart_open_read(path, mode = 'rb', try_gzip = True) as fh:
         reader = csv.reader(fh, dialect = 'excel-tab', encoding = encoding)
@@ -485,7 +489,7 @@ def read_all(path, encoding = 'UTF-8'):
 
     Parameters
     ----------
-    path: str or unicode
+    path: str
         The path of the file.
     enc: str, optional
         The file encoding.
@@ -496,7 +500,7 @@ def read_all(path, encoding = 'UTF-8'):
         A list, which each element containing the contents of a row
         (as a tuple).
     """
-    assert isinstance(path, (str, unicode))
+    assert isinstance(path, str)
     data = []
     with smart_open_read(path, mode = 'rb', try_gzip = True) as fh:
         reader = csv.reader(fh, dialect = 'excel-tab', encoding = encoding)

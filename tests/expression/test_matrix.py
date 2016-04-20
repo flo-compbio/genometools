@@ -26,26 +26,29 @@ import numpy as np
 from genometools.expression import ExpMatrix
 from genometools.expression import ExpProfile
 
+
 @pytest.fixture
-def E():
-    genes = ['a','b','c','d']
-    samples = ['s1','s2','s3']
+def E_test():
+    genes = ['a', 'b', 'c', 'd']
+    samples = ['s1', 's2', 's3']
     X = np.arange(12, dtype=np.float64).reshape(4, 3)
     E = ExpMatrix(genes=genes, samples=samples, X=X)
     return E
 
-def test_slice(E):
-    e = E.iloc[:,0]
+
+def test_slice(E_test):
+    e = E_test.iloc[:, 0]
     assert isinstance(e, ExpProfile)
 
-def test_write_read(tmpdir, E):
+
+def test_write_read(tmpdir, E_test):
     path = tmpdir.join('test.txt')
-    E.write_tsv(str(path))
+    E_test.write_tsv(str(path))
     data = open(str(path), mode='rb').read()
     h = hashlib.md5(data).hexdigest()
     assert h == 'd34bf3d376eb613e4fea894f7c9d601f'
     E2 = ExpMatrix.read_tsv(str(path))
     assert isinstance(E2, ExpMatrix)
-    assert E.index.equals(E2.index)
-    assert E.columns.equals(E2.columns)
-    assert E.equals(E2)
+    assert E_test.index.equals(E2.index)
+    assert E_test.columns.equals(E2.columns)
+    assert E_test.equals(E2)

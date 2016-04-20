@@ -1,6 +1,6 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 
-# Copyright (c) 2015 Florian Wagner
+# Copyright (c) 2015, 2016 Florian Wagner
 #
 # This file is part of GenomeTools.
 #
@@ -20,11 +20,15 @@
 
 """
 
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 import sys
 import os
-import argparse
-import logging
-from collections import Counter
+# import argparse
+# import logging
+# from collections import Counter
 
 import numpy as np
 
@@ -33,6 +37,7 @@ import unicodecsv as csv
 from genometools import misc
 from genometools import cli
 from genometools.gtf import parse_attributes
+
 
 def get_argument_parser():
     """Function to obtain the argument parser.
@@ -46,37 +51,44 @@ def get_argument_parser():
     This function is used by the `sphinx-argparse` extension for sphinx.
 
     """
-    str_type = cli.str_type
     file_mv = cli.file_mv
 
     desc = 'Extracts gene-level expression data from StringTie output.'
     parser = cli.get_argument_parser(desc)
 
-    parser.add_argument('-s', '--stringtie-file', required = True,
-        type = str_type, metavar = file_mv,
-        help="""Path of the StringTie output file .""")
+    parser.add_argument(
+        '-s', '--stringtie-file', type=str, required=True, metavar=file_mv,
+        help="""Path of the StringTie output file ."""
+    )
 
-    parser.add_argument('-g', '--gene-file', required = True,
-        type = str_type, metavar = file_mv,
-        help="""File containing a list of protein-coding genes.""")
+    parser.add_argument(
+        '-g', '--gene-file', type=str, required=True, metavar=file_mv,
+        help="""File containing a list of protein-coding genes."""
+    )
 
-    parser.add_argument('--no-novel-transcripts', action = 'store_true',
-        help="""Ignore novel transcripts.""")
+    parser.add_argument(
+        '--no-novel-transcripts', action='store_true',
+        help="""Ignore novel transcripts."""
+    )
 
-    #parser.add_argument('--ambiguous-transcripts', default = 'ignore',
-    #    help="""Strategy for counting expression of ambiguous novel transcripts."""
-    # possible strategies for ambiguous transcritps: 'ignore','highest','all'
-    # currently we 
+    # parser.add_argument(
+    #     '--ambiguous-transcripts', default = 'ignore',
+    #      help='Strategy for counting expression of ambiguous novel '
+    #            'transcripts.'
+    # )
+    # possible strategies for ambiguous transcripts: 'ignore','highest','all'
 
-    parser.add_argument('-o', '--output-file', required = True,
-        type = str_type, metavar = file_mv,
-        help="""Path of output file.""")
+    parser.add_argument(
+        '-o', '--output-file', type=str, required=True, metavar=file_mv,
+        help="""Path of output file."""
+    )
 
     cli.add_reporting_args(parser)
 
     return parser
 
-def main(args = None):
+
+def main(args=None):
     """Extracts gene-level expression data from StringTie output.
 
     Parameters
@@ -106,8 +118,7 @@ def main(args = None):
     quiet = args.quiet
     verbose = args.verbose
 
-    logger = misc.get_logger(log_file = log_file, quiet = quiet,
-            verbose = verbose)
+    logger = misc.get_logger(log_file=log_file, quiet=quiet, verbose=verbose)
 
     # read list of gene symbols
     logger.info('Reading gene data...')
@@ -136,20 +147,22 @@ def main(args = None):
                 try:
                     g = stringtie_genes[attr['gene_id']]
                 except KeyError:
-                    stringtie_genes[attr['gene_id']] = set([ref_gene])
+                    stringtie_genes[attr['gene_id']] = {ref_gene, }
                 else:
                     g.add(ref_gene)
-    logger.info('Associated %d gene IDs with gene symbols.', len(stringtie_genes))
-    #C = Counter(len(v) for v in stringtie_genes.itervalues())
-    gene_ids_ambiguous = [k for k,v in stringtie_genes.iteritems() if len(v) > 1]
+    logger.info('Associated %d gene IDs with gene symbols.',
+                len(stringtie_genes))
+    # C = Counter(len(v) for v in stringtie_genes.itervalues())
+    gene_ids_ambiguous = [k for k, v in stringtie_genes.items()
+                          if len(v) > 1]
     n = len(gene_ids_ambiguous)
     logger.info('%d / %d associated with multiple gene symbols (%.1f%%).',
-            n, len(stringtie_genes), 100 * (n / float(len(stringtie_genes))))
+                n, len(stringtie_genes), 100*(n/float(len(stringtie_genes))))
 
     # read StringTie output file and summarize FPKM and TPM per gene
     n = len(genes)
-    fpkm = np.zeros(n,dtype=np.float64)
-    tpm = np.zeros(n,dtype=np.float64)
+    fpkm = np.zeros(n, dtype=np.float64)
+    tpm = np.zeros(n, dtype=np.float64)
     fpkm_novel_gene = 0
     fpkm_unknown_gene_name = 0
     fpkm_novel_trans = 0
@@ -195,7 +208,7 @@ def main(args = None):
                             g = list(assoc)[0]
  
             try:
-                idx = misc.bisect_index(genes,g)
+                idx = misc.bisect_index(genes, g)
             except ValueError:
                 fpkm_unknown_gene_name += f
                 logger.warning('Unknown gene name: "%s".', g)
@@ -205,39 +218,44 @@ def main(args = None):
             fpkm[idx] += f
             tpm[idx] += t
 
-    ignored_fpkm = None
+    # ignored_fpkm = None
     if no_novel_transcripts:
         ignored_fpkm = fpkm_novel_trans + fpkm_unknown_gene_name
     else:
         ignored_fpkm = fpkm_novel_gene + fpkm_ambig + fpkm_unknown_gene_name
     total_fpkm = np.sum(fpkm) + ignored_fpkm
     logger.info('Ignored %.1f / %.1f FPKM (%.1f%%)', ignored_fpkm,
-            total_fpkm, 100*(ignored_fpkm / total_fpkm))
+                total_fpkm, 100*(ignored_fpkm/total_fpkm))
 
     if no_novel_transcripts and fpkm_novel_trans > 0:
         logger.info('Ignored %.1f FPKM from novel transcripts (%.1f%%).',
-                fpkm_novel_trans, 100*(fpkm_novel_trans / total_fpkm))
+                    fpkm_novel_trans, 100*(fpkm_novel_trans/total_fpkm))
 
     else:
         if fpkm_novel_gene > 0:
-            logger.info('Ignored %.1f FPKM from transcripts of novel genes (%.1f%%).',
-                    fpkm_novel_gene, 100*(fpkm_novel_gene / total_fpkm))
+            logger.info('Ignored %.1f FPKM from transcripts of novel genes '
+                        '(%.1f%%).',
+                        fpkm_novel_gene, 100*(fpkm_novel_gene/total_fpkm))
 
         if fpkm_ambig > 0:
-            logger.info('Ignored %.1f FPKM from transcripts with ambiguous gene membership (%.1f%%).',
-                    fpkm_ambig, 100*(fpkm_ambig / total_fpkm))
+            logger.info('Ignored %.1f FPKM from transcripts with ambiguous '
+                        'gene membership (%.1f%%).',
+                        fpkm_ambig, 100*(fpkm_ambig/total_fpkm))
 
     if fpkm_unknown_gene_name > 0:
-        logger.info('Ignored %.1f FPKM from transcripts of genes with unknown names (%.1f%%).',
-                fpkm_unknown_gene_name, 100*(fpkm_unknown_gene_name / total_fpkm))
+        logger.info('Ignored %.1f FPKM from transcripts of genes with unknown '
+                    'names (%.1f%%).',
+                    fpkm_unknown_gene_name,
+                    100*(fpkm_unknown_gene_name/total_fpkm))
 
     # write output file
-    E = np.c_[fpkm,tpm]
-    with open(output_file,'w') as ofh:
-        writer = csv.writer(ofh, dialect = 'excel-tab',
-                lineterminator = os.linesep, quoting = csv.QUOTE_NONE)
-        for i,g in enumerate(genes):
-            writer.writerow([g] + ['%.5f' %(e) for e in E[i,:]])
+    E = np.c_[fpkm, tpm]
+    with open(output_file, 'w') as ofh:
+        writer = csv.writer(ofh, dialect='excel-tab',
+                            lineterminator=os.linesep,
+                            quoting=csv.QUOTE_NONE)
+        for i, g in enumerate(genes):
+            writer.writerow([g] + ['%.5f' % e for e in E[i, :]])
 
     return 0
 

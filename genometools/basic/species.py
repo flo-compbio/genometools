@@ -18,48 +18,54 @@
 
 """
 
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 class Species(object):
     """A species.
 
     Parameters
     ----------
-    name: str or unicode
+    name: str
         See :attr:`name` attribute.
-    common_name: str or unicode, optional
+    common_name: str, optional
         See :attr:`common_name` attribute. (None)
 
     Attributes
     ----------
     name: str
         The scientific name of the species (e.g., "Homo sapiens").
-    common_name: None or (str or unicode)
+    common_name: None or str
         The common name of the species (e.g., "human")
     """
-    def __init__(self, name, common_name = None):
+    def __init__(self, name, common_name=None):
         # checks
-        assert isinstance(name, (str, unicode))
-        assert common_name is None or isinstance(common_name, (str, unicode))
+        assert isinstance(name, str)
+        assert common_name is None or isinstance(common_name, str)
 
         self.name = name
         self.common_name = common_name
 
     def __repr__(self):
-        return '<Species "%s">' %(self.name)
+        return '<Species "%s">' % self.name
 
     def __str__(self):
         common = ''
         if self.common_name is not None:
-            common = ' ("%s")' %(self.common_name)
-        return '<Species "%s"%s>' %(self.name, common)
+            common = ' ("%s")' % self.common_name
+        return '<Species "%s"%s>' % (self.name, common)
 
     def __hash__(self):
-        data = []
-        data.append(self.name)
-        return hash(tuple(data))
+        data = (
+            self.name,
+        )
+        return hash(data)
 
     def __eq__(self, other):
         if self is other:

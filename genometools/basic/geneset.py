@@ -15,8 +15,12 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 """Module containing the `GeneSet` class.
-
 """
+
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 
 class GeneSet(object):
     """A gene set.
@@ -28,51 +32,51 @@ class GeneSet(object):
     
     Parameters
     ----------
-    id_: str or unicode
+    id_: str
         See :attr:`id` attribute.
-    name: str or unicode
+    name: str
         See :attr:`name` attribute.
-    genes: set, frozenset, list or tuple of (str or unicode)
+    genes: set, frozenset, list or tuple of str
         See :attr:`genes` attribute.
-    source: str or unicode, optional
+    source: str, optional
         See :attr:`source` attribute. (None)
-    collection: str or unicode, optional
+    collection: str, optional
         See :attr:`collection` attribute. (None)
-    description: str or unicode, optional
+    description: str, optional
         See :attr:`description` attribute. (None)
 
     Attributes
     ----------
-    id_: str or unicode
+    id_: str
         The (unique) ID of the gene set.
-    name: str or unicode
+    name: str
         The name of the gene set.
-    genes: frozenset of (str or unicode)
+    genes: frozenset of str
         The list of genes in the gene set.
-    source: None or (str or unicode)
+    source: None or str
         The source / origin of the gene set (e.g., "MSigDB")
-    collection: None or (str or unicode)
+    collection: None or str
         The collection that the gene set belongs to (e.g., "c4" for gene sets
         from MSigDB).
-    description: None or (str or unicode)
+    description: None or str
         The description of the gene set.
     """
 
-    def __init__(self, id_, name, genes, source = None,
-            collection = None, description = None):
+    def __init__(self, id_, name, genes,
+                 source=None, collection=None, description=None):
 
-        assert isinstance(id_, (str, unicode))
-        assert isinstance(name, (str, unicode))
+        assert isinstance(id_, str)
+        assert isinstance(name, str)
         assert isinstance(genes, (list, tuple, set, frozenset))
         for g in genes:
-            assert isinstance(g, (str, unicode))
+            assert isinstance(g, str)
 
         if source is not None:
-            assert isinstance(source, (str, unicode))
+            assert isinstance(source, str)
         if collection is not None:
-            assert isinstance(collection, (str, unicode))
+            assert isinstance(collection, str)
         if description is not None:
-            assert isinstance(description, (str, unicode))
+            assert isinstance(description, str)
 
         self.id = id_
         self.name = name
@@ -83,19 +87,19 @@ class GeneSet(object):
 
     def __repr__(self):
 
-        src_str = unicode(self.source)
-        coll_str = unicode(self.collection)
-        desc_str = unicode(self.description)
+        # src_str = str(self.source)
+        # coll_str = str(self.collection)
+        # desc_str = str(self.description)
 
-        return '<%s "%s" (id=%s; source=%s; collection=%s; size=%d; hash=%d)>' \
-                %(self.__class__.__name__, self.name,
-                    self.id, self.source, self.collection,
-                    self.size, hash(self))
+        return '<%s "%s" (id=%s; source=%s; collection=%s; size=%d; hash=%d)>'\
+                % (self.__class__.__name__, self.name,
+                   self.id, self.source, self.collection,
+                   self.size, hash(self))
 
     def __str__(self):
         return '<%s "%s" (id=%s; source=%s; collection=%s; size=%d)>' \
-                %(self.__class__.__name__, self.name,
-                    self.id, self.source, self.collection, self.size)
+                % (self.__class__.__name__, self.name,
+                   self.id, self.source, self.collection, self.size)
 
     def __eq__(self, other):
         if self is other:
@@ -109,14 +113,15 @@ class GeneSet(object):
         return not (self == other)
 
     def __hash__(self):
-        data = []
-        data.append(self.id)
-        data.append(self.name)
-        data.append(self.genes)
-        data.append(self.source)
-        data.append(self.collection)
-        data.append(self.description)
-        return hash(tuple(data))
+        data = (
+            self.id,
+            self.name,
+            self.genes,
+            self.source,
+            self.collection,
+            self.description
+        )
+        return hash(data)
 
     @property
     def size(self):
@@ -130,8 +135,7 @@ class GeneSet(object):
 
         Parameters
         ----------
-        None
-        
+
         Returns
         -------
         list of str
@@ -158,7 +162,7 @@ class GeneSet(object):
 
         Parameters
         ----------
-        l: list or tuple of (str or unicode)
+        l: list or tuple of str
             A list of strings representing gene set ID, name, genes,
             source, collection, and description. The genes must be
             comma-separated. See also :meth:`to_list`.
