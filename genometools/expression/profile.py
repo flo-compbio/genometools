@@ -102,9 +102,7 @@ class ExpProfile(pd.Series):
         data = []
         data.append(tuple(self.genes))
         data.append(tuple(self.label))
-        x = self.x.copy()
-        x.flags.writeable = False
-        data.append(x.data)
+        data.append(self.x.tobytes())
         return hash(tuple(data))
 
     @property
@@ -118,7 +116,7 @@ class ExpProfile(pd.Series):
     @property
     def p(self):
         """The number of genes."""
-        #return len(self.genes)
+        # return len(self.genes)
         return self.shape[0]
 
     @property
@@ -153,7 +151,6 @@ class ExpProfile(pd.Series):
 
         Parameters
         ----------
-        None
 
         Returns
         -------
@@ -164,7 +161,7 @@ class ExpProfile(pd.Series):
         genome = ExpGenome(genes)
         return genome
 
-    def sort_genes(self, stable = False):
+    def sort_genes(self, stable=False):
         """Sort the rows of the profile alphabetically by gene name.
 
         Parameters
@@ -179,7 +176,7 @@ class ExpProfile(pd.Series):
         kind = 'quicksort'
         if stable:
             kind = 'mergesort'
-        self.sort_index(kind = kind)
+        self.sort_index(kind=kind)
 
     def filter_against_genome(self, genome):
         """Filter the expression matrix against a genome (set of genes).
@@ -199,7 +196,7 @@ class ExpProfile(pd.Series):
         return self.loc[self.index & genome.genes]
 
     @classmethod
-    def read_tsv(cls, path, genome = None, encoding = 'UTF-8'):
+    def read_tsv(cls, path, genome=None, encoding='UTF-8'):
         """Read expression profile from a tab-delimited text file.
 
         Parameters
@@ -225,8 +222,8 @@ class ExpProfile(pd.Series):
 
         # "squeeze = True" ensures that a pd.read_tsv returns a series
         # as long as there is only one column
-        e = cls(pd.read_csv(path, sep = '\t', index_col = 0, header = 0,
-                         encoding = encoding, squeeze = True))
+        e = cls(pd.read_csv(path, sep='\t', index_col=0, header=0,
+                            encoding=encoding, squeeze=True))
 
         if genome is not None:
             # filter genes
@@ -234,7 +231,7 @@ class ExpProfile(pd.Series):
 
         return e
 
-    def write_tsv(self, path, encoding = 'UTF-8'):
+    def write_tsv(self, path, encoding='UTF-8'):
         """Write expression matrix to a tab-delimited text file.
 
         Parameters
@@ -256,9 +253,9 @@ class ExpProfile(pd.Series):
             sep = sep.encode('UTF-8')
 
         self.to_csv(
-            path, sep = sep, float_format = '%.5f', mode = 'w',
-            encoding = encoding, header = True
+            path, sep=sep, float_format='%.5f', mode='w',
+            encoding=encoding, header=True
         )
 
         logger.info('Wrote expression profile "%s" with %d genes to "%s".',
-                self.name, self.p, path)
+                    self.name, self.p, path)

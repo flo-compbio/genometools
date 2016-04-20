@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 
 # Copyright (c) 2015, 2016 Florian Wagner
 #
@@ -51,6 +51,10 @@ downloaded from the
 
 """
 
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 import sys
 import os
 import re
@@ -95,7 +99,16 @@ def main(args = None):
     int
         Exit code (0 if no error occurred).
  
+    Raises
+    ------
+    SystemError
+        If the version of the Python interpreter is not >= 2.7.
     """
+
+    vinfo = sys.version_info
+    if not (vinfo >= (2, 7)):
+        raise SystemError('Python interpreter version >= 2.7 required, '
+                          'found %d.%d instead.' %(vinfo.major, vinfo.minor))
 
     if args is None:
         # parse command-line arguments
@@ -156,7 +169,7 @@ def main(args = None):
         for l in reader:
             i += 1
             #if i % int(1e5) == 0:
-            #   print '\r%d...' %(i), ; sys.stdout.flush() # report progress
+            #   print('\r%d...' %(i), end=' '); sys.stdout.flush() # report progress
 
             if len(l) > 1 and l[2] == field_name:
 

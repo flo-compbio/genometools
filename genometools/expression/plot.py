@@ -23,19 +23,20 @@ from builtins import *
 import os
 import logging
 
-import pandas as pd
+# import pandas as pd
 import numpy as np
 
 import plotly.graph_objs as go
 
 from .. import _root
-from .. import misc
+# from .. import misc
 from . import ExpMatrix
 
 logger = logging.getLogger(__name__)
 
 default_cmap_file = _root.rstrip(os.sep) + os.sep + \
                     os.sep.join(['data', 'RdBu_r_colormap.tsv'])
+
 
 def _read_colorscale(cmap_file):
     """Return a colorscale in the format that plotly expects it.
@@ -50,30 +51,30 @@ def _read_colorscale(cmap_file):
     """
     assert isinstance(cmap_file, str)
 
-    cm = np.loadtxt(cmap_file, delimiter = '\t', dtype = np.float64)
-    x = cm[:,0]
-    rgb = np.int64(cm[:,1:]) # normalize to 0-1?
+    cm = np.loadtxt(cmap_file, delimiter='\t', dtype=np.float64)
+    # x = cm[:, 0]
+    rgb = np.int64(cm[:, 1:])  # normalize to 0-1?
     n = cm.shape[0]
     colorscale = []
     for i in range(n):
         colorscale.append(
-            [i / float(n - 1),
-             'rgb(%d, %d, %d)' %(rgb[i,0], rgb[i,1], rgb[i,2])]
+            [i / float(n-1),
+             'rgb(%d, %d, %d)' % (rgb[i, 0], rgb[i, 1], rgb[i, 2])]
         )
     return colorscale
+
 
 def get_heatmap(
         E, colorscale=None, title=None, emin=None, emax=None,
         width=800, height=400,
         margin_left=100, margin_bottom=60, margin_top=30,
         colorbar_label='Expression', colorbar_size=0.4,
-        yaxis_label = 'Genes', xaxis_label = 'Samples',
-        yaxis_nticks = None, xaxis_nticks = None,
-        xtick_angle = 30,
-        font = '"Droid Serif", "Open Serif", serif',
-        font_size = 12, title_font_size = None,
-        show_sample_labels = True
-    ):
+        yaxis_label='Genes', xaxis_label='Samples',
+        yaxis_nticks=None, xaxis_nticks=None,
+        xtick_angle=30,
+        font='"Droid Serif", "Open Serif", serif',
+        font_size=12, title_font_size=None,
+        show_sample_labels=True, **kwargs):
     
     assert isinstance(E, ExpMatrix)
 
@@ -91,27 +92,28 @@ def get_heatmap(
         title_font_size = font_size
 
     colorbar = dict(
-        lenmode = 'fraction',
-        len = colorbar_size,
-        title = colorbar_label,
-        titleside = 'right',
-        xpad = 0,
-        ypad = 0,
-        outlinewidth = 0, # no border
-        thickness = 20, # in pixels
-        #outlinecolor = '#000000',
+        lenmode='fraction',
+        len=colorbar_size,
+        title=colorbar_label,
+        titleside='right',
+        xpad=0,
+        ypad=0,
+        outlinewidth=0,  # no border
+        thickness=20,  # in pixels
+        # outlinecolor = '#000000',
     )
 
     data = [
         go.Heatmap(
-            z = E.X,
-            x = E.samples,
-            y = E.genes,
-            zmin = emin,
-            zmax = emax,
-            colorscale = colorscale,
-            colorbar = colorbar,
-            hoverinfo = 'x+y+z',
+            z=E.X,
+            x=E.samples,
+            y=E.genes,
+            zmin=emin,
+            zmax=emax,
+            colorscale=colorscale,
+            colorbar=colorbar,
+            hoverinfo='x+y+z',
+            **kwargs
         ),
     ]
 
@@ -120,31 +122,31 @@ def get_heatmap(
         xticks = ''
 
     if xaxis_label is not None:
-        xaxis_label = xaxis_label + ' (n = %d)' %(E.n)
+        xaxis_label = xaxis_label + ' (n = %d)' % E.n
 
     layout = go.Layout(
-        width = width,
-        height = height,
-        title = title,
-        titlefont = dict(size = title_font_size),
+        width=width,
+        height=height,
+        title=title,
+        titlefont=dict(size=title_font_size),
 
-        font = dict(size = font_size, family = font),
+        font=dict(size=font_size, family=font),
 
-        xaxis = dict(title = xaxis_label,
-                     titlefont = dict(size = title_font_size),
-                     showticklabels = show_sample_labels, ticks = xticks,
-                     nticks = xaxis_nticks, tickangle = xtick_angle,
-                     showline = True),
+        xaxis=dict(title=xaxis_label,
+                   titlefont=dict(size=title_font_size),
+                   showticklabels=show_sample_labels, ticks=xticks,
+                   nticks=xaxis_nticks, tickangle=xtick_angle,
+                   showline=True),
 
-        yaxis = dict(title = yaxis_label,
-                     titlefont = dict(size = title_font_size),
-                     nticks = yaxis_nticks, autorange = 'reversed',
-                     showline = True),
+        yaxis=dict(title=yaxis_label,
+                   titlefont=dict(size=title_font_size),
+                   nticks=yaxis_nticks, autorange='reversed',
+                   showline=True),
 
-        margin = dict(l = margin_left, t = margin_top, b = margin_bottom, r = 0,
-                      pad = 0),
+        margin=dict(l = margin_left, t=margin_top, b=margin_bottom, r=0,
+                    pad=0),
     )
 
-    fig = go.Figure(data = data, layout = layout)
+    fig = go.Figure(data=data, layout=layout)
 
     return fig

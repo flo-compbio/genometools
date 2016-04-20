@@ -92,6 +92,11 @@ def get_argument_parser():
 
 def main(args=None):
 
+    vinfo = sys.version_info
+    if not (vinfo >= (2, 7)):
+        raise SystemError('Python interpreter version >= 2.7 required, '
+                          'found %d.%d instead.' % (vinfo.major, vinfo.minor))
+
     if args is None:
         parser = get_argument_parser()
         args = parser.parse_args()
@@ -129,6 +134,7 @@ def main(args=None):
     f = 0
     genes = []
     X = []
+
     # g = None
     for i, e in enumerate(entrez):
         # print e

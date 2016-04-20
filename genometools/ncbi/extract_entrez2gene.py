@@ -142,7 +142,8 @@ def read_gene2acc(file_path, logger):
                 gene2acc[id_].append(symbol)
             except KeyError:
                 gene2acc[id_] = [symbol]
-            # print l[0],l[15]
+
+            # print (l[0],l[15])
 
     # make sure all EntrezIDs map to a unique gene symbol
     n = len(gene2acc)
@@ -195,8 +196,16 @@ def main(args=None):
     -------
     int
         Exit code (0 if no error occurred).
- 
+
+    Raises
+    ------
+    SystemError
+        If the version of the Python interpreter is not >= 2.7.
     """
+    vinfo = sys.version_info
+    if not (vinfo >= (2, 7)):
+        raise SystemError('Python interpreter version >= 2.7 required, '
+                          'found %d.%d instead.' % (vinfo.major, vinfo.minor))
 
     if args is None:
         parser = get_argument_parser()

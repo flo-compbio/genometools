@@ -465,7 +465,7 @@ def read_single(path, encoding = 'UTF-8'):
     ----------
     path: str
         The path of the file.
-    enc: str, optional
+    enc: str
         The file encoding.
 
     Returns

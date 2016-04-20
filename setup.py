@@ -17,6 +17,7 @@
 from __future__ import print_function
 
 # import sys
+
 import os
 import io
 
@@ -126,12 +127,12 @@ setup(
     },
 
     # data
-    package_data={'genometools': ['data/RdBu_r_colormap.tsv']},
+    # package_data={'genometools': ['data/RdBu_r_colormap.tsv']},
+    package_data={'genometools': ['data/*.tsv']},
 
     # data outside the package
     # data_files=[('my_data', ['data/data_file'])],
 
-    # executable scripts
     entry_points={
         'console_scripts': [
             # Ensembl scripts

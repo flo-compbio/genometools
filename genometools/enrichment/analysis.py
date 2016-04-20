@@ -25,7 +25,7 @@ from math import ceil
 
 import numpy as np
 
-import xlmhg
+from xlmhg import xlmhg_test
 
 # from ..basic import GeneSet, GeneSetDB
 from ..basic import GeneSetDB
@@ -56,17 +56,16 @@ class GSEAnalysis(object):
     ----------
     genome: `ExpGenome` object
         See :attr:`genome` attribute.
-    geneset_db: `GeneSetDB` object
+    gene_set_db: `GeneSetDB` object
         See :attr:`geneset_db` attribute.
 
     Attributes
     ----------
     genome: `ExpGenome` object
         The universe of genes.
-    geneset_db: `GeneSetDB` object
+    gene_set_db: `GeneSetDB` object
         The gene set database.
     """
-
     def __init__(self, genome, gene_set_db):
 
         assert isinstance(genome, ExpGenome)
@@ -76,7 +75,8 @@ class GSEAnalysis(object):
         self.gene_set_db = gene_set_db
 
         # generate annotation matrix by going over all gene sets
-        logger.info('Generating gene x GO term matrix...')
+        logger.info('Generating gene-by-gene set membership matrix...')
+
         self.A = np.zeros((genome.p, gene_set_db.n), dtype=np.uint8)
         for j, gs in enumerate(self.gene_set_db.gene_sets):
             for g in gs.genes:
@@ -140,6 +140,7 @@ class GSEAnalysis(object):
         # reorder rows in annotation matrix to match the given gene ranking
         # also exclude genes not in the ranking
         gene_indices = np.int64([self.genome.index(g) for g in ranked_genes])
+
         A = A[gene_indices, :]  # not a view either!
 
         # determine largest K
@@ -155,15 +156,15 @@ class GSEAnalysis(object):
 
         # find enriched GO terms
         logger.info('Testing %d gene sets for enrichment...', m)
-        logger.debug('(N = %d, X_frac = %.2f, X_min = %d, L = %d; K_max = %d)',
-                     len(ranked_genes), X_frac, X_min, L, K_max)
+        logger.debug('(N=%d, X_frac=%.2f, X_min=%d, L=%d; K_max=%d)',
+                    len(ranked_genes), X_frac, X_min, L, K_max)
 
         enriched = []
-        tested = 0 # number of tests conducted
-        N,m = A.shape
+        tested = 0  # number of tests conducted
+        N, m = A.shape
         for j in range(m):
             # determine gene set-specific value for X (based on K[j])
-            X = max(X_min, int(ceil(X_frac * float(K[j]))))
+            X = max(X_min, int(ceil(X_frac*float(K[j]))))
 
             # determine significance of gene set enrichment using XL-mHG test
             # (only if there are at least X gene set genes in the list)
@@ -173,8 +174,9 @@ class GSEAnalysis(object):
                 # we only need to perform the XL-mHG test if there are enough
                 # gene set genes at or above L'th rank (otherwise, pval = 1.0)
                 if K_lim[j] >= X:
+
                     v = np.ascontiguousarray(A[:, j])  # copy
-                    n, stat, pval = xlmhg.xlmhg_test(
+                    n, stat, pval = xlmhg_test(
                         v, X, L, K=int(K[j]),
                         table=mat, pval_thresh=pval_thresh
                     )
@@ -197,7 +199,7 @@ class GSEAnalysis(object):
 
         # report results
         q = len(enriched)
-        ignored = m - tested
+        ignored = m-tested
         if ignored > 0:
             logger.debug('%d / %d gene sets (%.1f%%) had less than X genes '
                          'annotated with them and were ignored.',
