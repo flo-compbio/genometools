@@ -20,7 +20,7 @@ before_install:
 - conda info -a
 install:
 - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
-    pytest coverage numpy cython pandas scipy
+    pip pytest coverage numpy cython pandas scipy
 - source activate test-environment
 - pip install codecov pytest-cov
 - pip install -e .

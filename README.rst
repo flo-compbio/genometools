@@ -18,7 +18,12 @@
 GenomeTools
 ===========
 
-|docs-latest| |docs-develop|
+| |pypi| |versions| |license|
+
+===========  =================================================
+**latest**   |docs-latest|
+**develop**  |travis-develop| |codecov-develop| |docs-develop|
+===========  =================================================
 
 GenomeTools is a collection of Python classes, functions, and scripts for
 analyzing genomic data. The library is compatible with Python 2.7 and 3.x.
@@ -62,14 +67,35 @@ Copyright (c) 2015, 2016 Florian Wagner
   You should have received a copy of the GNU General Public License
   along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+.. |pypi| image:: https://img.shields.io/pypi/v/genometools.svg
+    :target: https://pypi.python.org/pypi/genometools
+    :alt: PyPI version
+
+.. |versions| image:: https://img.shields.io/pypi/pyversions/genometools.svg
+    :target: https://pypi.python.org/pypi/genometools
+    :alt: Python versions supported
+
+.. |license| image:: https://img.shields.io/pypi/l/genometools.svg
+    :target: https://pypi.python.org/pypi/genometools
+    :alt: License
+
+.. |travis-develop| image:: https://travis-ci.org/flo-compbio/genometools.svg?branch=develop
+    :alt: Build Status (develop branch)
+    :scale: 100%
+    :target: https://travis-ci.org/flo-compbio/genometools
+
+.. |codecov-develop| image:: https://codecov.io/github/flo-compbio/genometools/coverage.svg?branch=develop
+    :alt: Coverage (develop branch)
+    :target: https://codecov.io/github/flo-compbio/genometools?branch=develop
+
 .. |docs-latest| image:: https://readthedocs.org/projects/genometools/badge/?version=latest
     :alt: Documentation Status (master branch)
     :scale: 100%
-    :target: https://genometools.readthedocs.org/en/latest/?badge=latest
+    :target: https://genometools.readthedocs.org/en/latest
 
 .. |docs-develop| image:: https://readthedocs.org/projects/genometools/badge/?version=develop
     :alt: Documentation Status (develop branch)
     :scale: 100%
-    :target: https://genometools.readthedocs.org/en/develop/?badge=develop
+    :target: https://genometools.readthedocs.org/en/develop
 
 .. _gtdocs: https://genometools.readthedocs.org/en/latest/
