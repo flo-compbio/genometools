@@ -18,7 +18,7 @@
 Changelog
 =========
 
-Version 2.0 (2016-??-??)
+Version 2.0rc1 (2016-04-21)
 ---------------------------
 
 - Made library compatible with both Python 2.7 and Pyhon 3.x
@@ -26,6 +26,7 @@ Version 2.0 (2016-??-??)
 - `expression.ExpMatrix` now subclasses the Pandas DataFrame,
   and `expression.ExpProfile` now subclasses the Pandas Series
 - New plotting API based on plotly in `expression.plot`
+- Warning: The package documentation is currently not up-to-date!
 
 Version 1.2.3 (2016-03-16)
 --------------------------

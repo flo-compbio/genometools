@@ -25,7 +25,6 @@ from setuptools import setup, find_packages, Command
 from os import path
 
 root = 'genometools'
-
 name = 'genometools'
 version = '2.0rc1'
 
