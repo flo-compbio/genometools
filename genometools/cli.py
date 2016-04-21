@@ -17,9 +17,13 @@
 """Functions for configuring command-line arguments of GenomeTools scripts.
 """
 
-import sys
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
+# import sys
 import argparse
-import textwrap
+# import textwrap
 
 import genometools
 
@@ -29,9 +33,12 @@ float_mv = '<float>'
 name_mv = '<name>'
 str_mv = '<str>'
 
-str_type = lambda s: unicode(s, sys.getfilesystemencoding())
+# def str_type(s):
+#    # return encode(s, sys.getfilesystemencoding())
+#    return str(s)
 
-def get_argument_parser(prog = None, desc = None, formatter_class = None):
+
+def get_argument_parser(prog=None, desc=None, formatter_class=None):
     """Create an argument parser.
 
     Parameters
@@ -40,6 +47,8 @@ def get_argument_parser(prog = None, desc = None, formatter_class = None):
         The program name.
     desc: str
         The program description.
+    formatter_class: argparse formatter class, optional
+        The argparse formatter class to use.
 
     Returns
     -------
@@ -49,18 +58,21 @@ def get_argument_parser(prog = None, desc = None, formatter_class = None):
     if formatter_class is None:
         formatter_class = argparse.RawTextHelpFormatter
 
-    parser = argparse.ArgumentParser(prog = prog, description = desc,
-            formatter_class = formatter_class, add_help = False)
+    parser = argparse.ArgumentParser(
+        prog=prog, description=desc,
+        formatter_class=formatter_class, add_help=False
+    )
 
     g = parser.add_argument_group('Help')
     g.add_argument('-h', '--help', action='help',
-            help='Show this help message and exit.')
+                   help='Show this help message and exit.')
 
     v = genometools.__version__
     g.add_argument('--version', action='version', version='GenomeTools ' + v,
-            help='Output the GenomeTools version and exit.')
+                   help='Output the GenomeTools version and exit.')
 
     return parser
+
 
 def add_reporting_args(parser):
     """Add reporting arguments to an argument parser.
@@ -76,14 +88,18 @@ def add_reporting_args(parser):
     """
     g = parser.add_argument_group('Reporting options')
 
-    g.add_argument('-l', '--log-file', default=None,
-            type = str_type, metavar = file_mv, help = textwrap.dedent("""\
-                Path of log file (if specified, report to stdout AND file."""))
+    g.add_argument(
+        '-l', '--log-file', default=None,
+        type=str, metavar=file_mv,
+        help='Path of log file (if specified, report to stdout AND file.'
+    )
 
     g.add_argument('-q', '--quiet', action='store_true',
-            help = 'Only output errors and warnings.')
+                   help='Only output errors and warnings.')
 
-    g.add_argument('-v', '--verbose', action='store_true',
-            help = 'Enable verbose output. Ignored if --quiet is specified.')
+    g.add_argument(
+        '-v', '--verbose', action='store_true',
+        help='Enable verbose output. Ignored if --quiet is specified.'
+    )
 
     return g

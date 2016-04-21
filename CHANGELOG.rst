@@ -1,5 +1,5 @@
 ..
-    Copyright (c) 2015 Florian Wagner
+    Copyright (c) 2015, 2016 Florian Wagner
     
     This file is part of GenomeTools.
     
@@ -15,9 +15,18 @@
     You should have received a copy of the GNU General Public License
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-
 Changelog
 =========
+
+Version 2.0rc1 (2016-04-21)
+---------------------------
+
+- Made library compatible with both Python 2.7 and Pyhon 3.x
+- New "enrichment" subpackage for testing gene set enrichment
+- `expression.ExpMatrix` now subclasses the Pandas DataFrame,
+  and `expression.ExpProfile` now subclasses the Pandas Series
+- New plotting API based on plotly in `expression.plot`
+- Warning: The package documentation is currently not up-to-date!
 
 Version 1.2.3 (2016-03-16)
 --------------------------

@@ -1,4 +1,4 @@
-# Copyright (c) 2015 Florian Wagner
+# Copyright (c) 2015, 2016 Florian Wagner
 #
 # This file is part of GenomeTools.
 #
@@ -16,7 +16,12 @@
 
 """Module containing the `FastaReader` class."""
 
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 from . import Sequence
+
 
 class FastaReader(object):
     """A FASTA file reader."""
@@ -28,7 +33,7 @@ class FastaReader(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         started = False
         name = None
         if self.cur_name is not None:
@@ -41,7 +46,7 @@ class FastaReader(object):
 
             try:
                 l = self.fh.next()
-            except StopIteration as e:
+            except StopIteration:
                 if started:
                     # we've read a sequence and now hit the end of the file
                     self.cur_name = None
@@ -63,7 +68,7 @@ class FastaReader(object):
                 name = l[1:-1]
 
             elif started:
-                if l[0] == '\n': # we've hit an empty line (= sequence end)
+                if l[0] == '\n':  # we've hit an empty line (= sequence end)
                     self.cur_name = None
                     break
                 seq.append(l[:-1])

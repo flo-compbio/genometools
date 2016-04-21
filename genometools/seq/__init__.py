@@ -1,2 +1,2 @@
-from sequence import Sequence
-from fasta import FastaReader
+from .sequence import Sequence
+from .fasta import FastaReader

@@ -18,6 +18,10 @@
 
 """
 
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -27,20 +31,20 @@ class ExpGene(object):
 
     Parameters
     ----------
-    name: str or unicode
+    name: str
         See :attr:`name` attribute.
-    chromosomes: list or tuple of (str or unicode), optional
+    chromosomes: list or tuple of str, optional
         See :attr:`chromosomes` attribute.
-    ensembl_ids: list or tuple of (str or unicode), optional
+    ensembl_ids: list or tuple of str, optional
         See :attr:`ensembl_ids` attribute.
 
     Attributes
     ----------
-    name: str or unicode
+    name: str
         The gene name (use the official gene symbol, if available).
-    chromosomes: None or tuple of (str or unicode)
+    chromosomes: None or tuple of str
         The chromosome(s) that the gene is located on.
-    ensembl_ids: None or tuple of (str or unicode)
+    ensembl_ids: None or tuple of str
         The Ensembl ID(s) of the gene.
 
     Notes
@@ -60,14 +64,14 @@ class ExpGene(object):
             ensembl_ids = []
 
         # checks
-        assert isinstance(name, (str, unicode))
+        assert isinstance(name, str)
         assert isinstance(chromosomes, (list, tuple))
         for chrom in chromosomes:
-            assert isinstance(chrom, (str, unicode))
+            assert isinstance(chrom, str)
 
         assert isinstance(ensembl_ids, (list, tuple))
         for id_ in ensembl_ids:
-            assert isinstance(id_, (str, unicode))
+            assert isinstance(id_, str)
 
         self.name = name
         self.chromosomes = tuple(chromosomes)
@@ -116,7 +120,7 @@ class ExpGene(object):
 
         Parameters
         ----------
-        l: list or tuple of (str or unicode)
+        l: list or tuple of str
             A list of strings representing gene name, chromosome(s), and
             Ensembl ID(s), respectively. See also :meth:`to_list`.
 
@@ -127,7 +131,7 @@ class ExpGene(object):
         assert isinstance(l, (list, tuple))
         assert len(l) == 3
         for i in range(3):
-            assert isinstance(l[i], (str, unicode))
+            assert isinstance(l[i], str)
 
         assert l[0] is not None # name has to be set
 

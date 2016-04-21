@@ -14,11 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+"""Package for gene set enrichment (GSE) analysis using the XL-mHG test.
+
+The `GSEAnalysis` class performs the tests, and the results are represented
+by `GSEResult` objects.
+"""
+
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import *
 
-from .geneset import GeneSet
-from .genesetdb import GeneSetDB
+from .result import GSEResult
+from .analysis import GSEAnalysis
 
-__all__ = ['GeneSet', 'GeneSetDB']
+__all__ = ['GSEResult', 'GSEAnalysis']

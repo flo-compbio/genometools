@@ -1,6 +1,6 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 
-# Copyright (c) 2015 Florian Wagner
+# Copyright (c) 2015, 2016 Florian Wagner
 #
 # This file is part of GenomeTools.
 #
@@ -30,52 +30,61 @@ __ ensembl_download_
 
 """
 
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 import sys
-import os
+# import os
 import re
 import textwrap
-import logging
+# import logging
 
 from genometools import misc
 from genometools import cli
 from genometools import ensembl
 from genometools.seq import FastaReader
 
+
 def get_argument_parser():
     """Returns an argument parser object for the script."""
 
     desc = 'Filter FASTA file by chromosome names.'
-    parser = cli.get_argument_parser(desc = desc)
+    parser = cli.get_argument_parser(desc=desc)
 
-    str_type = cli.str_type
-
-    parser.add_argument('-f','--fasta-file', default='-', type = str_type,
-            help = textwrap.dedent("""\
+    parser.add_argument(
+        '-f', '--fasta-file', default='-', type=str, help=textwrap.dedent("""\
                 Path of the FASTA file. The file may be gzip'ed.
                 If set to ``-``, read from ``stdin``."""))
 
-    parser.add_argument('-s', '--species', type = str_type,
-            choices = sorted(ensembl.species_chrompat.keys()), default = 'human',
-            help = textwrap.dedent("""\
-                Species for which to extract genes. (This parameter is ignored
-                if ``--chromosome-pattern`` is specified.)"""))
+    parser.add_argument(
+        '-s', '--species', type=str,
+        choices=sorted(ensembl.species_chrompat.keys()),
+        default='human', help=textwrap.dedent("""\
+            Species for which to extract genes. (This parameter is ignored
+            if ``--chromosome-pattern`` is specified.)""")
+    )
 
-    parser.add_argument('-c', '--chromosome-pattern', type = str_type,
-            required = False, default = None, help = textwrap.dedent("""\
-                Regular expression that chromosome names have to match.
-                If not specified, determine pattern based on the setting of
-                ``--species``."""))
+    parser.add_argument(
+        '-c', '--chromosome-pattern', type=str, required=False,
+        default=None, help=textwrap.dedent("""\
+            Regular expression that chromosome names have to match.
+            If not specified, determine pattern based on the setting of
+            ``--species``.""")
+    )
 
-    parser.add_argument('-o','--output-file', required = True, type = str_type,
-            help = textwrap.dedent("""\
-                Path of output file. If set to ``-``, print to ``stdout``,
-                and redirect logging messages to ``stderr``."""))
+    parser.add_argument(
+        '-o', '--output-file', type=str, required=True,
+        help=textwrap.dedent("""\
+            Path of output file. If set to ``-``, print to ``stdout``,
+            and redirect logging messages to ``stderr``."""))
 
     parser = cli.add_reporting_args(parser)
     
     return parser
 
-def main(args = None):
+
+def main(args=None):
     """Script body."""
 
     if args is None:
@@ -98,8 +107,8 @@ def main(args = None):
         # if we print output to stdout, redirect log messages to stderr
         log_stream = sys.stderr
 
-    logger = misc.get_logger(log_stream = log_stream, log_file = log_file,
-            quiet = quiet, verbose = verbose)
+    logger = misc.get_logger(log_stream=log_stream, log_file=log_file,
+                             quiet=quiet, verbose=verbose)
 
     # generate regular expression object from the chromosome pattern
     if chrom_pat is None:
@@ -109,10 +118,15 @@ def main(args = None):
     # filter the FASTA file
     # note: each chromosome sequence is temporarily read into memory,
     # so this script has a large memory footprint
-    with misc.smart_open(fasta_file, mode = 'r', try_gzip = True) as fh, \
-            misc.smart_open_write(output_file, mode = 'w') as ofh:
+    with \
+        misc.smart_open_read(
+            fasta_file, mode='r', encoding='ascii', try_gzip=True
+        ) as fh, \
+        misc.smart_open_write(
+            output_file, mode='w', encoding='ascii'
+        ) as ofh:
 
-        inside = False
+        # inside = False
         reader = FastaReader(fh)
         for seq in reader:
             chrom = seq.name.split(' ', 1)[0]

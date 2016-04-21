@@ -1,6 +1,6 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 
-# Copyright (c) 2015 Florian Wagner
+# Copyright (c) 2015, 2016 Florian Wagner
 #
 # This file is part of GenomeTools.
 #
@@ -20,21 +20,25 @@
 
 """
 
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 import sys
 import os
 
 import unicodecsv as csv
 
 from genometools import misc
-from genometools import ensembl
+# from genometools import ensembl
 from genometools import cli
+
 
 def get_argument_parser():
     """Create the argument parser for the script.
 
     Parameters
     ----------
-    None
 
     Returns
     -------
@@ -42,33 +46,37 @@ def get_argument_parser():
         The arguemnt parser.
     """
     desc = 'Generate a sample sheet based on a GEO series matrix.'
-    parser = cli.get_argument_parser(desc = desc)
+    parser = cli.get_argument_parser(desc=desc)
 
     g = parser.add_argument_group('Input and output files')
 
-    g.add_argument('-s', '--series-matrix-file', required = True,
-            type = cli.str_type, metavar = cli.file_mv,
-            help = 'The GEO series matrix file.')
+    g.add_argument(
+        '-s', '--series-matrix-file', type=str, required=True,
+        metavar=cli.file_mv, help='The GEO series matrix file.'
+    )
 
-    g.add_argument('-o', '--output-file', required = True,
-            type = cli.str_type, metavar = cli.file_mv,
-            help = 'The output file.')
+    g.add_argument(
+        '-o', '--output-file', type=str, required=True,
+        metavar=cli.file_mv, help='The output file.'
+    )
 
     cli.add_reporting_args(parser)
 
     return parser
 
+
 def read_series_matrix(path):
     """Read the series matrix."""
-    assert isinstance(path, (str, unicode))
+    assert isinstance(path, str)
 
     accessions = None
     titles = None
     celfile_urls = None
-    with misc.smart_open_read(path, mode = 'rb', try_gzip = True) as fh:
-        reader = csv.reader(fh, dialect = 'excel-tab')
+    with misc.smart_open_read(path, mode='rb', try_gzip=True) as fh:
+        reader = csv.reader(fh, dialect='excel-tab')
         for l in reader:
-            if not l: continue
+            if not l:
+                continue
             if l[0] == '!Sample_geo_accession':
                 accessions = l[1:]
             elif l[0] == '!Sample_title':
@@ -78,13 +86,15 @@ def read_series_matrix(path):
             elif l[0] == '!series_matrix_table_begin':
                 # we've read the end of the section containing metadata
                 break
-    return accessions,titles,celfile_urls
+    return accessions, titles, celfile_urls
 
-def write_sample_sheet(path, accessions, names, celfile_urls, sel = None):
+
+def write_sample_sheet(path, accessions, names, celfile_urls, sel=None):
     """Write the sample sheet."""
     with open(path, 'wb') as ofh:
-        writer = csv.writer(ofh, dialect = 'excel-tab',
-                lineterminator = os.linesep, quoting = csv.QUOTE_NONE)
+        writer = csv.writer(ofh, dialect='excel-tab',
+                            lineterminator=os.linesep,
+                            quoting=csv.QUOTE_NONE)
         # write header
         writer.writerow(['Accession', 'Name', 'CEL file', 'CEL file URL'])
         n = len(names)
@@ -92,10 +102,11 @@ def write_sample_sheet(path, accessions, names, celfile_urls, sel = None):
             sel = range(n)
         for i in sel:
             cf = celfile_urls[i].split('/')[-1]
-            row = [accessions[i], names[i], cf, celfile_urls[i]]
+            # row = [accessions[i], names[i], cf, celfile_urls[i]]
             writer.writerow([accessions[i], names[i], cf, celfile_urls[i]])
 
-def main(args = None):
+
+def main(args=None):
     """Script entry point."""
 
     if args is None:
@@ -105,14 +116,14 @@ def main(args = None):
     series_matrix_file = args.series_matrix_file
     output_file = args.output_file
 
-    log_file = args.log_file
-    quiet = args.quiet
-    verbose = args.verbose
+    # log_file = args.log_file
+    # quiet = args.quiet
+    # verbose = args.verbose
 
-    logger = misc.get_logger(log_file = log_file, quiet = quiet,
-            verbose = verbose)
+    # logger = misc.get_logger(log_file = log_file, quiet = quiet,
+    #        verbose = verbose)
 
-    accessions,titles,celfile_urls = read_series_matrix(series_matrix_file)
+    accessions, titles, celfile_urls = read_series_matrix(series_matrix_file)
     write_sample_sheet(output_file, accessions, titles, celfile_urls)
 
     return 0
