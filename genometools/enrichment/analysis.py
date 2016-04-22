@@ -157,7 +157,7 @@ class GSEAnalysis(object):
         # find enriched GO terms
         logger.info('Testing %d gene sets for enrichment...', m)
         logger.debug('(N=%d, X_frac=%.2f, X_min=%d, L=%d; K_max=%d)',
-                    len(ranked_genes), X_frac, X_min, L, K_max)
+                     len(ranked_genes), X_frac, X_min, L, K_max)
 
         enriched = []
         tested = 0  # number of tests conducted
@@ -176,9 +176,8 @@ class GSEAnalysis(object):
                 if K_lim[j] >= X:
 
                     v = np.ascontiguousarray(A[:, j])  # copy
-                    n, stat, pval = xlmhg_test(
-                        v, X, L, K=int(K[j]),
-                        table=mat, pval_thresh=pval_thresh
+                    stat, n_star, pval = xlmhg_test(
+                        v, X, L, K=int(K[j]), table=mat
                     )
 
                     # check if gene set is significantly enriched
@@ -187,7 +186,7 @@ class GSEAnalysis(object):
                         sel = np.nonzero(A[:, j])[0]  # indices of all the 1's
                         # k_n = np.sum(sel < n)
                         sel_genes = [ranked_genes[i] for i in sel]
-                        result = GSEResult(n, stat, pval, N, X, L, sel,
+                        result = GSEResult(n_star, stat, pval, N, X, L, sel,
                                            gene_set_db[j], sel_genes)
                         enriched.append(result)
 
@@ -203,7 +202,7 @@ class GSEAnalysis(object):
         if ignored > 0:
             logger.debug('%d / %d gene sets (%.1f%%) had less than X genes '
                          'annotated with them and were ignored.',
-                         ignored, m, 100 * (ignored / float(m)))
+                         ignored, m, 100*(ignored/float(m)))
 
         logger.info('%d / %d gene sets were found to be significantly '
                     'enriched (p-value <= %.1e).', q, m, pval_thresh)

@@ -26,7 +26,7 @@ import logging
 from collections import OrderedDict
 
 import unicodecsv as csv
-# import numpy as np
+import numpy as np
 
 # from genometools import misc
 from .gene import ExpGene
@@ -77,7 +77,7 @@ class ExpGenome(object):
         Depending on whether key is an integer or not, look up a gene
         either by index, or by name.
         """
-        if isinstance(key, int):
+        if isinstance(key, (int, np.integer)):
             return self.get_by_index(key)
         else:
             return self.get_by_name(key)
