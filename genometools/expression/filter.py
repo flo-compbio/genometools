@@ -28,21 +28,107 @@ from . import ExpMatrix
 
 logger = logging.getLogger(__name__)
 
-def filter_variance(E, top):
-    assert isinstance(E, ExpMatrix)
+
+def filter_variance(matrix, top):
+    """Filter genes in an expression matrix by variance.
+
+    Parameters
+    ----------
+    matrix: ExpMatrix
+        The expression matrix.
+    top: int
+        The number of genes to retain.
+
+    Returns
+    -------
+    ExpMatrix
+        The filtered expression matrix.
+    """
+    assert isinstance(matrix, ExpMatrix)
     assert isinstance(top, int)
 
-    if top >= E.p:
-        logger.warning('Variance filter with `top` parameter that is >= '
-                       'the number of genes!')
-        top = E.p
+    if top >= matrix.p:
+        logger.warning('Gene expression filter with `top` parameter that is '
+                       '>= the number of genes!')
+        top = matrix.p
 
-    a = np.argsort(np.var(E.X, axis=1))
+    a = np.argsort(np.var(matrix.X, axis=1))
     a = a[::-1]
     
-    sel = np.zeros(E.p, dtype=np.bool_)
+    sel = np.zeros(matrix.p, dtype=np.bool_)
     sel[a[:top]] = True
     sel = np.nonzero(sel)[0]
 
-    E = E.iloc[sel]
-    return E
+    matrix = matrix.iloc[sel]
+    return matrix
+
+
+def filter_mean(matrix, top):
+    """Filter genes in an expression matrix by mean expression.
+
+    Parameters
+    ----------
+    matrix: ExpMatrix
+        The expression matrix.
+    top: int
+        The number of genes to retain.
+
+    Returns
+    -------
+    ExpMatrix
+        The filtered expression matrix.
+    """
+    assert isinstance(matrix, ExpMatrix)
+    assert isinstance(top, int)
+
+    if top >= matrix.p:
+        logger.warning('Gene expression filter with `top` parameter that is '
+                       '>= the number of genes!')
+        top = matrix.p
+
+    a = np.argsort(np.mean(matrix.X, axis=1))
+    a = a[::-1]
+
+    sel = np.zeros(matrix.p, dtype=np.bool_)
+    sel[a[:top]] = True
+    sel = np.nonzero(sel)[0]
+
+    matrix = matrix.iloc[sel]
+    return matrix
+
+
+def filter_percentile(matrix, top, percentile=50):
+    """Filter genes in an expression matrix by percentile expression.
+
+    Parameters
+    ----------
+    matrix: ExpMatrix
+        The expression matrix.
+    top: int
+        The number of genes to retain.
+    percentile: int or float, optinonal
+        The percentile to use  Defaults to the median (50th percentile).
+
+    Returns
+    -------
+    ExpMatrix
+        The filtered expression matrix.
+    """
+    assert isinstance(matrix, ExpMatrix)
+    assert isinstance(top, int)
+    assert isinstance(percentile, (int, float))
+
+    if top >= matrix.p:
+        logger.warning('Gene expression filter with `top` parameter that is '
+                       ' >= the number of genes!')
+        top = matrix.p
+
+    a = np.argsort(np.percentile(matrix.X, percentile, axis=1))
+    a = a[::-1]
+
+    sel = np.zeros(matrix.p, dtype=np.bool_)
+    sel[a[:top]] = True
+    sel = np.nonzero(sel)[0]
+
+    matrix = matrix.iloc[sel]
+    return matrix
