@@ -22,33 +22,76 @@ import hashlib
 
 import pytest
 import numpy as np
+import pandas as pd
 
-from genometools.expression import ExpMatrix
-from genometools.expression import ExpProfile
-
+from genometools.expression import ExpMatrix, ExpProfile, ExpGenome
 
 @pytest.fixture
-def E_test():
+def my_X(my_x):
+    X = []
+    for i in range(0, -3, -1):
+        X.append(np.roll(my_x,i))
+    X = np.float64(X).T
+    return X
+
+@pytest.fixture
+def my_matrix(my_genes, my_samples, my_X):
     genes = ['a', 'b', 'c', 'd']
     samples = ['s1', 's2', 's3']
-    X = np.arange(12, dtype=np.float64).reshape(4, 3)
-    E = ExpMatrix(genes=genes, samples=samples, X=X)
-    return E
+    # X = np.arange(12, dtype=np.float64).reshape(4, 3)
+    matrix = ExpMatrix(genes=my_genes, samples=my_samples, X=my_X)
+    return matrix
 
 
-def test_slice(E_test):
-    e = E_test.iloc[:, 0]
-    assert isinstance(e, ExpProfile)
+def test_init(my_matrix, my_genes, my_samples, my_X):
+    assert isinstance(my_matrix, ExpMatrix)
+    assert isinstance(repr(my_matrix), str)
+    assert isinstance(str(my_matrix), str)
+    assert isinstance(my_matrix.hash, str)
+
+    assert my_matrix.genes == my_genes
+    assert my_matrix.samples == my_samples
+    assert np.all(my_matrix.X == my_X)
+
+def test_slice(my_matrix):
+    profile = my_matrix.iloc[:, 0]
+    assert isinstance(profile, ExpProfile)
 
 
-def test_write_read(tmpdir, E_test):
-    path = tmpdir.join('test.txt')
-    E_test.write_tsv(str(path))
-    data = open(str(path), mode='rb').read()
-    h = hashlib.md5(data).hexdigest()
-    assert h == 'd34bf3d376eb613e4fea894f7c9d601f'
-    E2 = ExpMatrix.read_tsv(str(path))
-    assert isinstance(E2, ExpMatrix)
-    assert E_test.index.equals(E2.index)
-    assert E_test.columns.equals(E2.columns)
-    assert E_test.equals(E2)
+def test_transformation(my_matrix):
+    other = my_matrix.copy()
+    other.center_genes()
+    assert np.allclose(other.mean(axis=1), 0.0)
+    other = my_matrix.copy()
+    other.standardize_genes()
+    assert np.allclose(other.std(axis=1, ddof=1), 1.0)
+
+def test_filter(my_matrix, my_genome):
+    other = my_matrix.filter_against_genome(my_genome)
+    assert other is not my_matrix
+    assert other == my_matrix
+
+def test_genome(my_matrix, my_genes):
+    genome = my_matrix.get_genome()
+    assert isinstance(genome, ExpGenome)
+    assert len(genome) == len(my_genes)
+
+def test_copy(my_matrix, my_genes, my_samples, my_X):
+    other = my_matrix.copy()
+    assert other is not my_matrix
+    assert other == my_matrix
+    other.genes = my_genes
+    other.samples = my_samples
+    other.X = my_X
+    assert other == my_matrix
+
+def test_write_read(tmpdir, my_matrix):
+    output_file = str(tmpdir.join('expression_matrix.tsv'))
+    my_matrix.write_tsv(output_file)
+    #data = open(str(path), mode='rb').read()
+    #h = hashlib.md5(data).hexdigest()
+    #assert h == 'd34bf3d376eb613e4fea894f7c9d601f'
+    other = ExpMatrix.read_tsv(output_file)
+    assert other is not my_matrix
+    assert other == my_matrix
+    #assert E_test.equals(E2)

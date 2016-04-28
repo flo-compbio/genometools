@@ -39,40 +39,41 @@ class GSEResult(object):
 
     Parameters
     ----------
-    gene_set: `genometools.basic.GeneSet` object
-        The gene set tested.
+    n_star: int
+        The cutoff at which the XL-mHG test statistic was attained.
     stat: float
         The XL-mHG test statistic.
     pval: float
         The XL-mHG p-value.
-    indices: list (or tuple / ndarray) of int
-        The indices corresponding to the "1's" in the ranked list.
+    N: int
+        The total number of genes in the analysis.
+    X: int
+        The XL-mHG X parameter.
+    L: int
+        The XL-mHG L parameter.
+    gene_set `genometools.basic.GeneSet`
+        The gene set.
+    indices: np.ndarray of integers
+        The indices of the gene set genes in the ranked list.
     genes: list or tuple of str
-        The names of the genes corresponding to the "1's" in the ranked list.
-   
+        The gene names in order of their appearance in the ranked list.
     """
+    def __init__(self, n_star, stat, pval, N, X, L,
+                 gene_set, indices, genes):
 
-    # Note: Change this so that it inherits from class mHGResult?
-    #     (only additional attributes: term, genes).
-
-    # TO-DO: finish documentation
-
-    def __init__(self, n, stat, pval, N, X, L,
-                 indices, gene_set, genes):
-
-        assert isinstance(n, int)
+        assert isinstance(n_star, int)
         assert isinstance(stat, float)
         assert isinstance(pval, float)
         assert isinstance(N, int)
         assert isinstance(X, int)
         assert isinstance(L, int)
-        assert isinstance(indices, np.ndarray)
         assert isinstance(gene_set, GeneSet)
+        assert isinstance(indices, np.ndarray)
         assert isinstance(genes, (tuple, list))
         for g in genes:
             assert isinstance(g, str)
 
-        self.n = n
+        self.n_star = n_star
         self.stat = stat
         self.pval = pval
         self.N = N
@@ -100,7 +101,7 @@ class GSEResult(object):
 
     def __hash__(self):
         data = [
-            self.n,
+            self.n_star,
             self.stat,
             self.pval,
             self.N,
@@ -132,8 +133,8 @@ class GSEResult(object):
         return self.indices.size
 
     @property
-    def k_n(self):
-        return int(np.sum(self.indices < self.n))
+    def k(self):
+        return int(np.sum(self.indices < self.n_star))
 
     def calculate_escore(self, pval_thresh):
         """ Calculate XL-mHG E-score.  """
@@ -172,7 +173,7 @@ class GSEResult(object):
             assert max_name_length >= 3
             gs_name = gs_name[:(max_name_length-3)] + '...'
         gs_str = gs_name + ' (%d / %d @ %d)' % \
-                (self.k_n, len(self.genes), self.n)
+                (self.k, len(self.genes), self.n_star)
         param_str = ''
         if not omit_param:
             param_str = ' [X=%d,L=%d,N=%d]' % (self.X, self.L, self.N)

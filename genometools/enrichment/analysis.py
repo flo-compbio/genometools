@@ -186,8 +186,8 @@ class GSEAnalysis(object):
                         sel = np.nonzero(A[:, j])[0]  # indices of all the 1's
                         # k_n = np.sum(sel < n)
                         sel_genes = [ranked_genes[i] for i in sel]
-                        result = GSEResult(n_star, stat, pval, N, X, L, sel,
-                                           gene_set_db[j], sel_genes)
+                        result = GSEResult(n_star, stat, pval, N, X, L,
+                                           gene_set_db[j], sel, sel_genes)
                         enriched.append(result)
 
         # calculate enrichment score

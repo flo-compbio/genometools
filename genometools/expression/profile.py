@@ -25,6 +25,7 @@ import io
 import logging
 import copy
 import importlib
+import hashlib
 
 import pandas as pd
 import numpy as np
@@ -96,14 +97,37 @@ class ExpProfile(pd.Series):
         if label is not None:
             # set (overwrite) series name with user-provided sample label
             self.name = label
-                        
-    def __hash__(self):
-        # warning: involves copying all the data
-        data = []
-        data.append(tuple(self.genes))
-        data.append(tuple(self.label))
-        data.append(self.x.tobytes())
-        return hash(tuple(data))
+
+    def __eq__(self, other):
+        if self is other:
+            return True
+        elif type(self) is type(other):
+            return (self.label == other.label and \
+                    self.index.equals(other.index) and \
+                    self.equals(other))
+        else:
+            return NotImplemented
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __repr__(self):
+        return '<%s object (label=%s; p=%d; hash="%s">' \
+               % (self.__class__.__name__, self._label_str,
+                  self.p, self.hash)
+
+    def __str__(self):
+        if self.label is not None:
+            label_str = '"%s"' %(self.label)
+        else:
+            label_str = '(unlabeled)'
+        return '<%s %s with p=%d genes>'  \
+               % (self.__class__.__name__, label_str, self.p)
+
+    @property
+    def _label_str(self):
+        return '"%s"' % self.label \
+            if self.label is not None else 'None'
 
     @property
     def _constructor(self):
@@ -112,7 +136,15 @@ class ExpProfile(pd.Series):
     @property
     def _constructor_expanddim(self):
         return matrix.ExpMatrix
-    
+
+    @property
+    def hash(self):
+        # warning: involves copying all the data
+        gene_str = ','.join(self.genes)
+        data_str = ';'.join([self._label_str, gene_str]) + ';'
+        data = data_str.encode('ascii') + self.x.tobytes()
+        return hashlib.md5(data).hexdigest()
+
     @property
     def p(self):
         """The number of genes."""
@@ -161,22 +193,27 @@ class ExpProfile(pd.Series):
         genome = ExpGenome(genes)
         return genome
 
-    def sort_genes(self, stable=False):
+    def sort_genes(self, inplace=False):
         """Sort the rows of the profile alphabetically by gene name.
 
         Parameters
         ----------
-        stable: bool, optional
-            If set to True, uses a stable sorting algorithm. (False)
+        inplace: bool, optional
+            If set to True, perform the sorting in-place.
         
         Returns
         -------
         None
+
+        Notes
+        -----
+        pandas 0.18.0's `Series.sort_index` method does not support the
+        ``kind`` keyword, which is needed to select a stable sort algorithm.
         """
-        kind = 'quicksort'
-        if stable:
-            kind = 'mergesort'
-        self.sort_index(kind=kind)
+        # kind = 'quicksort'
+        # if stable:
+        #    kind = 'mergesort'
+        self.sort_index(inplace=inplace)
 
     def filter_against_genome(self, genome):
         """Filter the expression matrix against a genome (set of genes).
@@ -193,7 +230,8 @@ class ExpProfile(pd.Series):
         """
         assert isinstance(genome, ExpGenome)
 
-        return self.loc[self.index & genome.genes]
+        filt = self.loc[self.index & genome.genes]
+        return filt
 
     @classmethod
     def read_tsv(cls, path, genome=None, encoding='UTF-8'):

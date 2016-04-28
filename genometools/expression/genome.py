@@ -21,14 +21,13 @@ from __future__ import (absolute_import, division,
 from builtins import *
 
 import os
-import io
 import logging
+import hashlib
 from collections import OrderedDict
 
 import unicodecsv as csv
 import numpy as np
 
-# from genometools import misc
 from .gene import ExpGene
 
 logger = logging.getLogger(__name__)
@@ -52,24 +51,36 @@ class ExpGenome(object):
     class. It uses ordered dictionaries to support efficient access by gene
     name or index, as well as looking up the index of specific gene.
     """
-    def __init__(self, genes):
+    def __init__(self, exp_genes):
 
-        assert isinstance(genes, (list, tuple))
-        for g in genes:
+        assert isinstance(exp_genes, (list, tuple))
+        for g in exp_genes:
             assert isinstance(g, ExpGene)
 
-        self._genes = OrderedDict([g.name, g] for g in genes)
-        self._gene_names = tuple(self._genes.keys())
-        self._gene_indices = OrderedDict([g.name, i]
-                                         for i, g in enumerate(genes))
-        logger.debug('Initialized ExpGenome with %d genes.', self.p)
+        all_genes = [eg.name for eg in exp_genes]
+        if len(all_genes) != len(set(all_genes)):
+            raise ValueError('Cannot create ExpGenome: Not all genes have a '
+                             'unique name.')
+
+        self._exp_gene_dict = OrderedDict([eg.name, eg] for eg in exp_genes)
+        self._gene_names = tuple(self._exp_gene_dict.keys())
+        self._gene_indices = OrderedDict([eg.name, i]
+                                         for i, eg in enumerate(exp_genes))
+        logger.debug('Initialized ExpGenome with %d genes.', len(self))
 
     def __repr__(self):
-        return '<%s object (%d genes; hash = %d)>' \
-                % (self.__class__.__name__, self.p, hash(self))
+        return '<%s object (%d genes; hash=%s)>' \
+                % (self.__class__.__name__, len(self), self.hash)
 
     def __str__(self):
-        return '<%s object (%d genes)>' % (self.__class__.__name__, self.p)
+        return '<%s object with %d genes>' \
+               % (self.__class__.__name__, len(self))
+
+    def __len__(self):
+        return len(self._exp_gene_dict)
+
+    def __iter__(self):
+        return iter(self._exp_gene_dict.values())
 
     def __getitem__(self, key):
         """Simple interface for accessing genes.
@@ -82,32 +93,35 @@ class ExpGenome(object):
         else:
             return self.get_by_name(key)
 
-    def __hash__(self):
-        return hash(self.genes)
+    @property
+    def hash(self):
+        data_str = ';'.join(repr(g) for g in self._exp_gene_dict)
+        data = data_str.encode('ascii')
+        return hashlib.md5(data).hexdigest()
 
     def __eq__(self, other):
         if self is other:
             return True
-        elif type(self) != type(other):
-            return False
+        elif type(self) is type(other):
+            return self.__dict__ == other.__dict__
         else:
-            return repr(self) == repr(other)
+            return NotImplemented
 
     def __ne__(self, other):
         return not (self == other)
 
     def __contains__(self, gene):
-        return gene in self._genes
+        return gene.name in self._exp_gene_dict
 
     @property
-    def p(self):
-        """Returns the number of genes."""
-        return len(self._genes)
+    def exp_genes(self):
+        """Returns a list with all genes."""
+        return list(self._exp_gene_dict.values())
 
     @property
     def genes(self):
-        """Returns a tuple with all gene names."""
-        return tuple(self._genes.values())
+        """Returns a list with all gene names."""
+        return [eg.name for eg in self._exp_gene_dict.values()]
 
     @classmethod
     def from_gene_names(cls, genes):
@@ -130,12 +144,12 @@ class ExpGenome(object):
         genome = cls([ExpGene(g) for g in genes])
         return genome
 
-    def get_by_name(self, name):
+    def get_by_name(self, gene):
         """Look up a gene by its name.
 
         Parameters
         ----------
-        name: str
+        gene: str
             The gene name.
         
         Returns
@@ -143,10 +157,13 @@ class ExpGenome(object):
         `genometools.expression.ExpGene`
             The gene.
         """
+        if not isinstance(gene, str):
+            raise ValueError('Gene name must be a string.')
+
         try:
-            return self._genes[name]
+            return self._exp_gene_dict[gene]
         except KeyError:
-            raise ValueError('No gene with name "%s"!' % name)
+            raise ValueError('No gene with name "%s"!' % gene)
 
     def get_by_index(self, i):
         """Look up a gene by its index.
@@ -161,13 +178,16 @@ class ExpGenome(object):
         `genometools.expression.ExpGene`
             The gene.
         """
-        if i >= self.p:
-            raise ValueError('Index %d out of bounds '
-                             'for genome with %d genes.' % (i, self.p))
+        if not isinstance(i, (int, np.integer)):
+            raise ValueError('Index must be an integer.')
 
-        return self._genes[self._gene_names[i]]
+        if i >= len(self):
+            raise ValueError('Index %d out of bounds for genome with %d genes.'
+                             % (i, len(self)))
 
-    def index(self, gene_name):
+        return self._exp_gene_dict[self._gene_names[i]]
+
+    def index(self, gene):
         """Returns the index of the gene with the given gene.
 
         The index is 0-based, so the first gene in the genome has the index 0,
@@ -175,30 +195,31 @@ class ExpGenome(object):
 
         Parameters
         ----------
-        gene_name: str
-            The gene name.
+        gene: str
+            The gene.
 
         Returns
         -------
         int
             The gene index.
         """
-        assert isinstance(gene_name, str)
+        if not isinstance(gene, str):
+            raise ValueError('Gene name must be a string.')
 
         try:
-            return self._gene_indices[gene_name]
+            return self._gene_indices[gene]
         except KeyError:
-            raise ValueError('No gene with name "%s"!' % gene_name)
+            raise ValueError('No gene with name "%s"!' % gene)
 
     @classmethod
-    def read_tsv(cls, path, enc='UTF-8'):
+    def read_tsv(cls, path, encoding='UTF-8'):
         """Read genes from tab-delimited text file.
 
         Parameters
         ----------
         path: str
             The path of the text file.
-        enc: str, optional
+        encoding: str, optional
             The file encoding. ("UTF-8")
 
         Returns
@@ -206,31 +227,31 @@ class ExpGenome(object):
         None
         """
         genes = []
-        with io.open(path, 'rb') as fh:
-            reader = csv.reader(fh, dialect='excel-tab', encoding=enc)
+        with open(path, 'rb') as fh:
+            reader = csv.reader(fh, dialect='excel-tab', encoding=encoding)
             for l in reader:
                 genes.append(ExpGene.from_list(l))
         return cls(genes)
 
-    def write_tsv(self, path, enc='UTF-8'):
+    def write_tsv(self, output_file, encoding='UTF-8'):
         """Write genes to tab-delimited text file in alphabetical order.
 
         Parameters
         ----------
-        path: str
+        output_file: str
             The path of the output file.
-        enc: str, optional
+        encoding: str, optional
             The file encoding. ("UTF-8")
 
         Returns
         -------
         None
         """
-        with io.open(path, 'wb') as ofh:
+        with open(output_file, 'wb') as ofh:
             writer = csv.writer(
-                ofh, dialect='excel-tab', encoding=enc,
+                ofh, dialect='excel-tab', encoding=encoding,
                 lineterminator=os.linesep, quoting=csv.QUOTE_NONE
             )
-            for g in self.genes:
-                writer.writerow(g.to_list())
-        logger.info('Wrote %d genes to file "%s".', self.p, path)
+            for eg in self._exp_gene_dict.values():
+                writer.writerow(eg.to_list())
+        logger.info('Wrote %d genes to file "%s".', len(self), output_file)
