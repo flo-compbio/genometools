@@ -1,4 +1,6 @@
-# from genometools.basic import GeneSet
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
 
 import pytest
 import numpy as np

@@ -14,17 +14,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+"""Tests for the `ExpMatrix` class."""
+
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import *
 
-import hashlib
+# import hashlib
 
 import pytest
 import numpy as np
-import pandas as pd
 
 from genometools.expression import ExpMatrix, ExpProfile, ExpGenome
+
 
 @pytest.fixture
 def my_X(my_x):
@@ -33,6 +35,7 @@ def my_X(my_x):
         X.append(np.roll(my_x,i))
     X = np.float64(X).T
     return X
+
 
 @pytest.fixture
 def my_matrix(my_genes, my_samples, my_X):
@@ -53,6 +56,7 @@ def test_init(my_matrix, my_genes, my_samples, my_X):
     assert my_matrix.samples == my_samples
     assert np.all(my_matrix.X == my_X)
 
+
 def test_slice(my_matrix):
     profile = my_matrix.iloc[:, 0]
     assert isinstance(profile, ExpProfile)
@@ -66,15 +70,18 @@ def test_transformation(my_matrix):
     other.standardize_genes()
     assert np.allclose(other.std(axis=1, ddof=1), 1.0)
 
+
 def test_filter(my_matrix, my_genome):
     other = my_matrix.filter_against_genome(my_genome)
     assert other is not my_matrix
     assert other == my_matrix
 
+
 def test_genome(my_matrix, my_genes):
     genome = my_matrix.get_genome()
     assert isinstance(genome, ExpGenome)
     assert len(genome) == len(my_genes)
+
 
 def test_copy(my_matrix, my_genes, my_samples, my_X):
     other = my_matrix.copy()
@@ -85,13 +92,13 @@ def test_copy(my_matrix, my_genes, my_samples, my_X):
     other.X = my_X
     assert other == my_matrix
 
+
 def test_write_read(tmpdir, my_matrix):
     output_file = str(tmpdir.join('expression_matrix.tsv'))
     my_matrix.write_tsv(output_file)
-    #data = open(str(path), mode='rb').read()
-    #h = hashlib.md5(data).hexdigest()
-    #assert h == 'd34bf3d376eb613e4fea894f7c9d601f'
+    # data = open(str(path), mode='rb').read()
+    # h = hashlib.md5(data).hexdigest()
+    # assert h == 'd34bf3d376eb613e4fea894f7c9d601f'
     other = ExpMatrix.read_tsv(output_file)
     assert other is not my_matrix
     assert other == my_matrix
-    #assert E_test.equals(E2)
