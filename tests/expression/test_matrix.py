@@ -18,9 +18,6 @@
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
-from builtins import *
-
-# import hashlib
 
 import pytest
 import numpy as np
@@ -93,8 +90,8 @@ def test_copy(my_matrix, my_genes, my_samples, my_X):
     assert other == my_matrix
 
 
-def test_write_read(tmpdir, my_matrix):
-    output_file = str(tmpdir.join('expression_matrix.tsv'))
+def test_tsv(tmpdir, my_matrix):
+    output_file = tmpdir.join('expression_matrix.tsv').strpath
     my_matrix.write_tsv(output_file)
     # data = open(str(path), mode='rb').read()
     # h = hashlib.md5(data).hexdigest()

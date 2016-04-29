@@ -18,7 +18,6 @@
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
-from builtins import *
 
 from genometools.expression import ExpGene
 
@@ -28,6 +27,7 @@ def test_init(my_exp_genes):
         assert isinstance(g, ExpGene)
         assert isinstance(repr(g), str)
         assert isinstance(str(g), str)
+
 
 def test_list(my_exp_genes):
     for g in my_exp_genes:

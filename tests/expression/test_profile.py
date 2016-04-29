@@ -18,7 +18,6 @@
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
-from builtins import *
 
 import pytest
 import numpy as np
@@ -62,7 +61,7 @@ def test_expanddim(my_profile):
 
 
 def test_tsv(tmpdir, my_profile):
-    tmp_file = str(tmpdir.join('expression_profile.tsv'))
+    tmp_file = tmpdir.join('expression_profile.tsv').strpath
     my_profile.write_tsv(tmp_file)
     other = ExpProfile.read_tsv(tmp_file)
     assert other == my_profile
