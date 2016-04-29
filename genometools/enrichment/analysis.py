@@ -38,20 +38,6 @@ logger = logging.getLogger(__name__)
 class GSEAnalysis(object):
     """Test ranked gene lists for gene set enrichment using the XL-mHG test.
 
-    The class is intialized with a set of valid gene names (an `ExpGenome`
-    object), as well as a set of genesets (a `GeneSetDB` object). During
-    initialization, a binary "gene-by-gene set" matrix is constructed,
-    which stores information about which gene is contained in each gene set.
-    This matrix is quite sparse, and requires a significant amount of memory.
-    As an example, for a set of p = 10,000 genes and n = 10,000 gene sets, this
-    matrix is of size 100 MB in the memory (i.e., p x n bytes).
-
-    Once the class has been initialized, the function `get_enriched_gene_sets`
-    can be called with a ranked list of genes, a significance threshold, and a
-    set of parameters for the XL-mHG test. This function returns a list of
-    `GSEResult` objects, one for each gene set that was found to be
-    significantly enriched.
-
     Parameters
     ----------
     genome: `ExpGenome` object
@@ -65,6 +51,22 @@ class GSEAnalysis(object):
         The universe of genes.
     gene_set_db: `GeneSetDB` object
         The gene set database.
+
+    Notes
+    -----
+    The class is initialized with a set of valid gene names (an `ExpGenome`
+    object), as well as a set of gene sets (a `GeneSetDB` object). During
+    initialization, a binary "gene-by-gene set" matrix is constructed,
+    which stores information about which gene is contained in each gene set.
+    This matrix is quite sparse, and requires a significant amount of memory.
+    As an example, for a set of p = 10,000 genes and n = 10,000 gene sets, this
+    matrix is of size 100 MB in the memory (i.e., p x n bytes).
+
+    Once the class has been initialized, the function `get_enriched_gene_sets`
+    can be called with a ranked list of genes, a significance threshold, and a
+    set of parameters for the XL-mHG test. This function returns a list of
+    `GSEResult` objects, one for each gene set that was found to be
+    significantly enriched.
     """
     def __init__(self, genome, gene_set_db):
 
@@ -77,7 +79,7 @@ class GSEAnalysis(object):
         # generate annotation matrix by going over all gene sets
         logger.info('Generating gene-by-gene set membership matrix...')
 
-        self.A = np.zeros((genome.p, gene_set_db.n), dtype=np.uint8)
+        self._A = np.zeros((len(genome), gene_set_db.n), dtype=np.uint8)
         for j, gs in enumerate(self.gene_set_db.gene_sets):
             for g in gs.genes:
                 try:
@@ -85,7 +87,17 @@ class GSEAnalysis(object):
                 except ValueError:
                     pass
                 else:
-                    self.A[idx, j] = 1
+                    self._A[idx, j] = 1
+
+    def __repr__(self):
+        return '<%s object (genome=%s; gene_set_db=%s)>' \
+               % (self.__class__.__name__,
+                  repr(self.genome), repr(self.gene_set_db))
+
+    def __str__(self):
+        return '<%s object (%d genes in genome; %d gene sets)>' \
+               % (self.__class__.__name__,
+                  len(self.genome), len(self.gene_set_db))
 
     @property
     def genes(self):
@@ -99,6 +111,8 @@ class GSEAnalysis(object):
         This function also calculates XL-mHG E-scores for the enriched gene
         sets, using ``escore_pval_thresh`` as the p-value threshold "psi".
         """
+        if isinstance(X_frac, (int, np.integer)):
+            X_frac = float(X_frac)
 
         # checks
         assert isinstance(ranked_genes, (list, tuple))
@@ -119,7 +133,7 @@ class GSEAnalysis(object):
             assert isinstance(mat, np.ndarray)
         
         gene_set_db = self.gene_set_db
-        A = self.A
+        A = self._A
 
         if escore_pval_thresh is None:
             # if no separate E-score p-value threshold is specified, use the
@@ -186,15 +200,10 @@ class GSEAnalysis(object):
                         sel = np.nonzero(A[:, j])[0]  # indices of all the 1's
                         # k_n = np.sum(sel < n)
                         sel_genes = [ranked_genes[i] for i in sel]
-                        result = GSEResult(n_star, stat, pval, N, X, L,
-                                           gene_set_db[j], sel, sel_genes)
+                        result = GSEResult(stat, n_star, pval, N, X, L,
+                                           gene_set_db[j], sel, sel_genes,
+                                           escore_pval_thresh)
                         enriched.append(result)
-
-        # calculate enrichment score
-        logger.debug('Calculating enrichment score (using p-value threshold '
-                     'psi=%.1e) for enriched gene sets...', escore_pval_thresh)
-        for result in enriched:
-            result.calculate_escore(escore_pval_thresh)
 
         # report results
         q = len(enriched)

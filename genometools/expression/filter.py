@@ -57,9 +57,8 @@ def filter_variance(matrix, top):
     
     sel = np.zeros(matrix.p, dtype=np.bool_)
     sel[a[:top]] = True
-    sel = np.nonzero(sel)[0]
 
-    matrix = matrix.iloc[sel]
+    matrix = matrix.loc[sel]
     return matrix
 
 
@@ -91,9 +90,8 @@ def filter_mean(matrix, top):
 
     sel = np.zeros(matrix.p, dtype=np.bool_)
     sel[a[:top]] = True
-    sel = np.nonzero(sel)[0]
 
-    matrix = matrix.iloc[sel]
+    matrix = matrix.loc[sel]
     return matrix
 
 
@@ -128,7 +126,6 @@ def filter_percentile(matrix, top, percentile=50):
 
     sel = np.zeros(matrix.p, dtype=np.bool_)
     sel[a[:top]] = True
-    sel = np.nonzero(sel)[0]
 
-    matrix = matrix.iloc[sel]
+    matrix = matrix.loc[sel]
     return matrix

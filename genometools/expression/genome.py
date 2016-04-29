@@ -97,7 +97,7 @@ class ExpGenome(object):
     def hash(self):
         data_str = ';'.join(repr(g) for g in self._exp_gene_dict)
         data = data_str.encode('ascii')
-        return hashlib.md5(data).hexdigest()
+        return str(hashlib.md5(data).hexdigest())
 
     def __eq__(self, other):
         if self is other:

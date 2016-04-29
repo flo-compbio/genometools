@@ -20,24 +20,20 @@ from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import *
 
-import os
-import io
 import logging
-import copy
 import importlib
 import hashlib
 
 import pandas as pd
 import numpy as np
-import unicodecsv as csv
 import six
 
-from .. import misc
 from . import ExpGene, ExpGenome
 matrix = importlib.import_module('.matrix', package='genometools.expression')
 # "from . import matrix" does not work, due to cyclical imports
 
 logger = logging.getLogger(__name__)
+
 
 class ExpProfile(pd.Series):
     """A gene expression profile.
@@ -72,7 +68,7 @@ class ExpProfile(pd.Series):
         # check if user provided "x" keyword argument
         x = kwargs.pop('x', None)
         if x is not None:
-            assert isinstance(x, np.ndarray)
+            assert isinstance(x, np.ndarray) and x.ndim == 1
             kwargs['data'] = x
         
         # check if user provided "genes" keyword argument
@@ -98,12 +94,20 @@ class ExpProfile(pd.Series):
             # set (overwrite) series name with user-provided sample label
             self.name = label
 
+        #  some type checking after the fact
+        if self.name is not None:
+            assert isinstance(self.name, str)
+
+        if self.index.dtype is np.dtype('O'):
+            for d in self.index.values:
+                assert isinstance(d, str)
+
     def __eq__(self, other):
         if self is other:
             return True
         elif type(self) is type(other):
-            return (self.label == other.label and \
-                    self.index.equals(other.index) and \
+            return (self.label == other.label and
+                    self.index.equals(other.index) and
                     self.equals(other))
         else:
             return NotImplemented
@@ -118,7 +122,7 @@ class ExpProfile(pd.Series):
 
     def __str__(self):
         if self.label is not None:
-            label_str = '"%s"' %(self.label)
+            label_str = '"%s"' % self.label
         else:
             label_str = '(unlabeled)'
         return '<%s %s with p=%d genes>'  \
@@ -142,8 +146,8 @@ class ExpProfile(pd.Series):
         # warning: involves copying all the data
         gene_str = ','.join(self.genes)
         data_str = ';'.join([self._label_str, gene_str]) + ';'
-        data = data_str.encode('ascii') + self.x.tobytes()
-        return hashlib.md5(data).hexdigest()
+        data = data_str.encode('UTF-8') + self.x.tobytes()
+        return str(hashlib.md5(data).hexdigest())
 
     @property
     def p(self):

@@ -18,6 +18,7 @@
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
+from builtins import str as text
 
 import pytest
 import numpy as np
@@ -47,7 +48,8 @@ def test_init(my_profile, my_profile2, my_genes, my_x):
         assert isinstance(prof, ExpProfile)
         assert isinstance(repr(prof), str)
         assert isinstance(str(prof), str)
-        assert isinstance(prof.hash, str)
+        assert isinstance(text(prof), text)
+        assert isinstance(prof.hash, text)
         assert prof.p == len(my_genes)
         assert np.all(prof.x == my_x)
         assert prof.genes == my_genes

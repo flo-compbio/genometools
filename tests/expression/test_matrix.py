@@ -18,6 +18,7 @@
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
+from builtins import str as text
 
 import pytest
 import numpy as np
@@ -25,29 +26,12 @@ import numpy as np
 from genometools.expression import ExpMatrix, ExpProfile, ExpGenome
 
 
-@pytest.fixture
-def my_X(my_x):
-    X = []
-    for i in range(0, -3, -1):
-        X.append(np.roll(my_x,i))
-    X = np.float64(X).T
-    return X
-
-
-@pytest.fixture
-def my_matrix(my_genes, my_samples, my_X):
-    genes = ['a', 'b', 'c', 'd']
-    samples = ['s1', 's2', 's3']
-    # X = np.arange(12, dtype=np.float64).reshape(4, 3)
-    matrix = ExpMatrix(genes=my_genes, samples=my_samples, X=my_X)
-    return matrix
-
-
 def test_init(my_matrix, my_genes, my_samples, my_X):
     assert isinstance(my_matrix, ExpMatrix)
     assert isinstance(repr(my_matrix), str)
     assert isinstance(str(my_matrix), str)
-    assert isinstance(my_matrix.hash, str)
+    assert isinstance(text(my_matrix), text)
+    assert isinstance(my_matrix.hash, text)
 
     assert my_matrix.genes == my_genes
     assert my_matrix.samples == my_samples

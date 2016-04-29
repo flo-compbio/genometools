@@ -72,7 +72,7 @@ class ExpMatrix(pd.DataFrame):
         # check if user provided "X" keyword argument
         X = kwargs.pop('X', None)
         if X is not None:
-            assert isinstance(X, np.ndarray)
+            assert isinstance(X, np.ndarray) and X.ndim == 2
             kwargs['data'] = X
 
         # check if user provided "genes" keyword argument
@@ -89,14 +89,23 @@ class ExpMatrix(pd.DataFrame):
             for s in samples:
                 assert isinstance(s, str)
 
-        if genes is not None:
-            kwargs['index'] = genes
-
-        if samples is not None:
-            kwargs['columns'] = samples
-
         # call base class constructor
         pd.DataFrame.__init__(self, *args, **kwargs)
+
+        if genes is not None:
+            self.index = genes
+
+        if samples is not None:
+            self.columns = samples
+
+        # some type checking after the fact
+        if self.index.dtype is np.dtype('O'):
+            for d in self.index.values:
+                assert isinstance(d, str)
+
+        if self.columns.dtype is np.dtype('O'):
+            for d in self.columns.values:
+                assert isinstance(d, str)
 
     def __eq__(self, other):
         if self is other:
@@ -119,15 +128,14 @@ class ExpMatrix(pd.DataFrame):
         return '<%s object with p=%d genes and n=%d samples>' \
                % (self.__class__.__name__, self.p, self.n)
 
-
     @property
     def hash(self):
         # warning: involves copying all the data
         gene_str = ','.join(self.genes)
         sample_str = ','.join(self.samples)
         data_str = ';'.join([gene_str, sample_str]) + ';'
-        data = data_str.encode('ascii') + self.X.tobytes()
-        return hashlib.md5(data).hexdigest()
+        data = data_str.encode('UTF-8') + self.X.tobytes()
+        return str(hashlib.md5(data).hexdigest())
 
     @property
     def _constructor(self):

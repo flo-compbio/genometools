@@ -16,10 +16,9 @@
 
 """Tests for the `GeneSetDB` class."""
 
-# currently missing: test of the `GeneSetDB.read_msigdb_xml` class method
-
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
+from builtins import str as text
 
 from copy import deepcopy
 
@@ -48,7 +47,8 @@ def test_init(my_gene_set_db, my_gene_sets):
     assert my_gene_set_db.gene_sets == my_gene_sets
     assert isinstance(repr(my_gene_set_db), str)
     assert isinstance(str(my_gene_set_db), str)
-    assert isinstance(my_gene_set_db.hash, str)
+    assert isinstance(text(my_gene_set_db), text)
+    assert isinstance(my_gene_set_db.hash, text)
     assert my_gene_set_db.n == len(my_gene_sets)
 
 

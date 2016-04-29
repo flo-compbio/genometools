@@ -14,25 +14,35 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Tests for the `ExpGene` class."""
+"""Tests for the `GSEResult` clsas."""
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import str as text
 
-from genometools.expression import ExpGene
+from copy import deepcopy
+
+# import pytest
+import numpy as np
+
+from genometools.enrichment import GSEResult
 
 
-def test_init(my_exp_genes):
-    for g in my_exp_genes:
-        assert isinstance(g, ExpGene)
-        assert isinstance(repr(g), str)
-        assert isinstance(str(g), str)
-        assert isinstance(text(g), text)
+def test_init(my_result, my_v):
+    assert isinstance(my_result, GSEResult)
+    assert isinstance(repr(my_result), str)
+    assert isinstance(str(my_result), str)
+    assert isinstance(text(my_result), text)
+    assert isinstance(my_result.hash, text)
 
+    other = deepcopy(my_result)
+    assert other is not my_result
+    assert other == my_result
+    other.N += 1
+    assert other != my_result
 
-def test_list(my_exp_genes):
-    for g in my_exp_genes:
-        other = ExpGene.from_list(g.to_list())
-        assert other is not g
-        assert other == g
+    assert my_result.K == np.nonzero(my_v)[0].size
+    assert my_result.k == int(np.sum(np.nonzero(my_v)[0] < my_result.n_star))
+
+def test_format(my_result):
+    assert isinstance(my_result.get_pretty_format(), text)

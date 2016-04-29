@@ -18,6 +18,7 @@
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
+from builtins import str as text
 
 from copy import deepcopy
 from collections import Iterable
@@ -33,7 +34,8 @@ def test_init(my_genome, my_exp_genes):
     assert isinstance(my_genome, ExpGenome)
     assert isinstance(repr(my_genome), str)
     assert isinstance(str(my_genome), str)
-    assert isinstance(my_genome.hash, str)
+    assert isinstance(text(my_genome), text)
+    assert isinstance(my_genome.hash, text)
     assert len(my_genome) == len(my_exp_genes)
     assert isinstance(my_genome, Iterable)
 

@@ -14,8 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Module containing the `GeneSet` class.
-"""
+"""Module containing the `GeneSet` class."""
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)

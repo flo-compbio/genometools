@@ -13,25 +13,24 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+"""Tests for the `GeneSet` class."""
+
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
+from builtins import str as text
 
-import pytest
+# import pytest
 
 from genometools.basic import GeneSet
 
 
-@pytest.fixture
-def my_string():
-    return 'Hello World'
-
-
 def test_init(my_gene_set, my_gene_set2, my_genes):
-    print('Enter')
     for gs in [my_gene_set, my_gene_set2]:
         assert isinstance(gs, GeneSet)
         assert isinstance(repr(gs), str)
         assert isinstance(str(gs), str)
+        assert isinstance(text(gs), text)
         assert gs.size == len(my_genes)
     assert my_gene_set != my_gene_set2
 

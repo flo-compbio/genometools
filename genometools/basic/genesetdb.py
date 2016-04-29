@@ -83,6 +83,9 @@ class GeneSetDB(object):
     def __str__(self):
         return '<%s object (n=%d)>' % (self.__class__.__name__, self.n)
 
+    def __len__(self):
+        return len(self._gene_sets)
+
     def __getitem__(self, key):
         """Simple interface for querying the database.
 
@@ -108,7 +111,7 @@ class GeneSetDB(object):
     @property
     def hash(self):
         data = ';'.join(repr(gs) for gs in self.gene_sets)
-        return hashlib.md5(data.encode('ascii')).hexdigest()
+        return str(hashlib.md5(data.encode('ascii')).hexdigest())
 
     @property
     def gene_sets(self):
@@ -117,7 +120,7 @@ class GeneSetDB(object):
     @property
     def n(self):
         """The number of gene sets in the database."""
-        return len(self._gene_sets)
+        return len(self)
 
     def get_by_id(self, id_):
         """Look up a gene set by its ID.
@@ -236,7 +239,7 @@ class GeneSetDB(object):
                 writer.writerow(gs.to_list())
 
     @classmethod
-    def read_msigdb_xml(cls, path, entrez2gene, species=None):
+    def read_msigdb_xml(cls, path, entrez2gene, species=None):  # pragma: no cover
         """Read the complete MSigDB database from an XML file.
 
         The XML file can be downloaded from here:

@@ -14,29 +14,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+"""Tests for functions in the `filter` module."""
+
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
+from builtins import str as text
 
-from genometools.basic import GeneSet
+# import numpy as np
 
-import pytest
-
-
-@pytest.fixture
-def my_genes():
-    return ['a', 'b', 'c']
+from genometools.expression import filter
 
 
-@pytest.fixture
-def my_gene_set(my_genes):
-    gene_set = GeneSet('TestID', 'TestName', my_genes,
-                       source='TestSource', collection='TestCollection',
-                       description='Test GeneSet.')
-    return gene_set
-
-
-@pytest.fixture
-def my_gene_set2(my_genes):
-    # a gene set with all optional attributes set to None
-    gene_set = GeneSet('TestID', 'TestName', my_genes)
-    return gene_set
+def test_init(my_matrix):
+    #print(np.mean(my_matrix.X, axis=1))
+    #print(np.var(my_matrix.X, ddof=1, axis=1))
+    #print(np.percentile(my_matrix.X, 25, axis=1))
+    top = 2
+    percentile = 25
+    other = filter.filter_variance(my_matrix, top)
+    assert other.shape[0] == top
+    other = filter.filter_mean(my_matrix, top)
+    assert other.shape[0] == top
+    other = filter.filter_percentile(my_matrix, top, percentile=percentile)
+    assert other.shape[0] == top
