@@ -20,18 +20,16 @@ from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import *
 
-import os
-import io
 import logging
-import copy
 import importlib
+import hashlib
 
 import pandas as pd
 import numpy as np
 import unicodecsv as csv
 import six
 
-from .. import misc
+# from .. import misc
 from . import ExpGene, ExpGenome
 profile = importlib.import_module('.profile', package='genometools.expression')
 # - "import profile" is not possible, since a "profile" module exists
@@ -39,6 +37,7 @@ profile = importlib.import_module('.profile', package='genometools.expression')
 # - "from . import profile" fails due to cyclical imports
 
 logger = logging.getLogger(__name__)
+
 
 class ExpMatrix(pd.DataFrame):
     """A gene expression matrix.
@@ -73,7 +72,7 @@ class ExpMatrix(pd.DataFrame):
         # check if user provided "X" keyword argument
         X = kwargs.pop('X', None)
         if X is not None:
-            assert isinstance(X, np.ndarray)
+            assert isinstance(X, np.ndarray) and X.ndim == 2
             kwargs['data'] = X
 
         # check if user provided "genes" keyword argument
@@ -90,31 +89,53 @@ class ExpMatrix(pd.DataFrame):
             for s in samples:
                 assert isinstance(s, str)
 
-        
-        if genes is not None:
-            kwargs['index'] = genes
-
-        if samples is not None:
-            kwargs['columns'] = samples
-
         # call base class constructor
         pd.DataFrame.__init__(self, *args, **kwargs)
-        
-        #if genes is not None:
-        #    # set (overwrite) index with user-provided list
-        #    self.index = genes
-            
-        #if samples is not None:
-        #    # set (overwrite) index with user-provided list
-        #    self.columns = samples
-        
-    def __hash__(self):
+
+        if genes is not None:
+            self.index = genes
+
+        if samples is not None:
+            self.columns = samples
+
+        # some type checking after the fact
+        if self.index.dtype is np.dtype('O'):
+            for d in self.index.values:
+                assert isinstance(d, str)
+
+        if self.columns.dtype is np.dtype('O'):
+            for d in self.columns.values:
+                assert isinstance(d, str)
+
+    def __eq__(self, other):
+        if self is other:
+            return True
+        elif type(self) is type(other):
+            return (self.index.equals(other.index) and \
+                    self.columns.equals(other.columns) and \
+                    self.equals(other))
+        else:
+            return NotImplemented
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __repr__(self):
+        return '<%s object (p=%d; n=%d; hash="%s">' \
+               % (self.__class__.__name__, self.p, self.n, self.hash)
+
+    def __str__(self):
+        return '<%s object with p=%d genes and n=%d samples>' \
+               % (self.__class__.__name__, self.p, self.n)
+
+    @property
+    def hash(self):
         # warning: involves copying all the data
-        data = []
-        data.append(tuple(self.genes))
-        data.append(tuple(self.samples))
-        data.append(self.X.tobytes())
-        return hash(tuple(data))
+        gene_str = ','.join(self.genes)
+        sample_str = ','.join(self.samples)
+        data_str = ';'.join([gene_str, sample_str]) + ';'
+        data = data_str.encode('UTF-8') + self.X.tobytes()
+        return str(hashlib.md5(data).hexdigest())
 
     @property
     def _constructor(self):
@@ -173,18 +194,20 @@ class ExpMatrix(pd.DataFrame):
         `genometools.expression.ExpGenome`
             The genome.
         """
-
-        genes = [ExpGene(g) for g in self.genes]
-        genome = ExpGenome(genes)
+        genome = ExpGenome.from_gene_names(self.genes)
         return genome
 
-    def sort_genes(self, stable = False):
+    def sort_genes(self, stable=True, inplace=False, ascending=True):
         """Sort the rows of the matrix alphabetically by gene name.
 
         Parameters
         ----------
         stable: bool, optional
-            If set to True, uses a stable sorting algorithm. (False)
+            Whether to use a stable sorting algorithm. [True]
+        inplace: bool, optional
+            Whether to perform the operation in place.[False]
+        ascending: bool, optional
+            Whether to sort in ascending order [True]
         
         Returns
         -------
@@ -193,28 +216,39 @@ class ExpMatrix(pd.DataFrame):
         kind = 'quicksort'
         if stable:
             kind = 'mergesort'
-        self.sort_index(kind = kind)
+        return self.sort_index(kind=kind, inplace=inplace, ascending=ascending)
 
-    def center_genes(self, use_median=False):
+    def center_genes(self, use_median=False, inplace=False):
         """Center the expression of each gene (row)."""
+        matrix = self
+        if not inplace:
+            # make a copy
+            matrix = matrix.copy()
+
         if use_median:
-            self.X = self.X - np.tile(np.median(self.X, axis=1), (self.n, 1)).T
+            matrix.X = matrix.X - \
+                np.tile(np.median(matrix.X, axis=1), (matrix.n, 1)).T
         else:
-            self.X = self.X - np.tile(np.mean(self.X, axis=1), (self.n, 1)).T
+            matrix.X = matrix.X - \
+                np.tile(np.mean(matrix.X, axis=1), (matrix.n, 1)).T
+        return matrix
 
-    def standardize_genes(self):
+    def standardize_genes(self, inplace=False):
         """Standardize the expression of each gene (row)."""
-        self.center_genes()
-        self.X = self.X / np.tile(np.std(self.X, axis=1, ddof=1), 
-                                  (self.n, 1)).T
+        matrix = self.center_genes(inplace=inplace)
+        matrix.X = matrix.X / \
+            np.tile(np.std(matrix.X, axis=1, ddof=1), (matrix.n, 1)).T
+        return matrix
 
-    def filter_against_genome(self, genome):
-        """Filter the expression matrix against a genome (set of genes).
+    def filter_against_genome(self, genome, inplace=False):
+        """Filter the expression matrix against a _genome (set of genes).
 
         Parameters
         ----------
         genome: `genometools.expression.ExpGenome`
             The genome to filter the genes against.
+        inplace: bool, optional
+            Whether to perform the operation in-place.
 
         Returns
         -------
@@ -223,7 +257,7 @@ class ExpMatrix(pd.DataFrame):
         """
         assert isinstance(genome, ExpGenome)
 
-        return self.loc[self.index & genome.genes]
+        return self.drop(set(self.genes) - genome.all_genes, inplace=inplace)
 
     @classmethod
     def read_tsv(cls, path, genome=None, encoding='UTF-8'):
@@ -251,7 +285,8 @@ class ExpMatrix(pd.DataFrame):
         assert isinstance(encoding, str)
 
         # use pd.read_csv to parse the tsv file into a DataFrame
-        E = cls(pd.read_csv(path, sep='\t', index_col=0, header=0, encoding=encoding))
+        E = cls(pd.read_csv(path, sep='\t', index_col=0, header=0,
+                            encoding=encoding))
 
         if genome is not None:
             # filter genes
@@ -276,7 +311,7 @@ class ExpMatrix(pd.DataFrame):
         assert isinstance(path, str)
         assert isinstance(encoding, str)
 
-        #sep = str('\t')
+        # sep = str('\t')
         sep = '\t'
         if six.PY2:
             sep = sep.encode('UTF-8')
@@ -287,4 +322,4 @@ class ExpMatrix(pd.DataFrame):
         )
 
         logger.info('Wrote %d x %d expression matrix to "%s".',
-                self.p, self.n, path)
+                    self.p, self.n, path)

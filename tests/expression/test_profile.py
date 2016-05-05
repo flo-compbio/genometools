@@ -14,38 +14,79 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+"""Tests for the `ExpProfile` class."""
+
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
-from builtins import *
-
-import hashlib
+from builtins import str as text
 
 import pytest
 import numpy as np
 
-from genometools.expression import ExpMatrix
-from genometools.expression import ExpProfile
+from genometools.expression import ExpProfile, ExpMatrix
+
+
+@pytest.fixture(scope='session')
+def my_label():
+    return 'sample'
+
 
 @pytest.fixture
-def e():
-    genes = ['a','b','c','d']
-    label = 's1'
-    x = np.arange(4, dtype=np.float64)
-    e = ExpProfile(genes=genes, label=label, x=x)
-    return e
+def my_profile(my_genes, my_label, my_x):
+    prof = ExpProfile(genes=my_genes, label=my_label, x=my_x)
+    return prof
 
-def test_expanddim(e):
-    E = e.to_frame()
-    assert isinstance(E, ExpMatrix)
 
-def test_write_read(tmpdir, e):
-    path = tmpdir.join('test.txt')
-    e.write_tsv(str(path))
-    data = open(str(path), mode='rb').read()
-    h = hashlib.md5(data).hexdigest()
-    assert h == '0edbe33c2c35354019a71cd85f11137d'
-    e2 = ExpProfile.read_tsv(str(path))
-    assert isinstance(e2, ExpProfile)
-    assert e.name == e2.name
-    assert e.index.equals(e2.index)
-    assert e.equals(e2)
+@pytest.fixture
+def my_profile2(my_genes, my_x):
+    prof= ExpProfile(genes=my_genes, label=None, x=my_x)
+    return prof
+
+
+def test_init(my_profile, my_profile2, my_genes, my_x):
+    for prof in [my_profile, my_profile2]:
+        assert isinstance(prof, ExpProfile)
+        assert isinstance(repr(prof), str)
+        assert isinstance(str(prof), str)
+        assert isinstance(text(prof), text)
+        assert isinstance(prof.hash, text)
+        assert prof.p == len(my_genes)
+        assert np.all(prof.x == my_x)
+        assert prof.genes == my_genes
+    assert my_profile != my_profile2
+    assert my_profile.label != my_profile2.label
+
+
+def test_expanddim(my_profile):
+    matrix = my_profile.to_frame()
+    assert isinstance(matrix, ExpMatrix)
+
+
+def test_tsv(tmpdir, my_profile):
+    tmp_file = tmpdir.join('expression_profile.tsv').strpath
+    my_profile.write_tsv(tmp_file)
+    other = ExpProfile.read_tsv(tmp_file)
+    assert other == my_profile
+
+
+def test_copy(my_profile, my_genes, my_x):
+    prof = my_profile.copy()
+    assert prof is not my_profile
+    assert prof.hash == my_profile.hash
+    assert prof == my_profile
+    prof.genes = my_genes
+    prof.x = my_x
+    assert prof == my_profile
+
+
+def test_sort(my_profile):
+    prof = my_profile.copy()
+    prof.sort_genes(inplace=True)
+    print(np.lexsort([prof.genes]) == np.arange(prof.p))
+    assert np.all(np.lexsort([prof.genes]) == np.arange(prof.p))
+
+
+def test_filter(my_profile, my_genome):
+    print(my_genome.genes)
+    prof = my_profile.filter_against_genome(my_genome)
+    assert prof == my_profile

@@ -26,7 +26,7 @@ from os import path
 
 root = 'genometools'
 name = 'genometools'
-version = '2.0rc1'
+version = '2.0rc2'
 
 here = path.abspath(path.dirname(__file__))
 description = 'GenomeTools: A Python Framework For Analyzing Genomic Data.'
@@ -49,7 +49,7 @@ if 'READTHEDOCS' not in os.environ or \
         'pandas >= 0.18, < 1',
         'scipy >= 0.14, < 1',
         'plotly >= 1.9.6, < 2',
-        'xlmhg >= 2, < 3',
+        'xlmhg >= 2.2.0, < 3',
     ])
 
 # get long description from file

@@ -20,9 +20,9 @@ before_install:
 - conda info -a
 install:
 - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
-    pip pytest coverage numpy cython pandas scipy
+    pip future pytest coverage pytest-cov numpy cython pandas scipy
 - source activate test-environment
-- pip install codecov pytest-cov
+- pip install codecov
 - pip install -e .
 script:
 - py.test --cov=genometools --cov-report=xml tests/

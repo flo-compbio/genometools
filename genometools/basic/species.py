@@ -23,10 +23,11 @@ from __future__ import (absolute_import, division,
 from builtins import *
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 
-class Species(object):
+class Species(object): # pragma: no cover
     """A species.
 
     Parameters

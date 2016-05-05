@@ -133,7 +133,7 @@ def read_gene2acc(file_path, logger):
     gene2acc = {}
     with misc.smart_open_read(file_path, mode='rb', try_gzip=True) as fh:
         reader = csv.reader(fh, dialect='excel-tab')
-        reader.next()  # skip header
+        next(reader)  # skip header
         for i, l in enumerate(reader):
             id_ = int(l[1])
             symbol = l[15]

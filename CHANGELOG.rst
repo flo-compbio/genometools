@@ -18,6 +18,10 @@
 Changelog
 =========
 
+Version 2.0rc2 (2016-05-05)
+---------------------------
+- Made `enrichment` subpackage compatible with `xlmhg` version 2.2.0
+
 Version 2.0rc1 (2016-04-21)
 ---------------------------
 

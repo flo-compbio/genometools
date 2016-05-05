@@ -14,8 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Module containing the `GeneSet` class.
-"""
+"""Module containing the `GeneSet` class."""
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
@@ -32,11 +31,11 @@ class GeneSet(object):
     
     Parameters
     ----------
-    id_: str
+    id: str
         See :attr:`id` attribute.
     name: str
         See :attr:`name` attribute.
-    genes: set, frozenset, list or tuple of str
+    genes: set, list or tuple of str
         See :attr:`genes` attribute.
     source: str, optional
         See :attr:`source` attribute. (None)
@@ -51,7 +50,7 @@ class GeneSet(object):
         The (unique) ID of the gene set.
     name: str
         The name of the gene set.
-    genes: frozenset of str
+    genes: set of str
         The list of genes in the gene set.
     source: None or str
         The source / origin of the gene set (e.g., "MSigDB")
@@ -61,13 +60,12 @@ class GeneSet(object):
     description: None or str
         The description of the gene set.
     """
-
-    def __init__(self, id_, name, genes,
+    def __init__(self, id, name, genes,
                  source=None, collection=None, description=None):
 
-        assert isinstance(id_, str)
+        assert isinstance(id, str)
         assert isinstance(name, str)
-        assert isinstance(genes, (list, tuple, set, frozenset))
+        assert isinstance(genes, (set, list, tuple))
         for g in genes:
             assert isinstance(g, str)
 
@@ -78,50 +76,53 @@ class GeneSet(object):
         if description is not None:
             assert isinstance(description, str)
 
-        self.id = id_
+        self.id = id
         self.name = name
-        self.genes = frozenset(genes)
+        self.genes = set(genes)
         self.source = source
         self.collection = collection
         self.description = description
 
+    @property
+    def _gene_str(self):
+        return ', '.join('"%s"' % g for g in sorted(self.genes))
+
+    @property
+    def _source_str(self):
+        return '"%s"' % self.source \
+            if self.source is not None else 'None'
+
+    @property
+    def _coll_str(self):
+        return '"%s"' % self.collection \
+            if self.collection is not None else 'None'
+
+    @property
+    def _desc_str(self):
+        return '"%s"' % self.description \
+            if self.description is not None else 'None'
+
     def __repr__(self):
-
-        # src_str = str(self.source)
-        # coll_str = str(self.collection)
-        # desc_str = str(self.description)
-
-        return '<%s "%s" (id=%s; source=%s; collection=%s; size=%d; hash=%d)>'\
-                % (self.__class__.__name__, self.name,
-                   self.id, self.source, self.collection,
-                   self.size, hash(self))
+        return '<%s(id="%s", name="%s", genes=[%s], source=%s, ' \
+               'collection=%s, description=%s)' \
+                % (self.__class__.__name__, self.id, self.name, self._gene_str,
+                   self._source_str, self._coll_str, self._desc_str)
 
     def __str__(self):
         return '<%s "%s" (id=%s; source=%s; collection=%s; size=%d)>' \
                 % (self.__class__.__name__, self.name,
-                   self.id, self.source, self.collection, self.size)
+                   self.id, self._source_str, self._coll_str, self.size)
 
     def __eq__(self, other):
         if self is other:
             return True
-        elif type(self) != type(other):
-            return False
+        elif type(self) is type(other):
+            return self.__dict__ == other.__dict__
         else:
-            return repr(self) == repr(other)
+            return NotImplemented
 
     def __ne__(self, other):
-        return not (self == other)
-
-    def __hash__(self):
-        data = (
-            self.id,
-            self.name,
-            self.genes,
-            self.source,
-            self.collection,
-            self.description
-        )
-        return hash(data)
+        return not self.__eq__(other)
 
     @property
     def size(self):
@@ -141,17 +142,11 @@ class GeneSet(object):
         list of str
             The data from the GeneSet object as a flat list.
         """
-        l = []
         src = self.source or ''
         coll = self.collection or ''
         desc = self.description or ''
 
-        l.append(self.id)
-        l.append(src)
-        l.append(coll)
-        l.append(self.name)
-        l.append(','.join(sorted(self.genes)))
-        l.append(desc)
+        l = [self.id, src, coll, self.name, ','.join(sorted(self.genes)), desc]
         return l
 
     @classmethod

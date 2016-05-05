@@ -212,7 +212,7 @@ def get_url_size(url):
     size = int(r.headers['content-length'])
     return size
 
-def make_sure_dir_exists(dir_, create_subfolders = False):
+def make_sure_dir_exists(dir_, create_subfolders=False):
     """Ensures that a directory exists.
 
     Adapted from StackOverflow users "Bengt" and "Heikki Toivonen"
@@ -220,11 +220,11 @@ def make_sure_dir_exists(dir_, create_subfolders = False):
 
     Parameters
     ----------
-    dir: str
+    dir_: str
         The directory path.
-    create_subfolders: bool
-        Whether to create any inexistent subfolders. (False)
-
+    create_subfolders: bool, optional
+        Whether to create any inexistent subfolders. [False]
+    
     Returns
     -------
     None

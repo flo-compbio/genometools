@@ -23,9 +23,12 @@ import logging
 
 import numpy as np
 
+from . import ExpMatrix
+
 logger = logging.getLogger(__name__)
 
-def quantile_normalize(X, copy_matrix=True):
+
+def quantile_normalize(matrix, copy=True):
     """Quantile normalization, allowing for missing values (NaN).
 
     In case of nan values, this implementation will calculate evenly
@@ -35,9 +38,9 @@ def quantile_normalize(X, copy_matrix=True):
 
     Parameters
     ----------
-    X: numpy.ndarray (ndim = 2)
+    matrix: `ExpMatrix`
         The expression matrix (rows = genes, columns = samples).
-    copy_matrix: bool
+    copy: bool
         Whether or not to make a copy of the expression matrix. If set to
         False, the expression data will be modified in-place.
 
@@ -46,18 +49,16 @@ def quantile_normalize(X, copy_matrix=True):
     numpy.ndarray (ndim = 2)
         The normalized matrix.
     """
+    assert isinstance(matrix, ExpMatrix)
+    assert isinstance(copy, bool)
 
-    assert isinstance(X, np.ndarray)
-    assert isinstance(copy_matrix, bool)
-
-    if copy_matrix:
+    if copy:
         # make a copy of the original data
-        X = X.copy()
+        matrix = matrix.copy()
 
+    X = matrix.X
     _, n = X.shape
-
     nan = []
-
      # fill in missing values with evenly spaced quantiles
     for j in range(n):
         nan.append(np.nonzero(np.isnan(X[:, j]))[0])
@@ -67,27 +68,25 @@ def quantile_normalize(X, copy_matrix=True):
             X[nan[j], j] = fill
 
     # generate sorting indices
-    #A = np.argsort(X, axis = 0)
-    A = np.argsort(X, axis=0, kind='mergesort') # mergesort is stable
+    A = np.argsort(X, axis=0, kind='mergesort')  # mergesort is stable
 
     # reorder matrix
     for j in range(n):
-        X[:, j] = X[A[:, j], j]
+        matrix.iloc[:, j] = matrix.X[A[:, j], j]
 
     # calculate target distribution
-    target = np.mean(X, axis=1)
+    target = np.mean(matrix.X, axis=1)
 
     # generate indices to reverse sorting
-    #A = np.argsort(A, axis = 0)
-    A = np.argsort(A, axis=0, kind='mergesort') # mergesort is stable
+    A = np.argsort(A, axis=0, kind='mergesort')  # mergesort is stable
 
     # quantile-normalize
     for j in range(n):
-        X[:, j] = target[A[:, j]]
+        matrix.iloc[:, j] = target[A[:, j]]
 
     # set missing values to NaN again
     for j in range(n):
         if nan[j].size > 0:
-            X[nan[j], j] = np.nan
+            matrix.iloc[nan[j], j] = np.nan
 
-    return X
+    return matrix

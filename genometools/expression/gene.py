@@ -26,25 +26,29 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class ExpGene(object):
     """A gene in a gene expression analysis.
+
+    Instances are to be treated as immutable, to allow use of ExpGene
+    objects to be used in sets etc.
 
     Parameters
     ----------
     name: str
         See :attr:`name` attribute.
     chromosomes: list or tuple of str, optional
-        See :attr:`chromosomes` attribute.
+        See :attr:`chromosomes` attribute. [empty list]
     ensembl_ids: list or tuple of str, optional
-        See :attr:`ensembl_ids` attribute.
+        See :attr:`ensembl_ids` attribute. [empty list]
 
     Attributes
     ----------
     name: str
         The gene name (use the official gene symbol, if available).
-    chromosomes: None or tuple of str
+    chromosomes: list of str
         The chromosome(s) that the gene is located on.
-    ensembl_ids: None or tuple of str
+    ensembl_ids: list of str
         The Ensembl ID(s) of the gene.
 
     Notes
@@ -56,91 +60,91 @@ class ExpGene(object):
     treated as the same gene. This class therefore represents a more "abstract"
     idea of a gene, not its physical manifestation in the genome.
     """
-    def __init__(self, name, chromosomes = None, ensembl_ids = None):
+    def __init__(self, name, chromosomes=None, ensembl_ids=None):
 
         if chromosomes is None:
             chromosomes = []
         if ensembl_ids is None:
             ensembl_ids = []
 
-        # checks
+        # type checks
         assert isinstance(name, str)
         assert isinstance(chromosomes, (list, tuple))
         for chrom in chromosomes:
             assert isinstance(chrom, str)
-
         assert isinstance(ensembl_ids, (list, tuple))
         for id_ in ensembl_ids:
             assert isinstance(id_, str)
 
-        self.name = name
-        self.chromosomes = tuple(chromosomes)
-        self.ensembl_ids = tuple(ensembl_ids)
+        self._name = name
+        self._chromosomes = tuple(chromosomes)
+        self._ensembl_ids = tuple(ensembl_ids)
 
     def __repr__(self):
-        return '<%s "%s" (%s; %s)>' %(self.__class__.__name__,
-                self.name, repr(self.chromosomes), repr(self.ensembl_ids))
+        return '<%s instance (name="%s", chromosomes=%s, ensembl_ids=%s)>' \
+               % (self.__class__.__name__, self._name,
+                  repr(self._chromosomes), repr(self._ensembl_ids))
 
     def __str__(self):
-        chrom_str = 'None'
-        if self.chromosomes is not None:
-            chrom_str = ','.join(self.chromosomes)
-        ens_str = 'None'
-        if self.ensembl_ids is not None:
-            ens_str = ','.join(self.ensembl_ids)
-        return '<%s "%s" (Chromosome(s): %s, EnsemblID(s): %s)>' \
-                %(self.__class__.__name__, self.name, chrom_str, ens_str)
-
-    def __hash__(self):
-        data = []
-        data.append(self.name)
-        data.append(self.chromosomes)
-        data.append(self.ensembl_ids)
-
-        return hash(tuple(data))
+        return '<%s instance "%s" (Chromosome(s): %s, EnsemblID(s): %s)>' \
+               % (self.__class__.__name__, self._name,
+                  str(self._chromosomes), str(self._ensembl_ids))
 
     def __eq__(self, other):
         if self is other:
             return True
-        elif type(self) != type(other):
-            return False
-        else:
+        elif type(self) is type(other):
             return repr(self) == repr(other)
+        else:
+            return NotImplemented
 
     def __ne__(self, other):
-        return not (self == other)
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return hash(repr(self))
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def chromosomes(self):
+        return list(self._chromosomes)
+
+    @property
+    def ensembl_ids(self):
+        return list(self._ensembl_ids)
 
     def to_list(self):
-        return [self.name, ','.join(self.chromosomes),
-                ','.join(self.ensembl_ids)]
+        return [self._name, ','.join(self._chromosomes),
+                ','.join(self._ensembl_ids)]
 
     @classmethod
-    def from_list(cls, l):
+    def from_list(cls, data):
         """Generate an ExpGene object from a list of strings.
 
         Parameters
         ----------
-        l: list or tuple of str
+        data: list or tuple of str
             A list of strings representing gene name, chromosome(s), and
             Ensembl ID(s), respectively. See also :meth:`to_list`.
 
         Returns
         -------
-        `genometools.expression.ExpGene`
+        `ExpGene`
         """
-        assert isinstance(l, (list, tuple))
-        assert len(l) == 3
-        for i in range(3):
-            assert isinstance(l[i], str)
-
-        assert l[0] is not None # name has to be set
+        assert isinstance(data, (list, tuple))
+        assert len(data) == 3
+        for l in data:
+            assert isinstance(l, str)
 
         chrom = None
-        if l[1] is not None and l[1]:
-            chrom = l[1].split(',')
+        if data[1]:
+            chrom = data[1].split(',')
 
         ens = None
-        if l[2] is not None and l[2]:
-            ens = l[2].split(',')
+        if data[2]:
+            ens = data[2].split(',')
 
-        return cls(l[0], chromosomes = chrom, ensembl_ids = ens)
+        return cls(data[0], chromosomes=chrom, ensembl_ids=ens)

@@ -18,7 +18,7 @@
 
 """Script for extracting lists of protein-coding genes.
 
-This script parses an Ensembl GTF file containing genome annotations, extracts
+This script parses an Ensembl GTF file containing _genome annotations, extracts
 information about all protein-coding genes contained in it, and writes the
 results to a tab-delimited text file. Each row in the output file corresponds
 to one protein-coding gene.

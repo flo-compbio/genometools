@@ -27,8 +27,10 @@ from builtins import *
 import os
 import io
 import logging
+import hashlib
 from collections import OrderedDict
 
+import numpy as np
 import xmltodict
 import unicodecsv as csv
 
@@ -62,6 +64,12 @@ class GeneSetDB(object):
         for gs in gene_sets:
             assert isinstance(gs, GeneSet)
 
+        # make sure all IDs are unique
+        all_ids = [gs.id for gs in gene_sets]
+        if len(all_ids) != len(set(all_ids)):
+            raise ValueError('Cannot create GeneSetDB: gene set IDs are not '
+                             'unique!')
+
         self._gene_sets = OrderedDict([gs.id, gs] for gs in gene_sets)
         self._gene_set_ids = tuple(self._gene_sets.keys())
         self._gene_set_indices = OrderedDict(
@@ -69,11 +77,14 @@ class GeneSetDB(object):
         )
 
     def __repr__(self):
-        return '<%s object (n=%d; hash=%d)>' \
-                % (self.__class__.__name__, self.n, hash(self))
+        return '<%s object (n=%d; hash=%s)>' \
+                % (self.__class__.__name__, self.n, self.hash)
 
     def __str__(self):
         return '<%s object (n=%d)>' % (self.__class__.__name__, self.n)
+
+    def __len__(self):
+        return len(self._gene_sets)
 
     def __getitem__(self, key):
         """Simple interface for querying the database.
@@ -81,7 +92,7 @@ class GeneSetDB(object):
         Depending on whether key is an integer or not, look up a gene set
         either by index, or by ID.
         """
-        if isinstance(key, int):
+        if isinstance(key, (int, np.integer)):
             return self.get_by_index(key)
         else:
             return self.get_by_id(key)
@@ -89,25 +100,27 @@ class GeneSetDB(object):
     def __eq__(self, other):
         if self is other:
             return True
-        elif type(self) != type(other):
-            return False
+        elif type(self) is type(other):
+            return self.__dict__ == other.__dict__
         else:
-            return repr(self) == repr(other)
+            return NotImplemented
 
     def __ne__(self, other):
-        return not (self == other)
+        return not self.__eq__(other)
 
-    def __hash__(self):
-        return hash(tuple(self.gene_sets))
+    @property
+    def hash(self):
+        data = ';'.join(repr(gs) for gs in self.gene_sets)
+        return str(hashlib.md5(data.encode('ascii')).hexdigest())
 
     @property
     def gene_sets(self):
-        return tuple(self._gene_sets.values())
+        return list(self._gene_sets.values())
 
     @property
     def n(self):
         """The number of gene sets in the database."""
-        return len(self._gene_sets)
+        return len(self)
 
     def get_by_id(self, id_):
         """Look up a gene set by its ID.
@@ -226,7 +239,7 @@ class GeneSetDB(object):
                 writer.writerow(gs.to_list())
 
     @classmethod
-    def read_msigdb_xml(cls, path, entrez2gene, species=None):
+    def read_msigdb_xml(cls, path, entrez2gene, species=None):  # pragma: no cover
         """Read the complete MSigDB database from an XML file.
 
         The XML file can be downloaded from here:
