@@ -45,10 +45,10 @@ def test_slice(my_matrix):
 
 def test_transformation(my_matrix):
     other = my_matrix.copy()
-    other.center_genes()
+    other.center_genes(inplace=True)
     assert np.allclose(other.mean(axis=1), 0.0)
     other = my_matrix.copy()
-    other.standardize_genes()
+    other.standardize_genes(inplace=True)
     assert np.allclose(other.std(axis=1, ddof=1), 1.0)
 
 

@@ -26,68 +26,68 @@ import hashlib
 import numpy as np
 from scipy.stats import hypergeom
 
+from xlmhg import mHGResult
 from ..basic import GeneSet
 
 logger = logging.getLogger(__name__)
 
 
-class GSEResult(object):
-    """Result of an XL-mHG-based test for gene set enrichment in a ranked list.
+class GSEResult(mHGResult):
+    """Result of an XL-mHG-based test for gene set enrichment.
 
     Parameters
     ----------
-    stat: float
-        The XL-mHG test statistic.
-    n_star: int
-        The cutoff at which the XL-mHG test statistic was attained.
-    pval: float
-        The XL-mHG p-value.
+    gene_set `genometools.basic.GeneSet`
+        The gene set.
     N: int
-        The total number of genes in the analysis.
+        The total number of genes in the ranked list.
+    indices: np.ndarray of integers
+        The indices of the gene set genes in the ranked list.
+    ind_genes: list of str
+        The names of the genes corresponding to the indices.
     X: int
         The XL-mHG X parameter.
     L: int
         The XL-mHG L parameter.
-    gene_set `genometools.basic.GeneSet`
-        The gene set.
-    indices: np.ndarray of integers
-        The indices of the gene set genes in the ranked list.
-    genes: list or tuple of str
-        The gene names in order of their appearance in the ranked list.
+    stat: float
+        The XL-mHG test statistic.
+    cutoff: int
+        The cutoff at which the XL-mHG test statistic was attained.
+    pval: float
+        The XL-mHG p-value.
+    pval_thresh: float, optional
+        The p-value threshold used in the analysis. [None]
     escore_pval_thresh: float, optional
-        The hypergeometric p-value threshold used in calculating the E-score.
-        [None]
+        The hypergeometric p-value threshold used for calculating the E-score.
+        If not specified, the XL-mHG p-value will be used, resulting in a
+        conservative E-score. [None]
+    escore_tol: float, optional
+        The tolerance used for calculating the E-score. [None]
     """
-    def __init__(self, stat, n_star, pval, N, X, L,
-                 gene_set, indices, genes, escore_pval_thresh=None):
+    def __init__(self, gene_set, N, indices, ind_genes, X, L,
+                 stat, cutoff, pval,
+                 pval_thresh=None, escore_pval_thresh=None, escore_tol=None):
 
-        assert isinstance(stat, float)
-        assert isinstance(n_star, int)
-        assert isinstance(pval, float)
-        assert isinstance(N, int)
-        assert isinstance(X, int)
-        assert isinstance(L, int)
+        # call parent constructor
+        mHGResult.__init__(self, N, indices, X, L, stat, cutoff, pval,
+                           pval_thresh=pval_thresh,
+                           escore_pval_thresh=escore_pval_thresh,
+                           escore_tol=escore_tol)
+
+        # type checks
         assert isinstance(gene_set, GeneSet)
-        assert isinstance(indices, np.ndarray) and indices.ndim == 1 and \
-            np.issubdtype(indices.dtype, np.integer)
-        assert isinstance(genes, (tuple, list))
-        for g in genes:
+        assert isinstance(ind_genes, (tuple, list))
+        for g in ind_genes:
             assert isinstance(g, str)
-        if escore_pval_thresh is not None:
-            assert isinstance(escore_pval_thresh, float)
+        assert isinstance(indices, np.ndarray) and indices.ndim == 1 and \
+               np.issubdtype(indices.dtype, np.integer)
 
-        self.n_star = n_star
-        self.stat = stat
-        self.pval = pval
-        self.N = N
-        self.X = X  # XL-mHG "X" parameter
-        self.L = L  # XL-mHG "L" parameter
-        self.escore_pval_thresh = escore_pval_thresh
+        if len(ind_genes) != indices.size:
+            raise ValueError('The number of genes must match the number of '
+                             'indices.')
 
         self.gene_set = gene_set
-        self.indices = indices
-        self.genes = tuple(genes)
-        # self.escore = None
+        self.ind_genes = ind_genes
 
     def __repr__(self):
         return '<%s object (N=%d; gene_set_id="%s"; hash="%s">' \
@@ -97,16 +97,6 @@ class GSEResult(object):
     def __str__(self):
         return '<%s object (gene_set=%s; pval=%.1e)>' \
                 % (self.__class__.__name__, str(self.gene_set), self.pval)
-
-    @property
-    def hash(self):
-        data_str = ';'.join(
-            [str(repr(v)) for v in
-             [self.stat, self.n_star, self.pval, self.N, self.X, self.L,
-              self.gene_set, self.indices, self.genes,
-              self.escore_pval_thresh]])
-        data = data_str.encode('UTF-8')
-        return str(hashlib.md5(data).hexdigest())
 
     def __eq__(self, other):
         if self is other:
@@ -120,40 +110,16 @@ class GSEResult(object):
         return not self.__eq__(other)
 
     @property
-    def K(self):
-        return self.indices.size
+    def hash(self):
+        data_str = ';'.join(
+            [super().hash] +
+            [str(repr(var)) for var in [self.gene_set, self.ind_genes]])
+        data = data_str.encode('UTF-8')
+        return str(hashlib.md5(data).hexdigest())
 
     @property
-    def k(self):
-        return int(np.sum(self.indices < self.n_star))
-
-    @property
-    def escore(self):  # pragma: no cover
-        """ Calculate XL-mHG E-score.  """
-        N = self.N
-        K = self.K
-        X = self.X
-        L = self.L
-        indices = self.indices
-        pval_thresh = self.escore_pval_thresh
-        
-        if K == 0 or L == N or K < X:
-            return 0
-
-        fe_max = 0.0
-        k = 1
-
-        while k <= K and indices[k-1] < L:
-            if k >= X:
-                n = indices[k-1] + 1
-                if pval_thresh == 1.0 or \
-                        hypergeom.sf(k-1, N, K, n) <= pval_thresh:
-                    fe = k / (K * (n / float(N)))
-                    if fe >= fe_max:
-                        fe_max = fe
-            k += 1
-
-        return fe_max
+    def genes_above_cutoff(self):
+        return self.ind_genes[:self.k]
 
     def get_pretty_format(self, omit_param=True, max_name_length=0):
         # TO-DO: clean up, commenting
@@ -162,7 +128,7 @@ class GSEResult(object):
             assert max_name_length >= 3
             gs_name = gs_name[:(max_name_length-3)] + '...'
         gs_str = gs_name + ' (%d / %d @ %d)' % \
-                (self.k, len(self.genes), self.n_star)
+                (self.k, len(self.ind_genes), self.cutoff)
         param_str = ''
         if not omit_param:
             param_str = ' [X=%d,L=%d,N=%d]' % (self.X, self.L, self.N)
@@ -179,7 +145,7 @@ class GSEResult(object):
         term = GO.terms[self.gene_set.id]
         term_name = term.get_pretty_format(omit_acc=omit_acc,
                                            max_name_length=max_name_length)
-        term_str = term_name + ' (%d)' % (len(self.genes))
+        term_str = term_name + ' (%d)' % (len(self.ind_genes))
         param_str = ''
         if not omit_param:
             param_str = ' [X=%d,L=%d,N=%d]' % (self.X, self.L, self.N)

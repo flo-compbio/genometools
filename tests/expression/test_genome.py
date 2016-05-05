@@ -77,8 +77,8 @@ def test_access(my_genome, my_exp_genes, not_my_gene):
 
 
 def test_tsv(tmpdir, my_genome):
-    tmp_file = str(tmpdir.join('genome.tsv'))
-    # print(type(genome.exp_genes[0]))
+    tmp_file = str(tmpdir.join('_genome.tsv'))
+    # print(type(_genome.exp_genes[0]))
     my_genome.write_tsv(tmp_file)
     other = ExpGenome.read_tsv(tmp_file)
     assert my_genome == other

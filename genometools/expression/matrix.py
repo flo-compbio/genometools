@@ -197,13 +197,17 @@ class ExpMatrix(pd.DataFrame):
         genome = ExpGenome.from_gene_names(self.genes)
         return genome
 
-    def sort_genes(self, stable=False):
+    def sort_genes(self, stable=True, inplace=False, ascending=True):
         """Sort the rows of the matrix alphabetically by gene name.
 
         Parameters
         ----------
         stable: bool, optional
-            If set to True, uses a stable sorting algorithm. (False)
+            Whether to use a stable sorting algorithm. [True]
+        inplace: bool, optional
+            Whether to perform the operation in place.[False]
+        ascending: bool, optional
+            Whether to sort in ascending order [True]
         
         Returns
         -------
@@ -212,28 +216,39 @@ class ExpMatrix(pd.DataFrame):
         kind = 'quicksort'
         if stable:
             kind = 'mergesort'
-        self.sort_index(kind=kind)
+        return self.sort_index(kind=kind, inplace=inplace, ascending=ascending)
 
-    def center_genes(self, use_median=False):
+    def center_genes(self, use_median=False, inplace=False):
         """Center the expression of each gene (row)."""
+        matrix = self
+        if not inplace:
+            # make a copy
+            matrix = matrix.copy()
+
         if use_median:
-            self.X = self.X - np.tile(np.median(self.X, axis=1), (self.n, 1)).T
+            matrix.X = matrix.X - \
+                np.tile(np.median(matrix.X, axis=1), (matrix.n, 1)).T
         else:
-            self.X = self.X - np.tile(np.mean(self.X, axis=1), (self.n, 1)).T
+            matrix.X = matrix.X - \
+                np.tile(np.mean(matrix.X, axis=1), (matrix.n, 1)).T
+        return matrix
 
-    def standardize_genes(self):
+    def standardize_genes(self, inplace=False):
         """Standardize the expression of each gene (row)."""
-        self.center_genes()
-        self.X = self.X / np.tile(np.std(self.X, axis=1, ddof=1), 
-                                  (self.n, 1)).T
+        matrix = self.center_genes(inplace=inplace)
+        matrix.X = matrix.X / \
+            np.tile(np.std(matrix.X, axis=1, ddof=1), (matrix.n, 1)).T
+        return matrix
 
-    def filter_against_genome(self, genome):
-        """Filter the expression matrix against a genome (set of genes).
+    def filter_against_genome(self, genome, inplace=False):
+        """Filter the expression matrix against a _genome (set of genes).
 
         Parameters
         ----------
         genome: `genometools.expression.ExpGenome`
             The genome to filter the genes against.
+        inplace: bool, optional
+            Whether to perform the operation in-place.
 
         Returns
         -------
@@ -242,7 +257,7 @@ class ExpMatrix(pd.DataFrame):
         """
         assert isinstance(genome, ExpGenome)
 
-        return self.loc[self.index & genome.genes]
+        return self.drop(set(self.genes) - genome.all_genes, inplace=inplace)
 
     @classmethod
     def read_tsv(cls, path, genome=None, encoding='UTF-8'):

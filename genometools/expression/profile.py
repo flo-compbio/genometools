@@ -220,7 +220,7 @@ class ExpProfile(pd.Series):
         self.sort_index(inplace=inplace)
 
     def filter_against_genome(self, genome):
-        """Filter the expression matrix against a genome (set of genes).
+        """Filter the expression matrix against a _genome (set of genes).
 
         Parameters
         ----------

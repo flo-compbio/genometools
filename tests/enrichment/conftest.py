@@ -22,7 +22,7 @@ from string import ascii_lowercase
 
 import pytest
 import numpy as np
-from xlmhg import xlmhg_test
+from xlmhg import get_xlmhg_test_result
 
 from genometools.basic import GeneSet, GeneSetDB
 from genometools.expression import ExpGenome
@@ -74,15 +74,19 @@ def my_result(my_v, my_ranked_genes, my_gene_set):
     N = my_v.size
     X = 1
     L = N
-    sel = np.nonzero(my_v)[0]
-    sel_genes = [my_ranked_genes[i] for i in sel]
-    assert set(sel_genes) == my_gene_set.genes
-    stat, n_star, pval = xlmhg_test(my_v, X, L)
-    result = GSEResult(stat, n_star, pval, N, X, L, my_gene_set,
-                       sel, sel_genes)
+    indices = np.uint16(np.nonzero(my_v)[0])
+    ind_genes = [my_ranked_genes[i] for i in indices]
+    assert set(ind_genes) == my_gene_set.genes
+    ## stat, n_star, pval = xlmhg_test(my_v, X, L)
+    res = get_xlmhg_test_result(N, indices, X, L)
+    #result = GSEResult(stat, n_star, pval, N, X, L, my_gene_set,
+    #                   sel, sel_genes)
+    result = GSEResult(my_gene_set, N, indices, ind_genes, X, L,
+                       res.stat, res.cutoff, res.pval)
     return result
 
-    # @pytest.fixture
+
+# @pytest.fixture
 # def my_result(my_v, my_gene_set):
 #    N = my_v.size
 #    stat, n_star, pval = xlmhg_test(my_v, X=1, L=N)

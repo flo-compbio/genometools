@@ -30,6 +30,9 @@ logger = logging.getLogger(__name__)
 class ExpGene(object):
     """A gene in a gene expression analysis.
 
+    Instances are to be treated as immutable, to allow use of ExpGene
+    objects to be used in sets etc.
+
     Parameters
     ----------
     name: str
@@ -64,44 +67,58 @@ class ExpGene(object):
         if ensembl_ids is None:
             ensembl_ids = []
 
-        # checks
+        # type checks
         assert isinstance(name, str)
         assert isinstance(chromosomes, (list, tuple))
         for chrom in chromosomes:
             assert isinstance(chrom, str)
-
         assert isinstance(ensembl_ids, (list, tuple))
         for id_ in ensembl_ids:
             assert isinstance(id_, str)
 
-        self.name = name
-        self.chromosomes = list(chromosomes)
-        self.ensembl_ids = list(ensembl_ids)
+        self._name = name
+        self._chromosomes = tuple(chromosomes)
+        self._ensembl_ids = tuple(ensembl_ids)
 
     def __repr__(self):
-        return '%s(name="%s", chromosomes=%s; ensembl_ids=%s)' \
-               % (self.__class__.__name__,
-                  self.name, repr(self.chromosomes), repr(self.ensembl_ids))
+        return '<%s instance (name="%s", chromosomes=%s, ensembl_ids=%s)>' \
+               % (self.__class__.__name__, self._name,
+                  repr(self._chromosomes), repr(self._ensembl_ids))
 
     def __str__(self):
-        return '<%s "%s" (Chromosome(s): %s, EnsemblID(s): %s)>' \
-               % (self.__class__.__name__, self.name,
-                  str(self.chromosomes), str(self.ensembl_ids))
+        return '<%s instance "%s" (Chromosome(s): %s, EnsemblID(s): %s)>' \
+               % (self.__class__.__name__, self._name,
+                  str(self._chromosomes), str(self._ensembl_ids))
 
     def __eq__(self, other):
         if self is other:
             return True
         elif type(self) is type(other):
-            return self.__dict__ == other.__dict__
+            return repr(self) == repr(other)
         else:
             return NotImplemented
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def __hash__(self):
+        return hash(repr(self))
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def chromosomes(self):
+        return list(self._chromosomes)
+
+    @property
+    def ensembl_ids(self):
+        return list(self._ensembl_ids)
+
     def to_list(self):
-        return [self.name, ','.join(self.chromosomes),
-                ','.join(self.ensembl_ids)]
+        return [self._name, ','.join(self._chromosomes),
+                ','.join(self._ensembl_ids)]
 
     @classmethod
     def from_list(cls, data):

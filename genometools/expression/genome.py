@@ -24,6 +24,7 @@ import os
 import logging
 import hashlib
 from collections import OrderedDict
+import copy
 
 import unicodecsv as csv
 import numpy as np
@@ -42,7 +43,7 @@ class ExpGenome(object):
 
     Parameters
     ----------
-    genes: list or tuple of ExpGene objects
+    exp_genes: list or tuple of ExpGene objects
         The genes in the analysis.
 
     Notes
@@ -57,19 +58,22 @@ class ExpGenome(object):
         for g in exp_genes:
             assert isinstance(g, ExpGene)
 
-        all_genes = [eg.name for eg in exp_genes]
-        if len(all_genes) != len(set(all_genes)):
+        all_genes = frozenset([eg.name for eg in exp_genes])
+        if len(all_genes) != len(exp_genes):
             raise ValueError('Cannot create ExpGenome: Not all genes have a '
                              'unique name.')
 
-        self._exp_gene_dict = OrderedDict([eg.name, eg] for eg in exp_genes)
-        self._gene_names = tuple(self._exp_gene_dict.keys())
+        self._exp_genes = OrderedDict([eg.name, eg] for eg in exp_genes)
+
+        # auxiliary variables
+        self._genes = tuple(self._exp_genes.keys())
+        self._all_genes = all_genes
         self._gene_indices = OrderedDict([eg.name, i]
                                          for i, eg in enumerate(exp_genes))
         logger.debug('Initialized ExpGenome with %d genes.', len(self))
 
     def __repr__(self):
-        return '<%s object (%d genes; hash=%s)>' \
+        return '<%s object (%d genes, hash="%s")>' \
                 % (self.__class__.__name__, len(self), self.hash)
 
     def __str__(self):
@@ -77,10 +81,10 @@ class ExpGenome(object):
                % (self.__class__.__name__, len(self))
 
     def __len__(self):
-        return len(self._exp_gene_dict)
+        return len(self._exp_genes)
 
     def __iter__(self):
-        return iter(self._exp_gene_dict.values())
+        return iter(self._exp_genes.values())
 
     def __getitem__(self, key):
         """Simple interface for accessing genes.
@@ -95,15 +99,15 @@ class ExpGenome(object):
 
     @property
     def hash(self):
-        data_str = ';'.join(repr(g) for g in self._exp_gene_dict)
-        data = data_str.encode('ascii')
+        data_str = ';'.join(repr(g) for g in self._exp_genes.values())
+        data = data_str.encode('UTF-8')
         return str(hashlib.md5(data).hexdigest())
 
     def __eq__(self, other):
         if self is other:
             return True
         elif type(self) is type(other):
-            return self.__dict__ == other.__dict__
+            return repr(self) == repr(other)
         else:
             return NotImplemented
 
@@ -111,17 +115,27 @@ class ExpGenome(object):
         return not (self == other)
 
     def __contains__(self, gene):
-        return gene.name in self._exp_gene_dict
+        if isinstance(gene, str):
+            return gene in self._all_genes
+        elif isinstance(gene, ExpGene):
+            return gene.name in self._all_genes
+        else:
+            raise TypeError('Must be string or ExpGene instance.')
 
     @property
     def exp_genes(self):
         """Returns a list with all genes."""
-        return list(self._exp_gene_dict.values())
+        return list(self._exp_genes.values())
 
     @property
     def genes(self):
         """Returns a list with all gene names."""
-        return [eg.name for eg in self._exp_gene_dict.values()]
+        return list(self._genes)
+
+    @property
+    def all_genes(self):
+        """Returns a set of all genes."""
+        return set(self._all_genes)
 
     @classmethod
     def from_gene_names(cls, genes):
@@ -161,7 +175,7 @@ class ExpGenome(object):
             raise ValueError('Gene name must be a string.')
 
         try:
-            return self._exp_gene_dict[gene]
+            return self._exp_genes[gene]
         except KeyError:
             raise ValueError('No gene with name "%s"!' % gene)
 
@@ -185,7 +199,7 @@ class ExpGenome(object):
             raise ValueError('Index %d out of bounds for genome with %d genes.'
                              % (i, len(self)))
 
-        return self._exp_gene_dict[self._gene_names[i]]
+        return self._exp_genes[self._genes[i]]
 
     def index(self, gene):
         """Returns the index of the gene with the given gene.
@@ -252,6 +266,6 @@ class ExpGenome(object):
                 ofh, dialect='excel-tab', encoding=encoding,
                 lineterminator=os.linesep, quoting=csv.QUOTE_NONE
             )
-            for eg in self._exp_gene_dict.values():
+            for eg in self._exp_genes.values():
                 writer.writerow(eg.to_list())
         logger.info('Wrote %d genes to file "%s".', len(self), output_file)

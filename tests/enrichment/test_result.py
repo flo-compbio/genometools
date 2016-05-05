@@ -38,11 +38,12 @@ def test_init(my_result, my_v):
     other = deepcopy(my_result)
     assert other is not my_result
     assert other == my_result
-    other.N += 1
+    other.ind_genes[0] += 'Hello'
     assert other != my_result
 
     assert my_result.K == np.nonzero(my_v)[0].size
-    assert my_result.k == int(np.sum(np.nonzero(my_v)[0] < my_result.n_star))
+    assert my_result.k == int(np.sum(np.nonzero(my_v)[0] < my_result.cutoff))
+
 
 def test_format(my_result):
     assert isinstance(my_result.get_pretty_format(), text)
