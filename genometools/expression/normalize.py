@@ -28,7 +28,7 @@ from . import ExpMatrix
 logger = logging.getLogger(__name__)
 
 
-def quantile_normalize(matrix, copy=True):
+def quantile_normalize(matrix, inplace=False):
     """Quantile normalization, allowing for missing values (NaN).
 
     In case of nan values, this implementation will calculate evenly
@@ -40,9 +40,8 @@ def quantile_normalize(matrix, copy=True):
     ----------
     matrix: `ExpMatrix`
         The expression matrix (rows = genes, columns = samples).
-    copy: bool
-        Whether or not to make a copy of the expression matrix. If set to
-        False, the expression data will be modified in-place.
+    inplace: bool
+        Whether or not to perform the operation in-place. [False]
 
     Returns
     -------
@@ -50,9 +49,9 @@ def quantile_normalize(matrix, copy=True):
         The normalized matrix.
     """
     assert isinstance(matrix, ExpMatrix)
-    assert isinstance(copy, bool)
+    assert isinstance(inplace, bool)
 
-    if copy:
+    if not inplace:
         # make a copy of the original data
         matrix = matrix.copy()
 
@@ -63,7 +62,8 @@ def quantile_normalize(matrix, copy=True):
     for j in range(n):
         nan.append(np.nonzero(np.isnan(X[:, j]))[0])
         if nan[j].size > 0:
-            q = np.arange(1, nan[j].size + 1, dtype=np.float64) / (nan[j].size + 1.0)
+            q = np.arange(1, nan[j].size + 1, dtype=np.float64) / \
+                (nan[j].size + 1.0)
             fill = np.nanpercentile(X[:, j], 100 * q)
             X[nan[j], j] = fill
 

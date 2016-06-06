@@ -26,16 +26,16 @@ import numpy as np
 from genometools.expression import ExpMatrix, ExpProfile, ExpGenome
 
 
-def test_init(my_matrix, my_genes, my_samples, my_X):
+def test_basic(my_matrix, my_genes, my_samples, my_X):
     assert isinstance(my_matrix, ExpMatrix)
     assert isinstance(repr(my_matrix), str)
     assert isinstance(str(my_matrix), str)
     assert isinstance(text(my_matrix), text)
     assert isinstance(my_matrix.hash, text)
 
-    assert my_matrix.genes == my_genes
-    assert my_matrix.samples == my_samples
-    assert np.all(my_matrix.X == my_X)
+    assert np.array_equal(my_matrix.genes.values, my_genes)
+    assert np.array_equal(my_matrix.samples.values, my_samples)
+    assert np.array_equal(my_matrix.X, my_X)
 
 
 def test_slice(my_matrix):
@@ -59,7 +59,7 @@ def test_filter(my_matrix, my_genome):
 
 
 def test_genome(my_matrix, my_genes):
-    genome = my_matrix.get_genome()
+    genome = my_matrix.genome
     assert isinstance(genome, ExpGenome)
     assert len(genome) == len(my_genes)
 
@@ -68,9 +68,6 @@ def test_copy(my_matrix, my_genes, my_samples, my_X):
     other = my_matrix.copy()
     assert other is not my_matrix
     assert other == my_matrix
-    other.genes = my_genes
-    other.samples = my_samples
-    other.X = my_X
     assert other == my_matrix
 
 

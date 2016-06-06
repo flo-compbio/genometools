@@ -23,10 +23,11 @@ from builtins import *
 import logging
 import importlib
 import hashlib
+from collections import Iterable
 
+import six
 import pandas as pd
 import numpy as np
-import six
 
 from . import ExpGene, ExpGenome
 matrix = importlib.import_module('.matrix', package='genometools.expression')
@@ -70,19 +71,15 @@ class ExpProfile(pd.Series):
         if x is not None:
             assert isinstance(x, np.ndarray) and x.ndim == 1
             kwargs['data'] = x
-        
+
         # check if user provided "genes" keyword argument
         genes = kwargs.pop('genes', None)
         if genes is not None:
-            assert isinstance(genes, (list, tuple))
-            for g in genes:
-                assert isinstance(g, str)
-        
+            assert isinstance(genes, Iterable)
+
         # check if user provided "label" keyword argument
         label = kwargs.pop('label', None)
-        if label is not None:
-            assert isinstance(label, str)
-         
+
         # call base class constructor
         pd.Series.__init__(self, *args, **kwargs)
         
@@ -93,14 +90,6 @@ class ExpProfile(pd.Series):
         if label is not None:
             # set (overwrite) series name with user-provided sample label
             self.name = label
-
-        #  some type checking after the fact
-        if self.name is not None:
-            assert isinstance(self.name, str)
-
-        if self.index.dtype is np.dtype('O'):
-            for d in self.index.values:
-                assert isinstance(d, str)
 
     def __eq__(self, other):
         if self is other:
@@ -116,22 +105,21 @@ class ExpProfile(pd.Series):
         return not self.__eq__(other)
 
     def __repr__(self):
-        return '<%s object (label=%s; p=%d; hash="%s">' \
+        return '<%s instance (label="%s", p=%d, hash="%s">' \
                % (self.__class__.__name__, self._label_str,
                   self.p, self.hash)
 
-    def __str__(self):
-        if self.label is not None:
-            label_str = '"%s"' % self.label
-        else:
-            label_str = '(unlabeled)'
-        return '<%s %s with p=%d genes>'  \
-               % (self.__class__.__name__, label_str, self.p)
+    #def __str__(self):
+    #    if self.label is not None:
+    #        label_str = self._label_str
+    #    else:
+    #        label_str = '(unlabeled)'
+    #    return '<%s %s with p=%d genes>'  \
+    #           % (self.__class__.__name__, label_str, self.p)
 
     @property
     def _label_str(self):
-        return '"%s"' % self.label \
-            if self.label is not None else 'None'
+        return str(self.label) if self.label is not None else ''
 
     @property
     def _constructor(self):
@@ -144,7 +132,7 @@ class ExpProfile(pd.Series):
     @property
     def hash(self):
         # warning: involves copying all the data
-        gene_str = ','.join(self.genes)
+        gene_str = ','.join([str(g) for g in self.genes])
         data_str = ';'.join([self._label_str, gene_str]) + ';'
         data = data_str.encode('UTF-8') + self.x.tobytes()
         return str(hashlib.md5(data).hexdigest())
@@ -152,21 +140,20 @@ class ExpProfile(pd.Series):
     @property
     def p(self):
         """The number of genes."""
-        # return len(self.genes)
         return self.shape[0]
 
     @property
     def genes(self):
-        """Returns the gene names (= series index) as a list."""
-        return self.index.values.tolist()
+        """Alias for `Series.index`."""
+        return self.index
 
     @genes.setter
-    def genes(self, genes):
-        self.index = genes
+    def genes(self, gene_list):
+        self.index = gene_list
 
     @property
     def label(self):
-        """Returns the sample label (= series name)."""
+        """Alias for `Series.name`."""
         return self.name
 
     @label.setter
@@ -175,27 +162,18 @@ class ExpProfile(pd.Series):
 
     @property
     def x(self):
-        """Returns the expression values as a numpy vector."""
+        """Alias for `Series.values`."""
         return self.values
 
     @x.setter
     def x(self, x):
         self.x[:] = x
 
-    def get_genome(self):
-        """Get an ExpGenome representation of the genes in the profile.
-
-        Parameters
-        ----------
-
-        Returns
-        -------
-        `genometools.expression.ExpGenome`
-            The genome.
-        """
+    @property
+    def genome(self):
+        """Get an `ExpGenome` representation of the genes in the profile."""
         genes = [ExpGene(g) for g in self.genes]
-        genome = ExpGenome(genes)
-        return genome
+        return ExpGenome(genes)
 
     def sort_genes(self, inplace=False):
         """Sort the rows of the profile alphabetically by gene name.

@@ -30,8 +30,11 @@ from genometools.basic import GeneSet, GeneSetDB
 def my_gene_sets(my_gene_set):
     gene_sets = []
     for i in range(3):
-        gs = deepcopy(my_gene_set)
-        gs.id += str(i+1)
+        gs = GeneSet(
+            my_gene_set.id + str(i+1),
+            my_gene_set.name,
+            my_gene_set.genes
+        )
         gene_sets.append(gs)
     return gene_sets
 

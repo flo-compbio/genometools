@@ -22,6 +22,7 @@ from builtins import *
 
 import logging
 import hashlib
+from collections import Iterable
 
 import numpy as np
 from scipy.stats import hypergeom
@@ -76,26 +77,22 @@ class GSEResult(mHGResult):
 
         # type checks
         assert isinstance(gene_set, GeneSet)
-        assert isinstance(ind_genes, (tuple, list))
-        for g in ind_genes:
-            assert isinstance(g, str)
-        assert isinstance(indices, np.ndarray) and indices.ndim == 1 and \
-               np.issubdtype(indices.dtype, np.integer)
+        assert isinstance(ind_genes, Iterable)
 
         if len(ind_genes) != indices.size:
             raise ValueError('The number of genes must match the number of '
                              'indices.')
 
         self.gene_set = gene_set
-        self.ind_genes = ind_genes
+        self.ind_genes = list(ind_genes)
 
     def __repr__(self):
-        return '<%s object (N=%d; gene_set_id="%s"; hash="%s">' \
+        return '<%s object (N=%d, gene_set_id="%s", hash="%s">' \
                 % (self.__class__.__name__,
-                   self.N, self.gene_set.id, self.hash)
+                   self.N, self.gene_set._id, self.hash)
 
     def __str__(self):
-        return '<%s object (gene_set=%s; pval=%.1e)>' \
+        return '<%s object (gene_set=%s, pval=%.1e)>' \
                 % (self.__class__.__name__, str(self.gene_set), self.pval)
 
     def __eq__(self, other):
@@ -123,7 +120,7 @@ class GSEResult(mHGResult):
 
     def get_pretty_format(self, omit_param=True, max_name_length=0):
         # TO-DO: clean up, commenting
-        gs_name = self.gene_set.name
+        gs_name = self.gene_set._name
         if max_name_length > 0 and len(gs_name) > max_name_length:
             assert max_name_length >= 3
             gs_name = gs_name[:(max_name_length-3)] + '...'
@@ -142,7 +139,7 @@ class GSEResult(mHGResult):
                              max_name_length=0): # pragma: no cover
         # accepts a GOParser object ("GO")
         # TO-DO: clean up, commenting
-        term = GO.terms[self.gene_set.id]
+        term = GO.terms[self.gene_set._id]
         term_name = term.get_pretty_format(omit_acc=omit_acc,
                                            max_name_length=max_name_length)
         term_str = term_name + ' (%d)' % (len(self.ind_genes))
