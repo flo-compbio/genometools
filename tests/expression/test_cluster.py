@@ -26,7 +26,5 @@ from genometools.expression import cluster, ExpMatrix
 
 
 def test_init(my_matrix):
-    clust, a, b = cluster.bicluster(my_matrix)
+    clust = cluster.bicluster(my_matrix)
     assert isinstance(clust, ExpMatrix)
-    assert isinstance(a, np.ndarray)
-    assert isinstance(b, np.ndarray)

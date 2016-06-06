@@ -38,11 +38,27 @@ _linkage_warn = ('Function scipy.cluster.hierarchy.linkage with "method = '
                  'cluster_genes() with a different method (e.g., using '
                  '"method = \'median\'").')
 
-
-def bicluster(E, sample_cluster_metric='euclidean'):
-    E, a_row = cluster_genes(E)
-    E, a_col  = cluster_samples(E, metric=sample_cluster_metric)
-    return E, a_row, a_col
+def bicluster(
+        matrix,
+        gene_cluster_metric='correlation',
+        sample_cluster_metric='euclidean',
+        cluster_method='average',
+        reverse_genes=False,
+        reverse_samples=False
+    ):
+    matrix = cluster_genes(
+        matrix,
+        metric=gene_cluster_metric,
+        method=cluster_method,
+        reverse=reverse_genes
+    )
+    matrix = cluster_samples(
+        matrix,
+        metric=sample_cluster_metric,
+        method=cluster_method,
+        reverse=reverse_samples
+    )
+    return matrix
 
 
 def _cluster_ndarray(X, metric, method, reverse):
@@ -58,24 +74,28 @@ def _cluster_ndarray(X, metric, method, reverse):
         order_rows = order_rows[::-1]
     return order_rows
 
-def cluster_genes(E, metric='correlation', method='average', reverse=False):
-    assert isinstance(E, ExpMatrix)
+
+def cluster_genes(matrix, metric='correlation', method='average',
+                  reverse=False):
+    assert isinstance(matrix, ExpMatrix)
 
     # note: method = 'average' sometimes causes kernel to crash
     logger.warning(_linkage_warn)
 
-    order_rows = _cluster_ndarray(E.X, metric=metric, method=method,
+    order_rows = _cluster_ndarray(matrix.X, metric=metric, method=method,
                                   reverse=reverse)
-    E = E.iloc[order_rows]
-    return E, order_rows
+    matrix = matrix.iloc[order_rows]
+    return matrix
 
-def cluster_samples(E, metric='euclidean', method='average', reverse=False):
-    assert isinstance(E, ExpMatrix)
+
+def cluster_samples(matrix, metric='euclidean', method='average',
+                    reverse=False):
+    assert isinstance(matrix, ExpMatrix)
 
     # note: method = 'average' sometimes causes kernel to crash
     logger.warning(_linkage_warn)
 
-    order_cols = _cluster_ndarray(E.X.T, metric=metric, method=method,
+    order_cols = _cluster_ndarray(matrix.X.T, metric=metric, method=method,
                                   reverse=reverse)
-    E = E.iloc[:,order_cols]
-    return E, order_cols
+    matrix = matrix.iloc[:, order_cols]
+    return matrix

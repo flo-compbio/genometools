@@ -20,6 +20,8 @@ from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import *
 
+from collections import Iterable
+
 
 class GeneSet(object):
     """A gene set.
@@ -28,6 +30,9 @@ class GeneSet(object):
     sets are used to group genes that share a certain property (e.g., genes
     that perform related functions, or genes that are frequently co-expressed).
     The genes in the gene set are not ordered.
+
+    GeneSet instances are hashable and should therefore be considered to be
+    immutable.
     
     Parameters
     ----------
@@ -64,10 +69,7 @@ class GeneSet(object):
                  source=None, collection=None, description=None):
 
         assert isinstance(id, str)
-        assert isinstance(name, str)
-        assert isinstance(genes, (set, list, tuple))
-        for g in genes:
-            assert isinstance(g, str)
+        assert isinstance(name, Iterable)
 
         if source is not None:
             assert isinstance(source, str)
@@ -76,42 +78,43 @@ class GeneSet(object):
         if description is not None:
             assert isinstance(description, str)
 
-        self.id = id
-        self.name = name
-        self.genes = set(genes)
-        self.source = source
-        self.collection = collection
-        self.description = description
+        self._id = id
+        self._name = name
+        self._genes = frozenset(genes)
+        self._source = source
+        self._collection = collection
+        self._description = description
 
     @property
     def _gene_str(self):
-        return ', '.join('"%s"' % g for g in sorted(self.genes))
+        return ', '.join('"%s"' % g for g in sorted(self._genes))
 
     @property
     def _source_str(self):
-        return '"%s"' % self.source \
-            if self.source is not None else 'None'
+        return '"%s"' % self._source \
+            if self._source is not None else 'None'
 
     @property
     def _coll_str(self):
-        return '"%s"' % self.collection \
-            if self.collection is not None else 'None'
+        return '"%s"' % self._collection \
+            if self._collection is not None else 'None'
 
     @property
     def _desc_str(self):
-        return '"%s"' % self.description \
-            if self.description is not None else 'None'
+        return '"%s"' % self._description \
+            if self._description is not None else 'None'
 
     def __repr__(self):
-        return '<%s(id="%s", name="%s", genes=[%s], source=%s, ' \
-               'collection=%s, description=%s)' \
-                % (self.__class__.__name__, self.id, self.name, self._gene_str,
-                   self._source_str, self._coll_str, self._desc_str)
+        return ('<%s instance (id="%s", name="%s", genes=[%s], source=%s, '
+                'collection=%s, description=%s)'
+                % (self.__class__.__name__,
+                   self._id, self._name, self._gene_str,
+                   self._source_str, self._coll_str, self._desc_str))
 
     def __str__(self):
-        return '<%s "%s" (id=%s; source=%s; collection=%s; size=%d)>' \
-                % (self.__class__.__name__, self.name,
-                   self.id, self._source_str, self._coll_str, self.size)
+        return ('<%s "%s" (id=%s, source=%s, collection=%s, size=%d'
+                % (self.__class__.__name__, self._name,
+                   self._id, self._source_str, self._coll_str, self.size))
 
     def __eq__(self, other):
         if self is other:
@@ -125,9 +128,51 @@ class GeneSet(object):
         return not self.__eq__(other)
 
     @property
+    def _data(self):
+        data_str = ';'.join([
+            str(repr(var)) for var in
+            [self._id, self._name, self._genes,
+             self._source, self._collection, self._description]
+        ])
+        data = data_str.encode('UTF-8')
+        return data
+
+    def __hash__(self):
+        return hash(self._data)
+
+    @property
+    def hash(self):
+        """MD5 hash value for the gene set."""
+        return str(hashlib.md5(self._data).hexdigest())
+
+    @property
+    def id(self):
+        return self._id
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def genes(self):
+        return self._genes
+
+    @property
+    def source(self):
+        return self._source
+
+    @property
+    def collection(self):
+        return self._collection
+
+    @property
+    def description(self):
+        return self._description
+
+    @property
     def size(self):
         """The size of the gene set (i.e., the number of genes in it)."""
-        return len(self.genes)
+        return len(self._genes)
 
     def to_list(self):
         """Converts the GeneSet object to a flat list of strings.
@@ -142,11 +187,12 @@ class GeneSet(object):
         list of str
             The data from the GeneSet object as a flat list.
         """
-        src = self.source or ''
-        coll = self.collection or ''
-        desc = self.description or ''
+        src = self._source or ''
+        coll = self._collection or ''
+        desc = self._description or ''
 
-        l = [self.id, src, coll, self.name, ','.join(sorted(self.genes)), desc]
+        l = [self._id, src, coll, self._name,
+             ','.join(sorted(self._genes)), desc]
         return l
 
     @classmethod

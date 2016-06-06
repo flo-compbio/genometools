@@ -27,7 +27,7 @@ from genometools.expression import normalize
 
 
 def test_quantile_normalize(my_matrix):
-    normal = normalize.quantile_normalize(my_matrix, copy=True)
+    normal = normalize.quantile_normalize(my_matrix, inplace=False)
     assert isinstance(normal, ExpMatrix)
     assert normal.shape == my_matrix.shape
     assert np.all(normal.index == my_matrix.index)

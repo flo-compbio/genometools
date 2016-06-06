@@ -71,7 +71,7 @@ class GeneSetDB(object):
                              'unique!')
 
         self._gene_sets = OrderedDict([gs.id, gs] for gs in gene_sets)
-        self._gene_set_ids = tuple(self._gene_sets.keys())
+        self._gene_set_ids = list(self._gene_sets.keys())
         self._gene_set_indices = OrderedDict(
             [gs.id, i] for i, gs in enumerate(self._gene_sets.values())
         )
@@ -121,6 +121,14 @@ class GeneSetDB(object):
     def n(self):
         """The number of gene sets in the database."""
         return len(self)
+
+    def add_gene_set(self, gs, overwrite=False):
+        if gs.id in self._gene_sets and not overwrite:
+            raise ValueError('Gene set with this ID already exists, and '
+                             '`overwrite` was not set to ``True``.')
+        self._gene_sets[gs.id] = gs
+        self._gene_set_ids.append(gs)
+        self._gene_set_indices[gs.id] = len(self)-1
 
     def get_by_id(self, id_):
         """Look up a gene set by its ID.

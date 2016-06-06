@@ -51,8 +51,8 @@ def test_init(my_profile, my_profile2, my_genes, my_x):
         assert isinstance(text(prof), text)
         assert isinstance(prof.hash, text)
         assert prof.p == len(my_genes)
-        assert np.all(prof.x == my_x)
-        assert prof.genes == my_genes
+        assert np.array_equal(prof.x, my_x)
+        assert np.array_equal(prof.genes, my_genes)
     assert my_profile != my_profile2
     assert my_profile.label != my_profile2.label
 

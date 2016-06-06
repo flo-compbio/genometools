@@ -23,6 +23,7 @@ from builtins import *
 import logging
 import importlib
 import hashlib
+from collections import Iterable
 
 import pandas as pd
 import numpy as np
@@ -78,16 +79,12 @@ class ExpMatrix(pd.DataFrame):
         # check if user provided "genes" keyword argument
         genes = kwargs.pop('genes', None)
         if genes is not None:
-            assert isinstance(genes, (list, tuple))
-            for g in genes:
-                assert isinstance(g, str)
-            
+            assert isinstance(genes, Iterable)
+
         # check if user provided "samples" keyword argument
         samples = kwargs.pop('samples', None)
         if samples is not None:
-            assert isinstance(samples, (list, tuple))
-            for s in samples:
-                assert isinstance(s, str)
+            assert isinstance(samples, Iterable)
 
         # call base class constructor
         pd.DataFrame.__init__(self, *args, **kwargs)
@@ -98,14 +95,6 @@ class ExpMatrix(pd.DataFrame):
         if samples is not None:
             self.columns = samples
 
-        # some type checking after the fact
-        if self.index.dtype is np.dtype('O'):
-            for d in self.index.values:
-                assert isinstance(d, str)
-
-        if self.columns.dtype is np.dtype('O'):
-            for d in self.columns.values:
-                assert isinstance(d, str)
 
     def __eq__(self, other):
         if self is other:
@@ -121,18 +110,18 @@ class ExpMatrix(pd.DataFrame):
         return not self.__eq__(other)
 
     def __repr__(self):
-        return '<%s object (p=%d; n=%d; hash="%s">' \
+        return '<%s instance (p=%d, n=%d, hash="%s">' \
                % (self.__class__.__name__, self.p, self.n, self.hash)
 
-    def __str__(self):
-        return '<%s object with p=%d genes and n=%d samples>' \
-               % (self.__class__.__name__, self.p, self.n)
+    #def __str__(self):
+    #    return '<%s object with p=%d genes and n=%d samples>' \
+    #           % (self.__class__.__name__, self.p, self.n)
 
     @property
     def hash(self):
         # warning: involves copying all the data
-        gene_str = ','.join(self.genes)
-        sample_str = ','.join(self.samples)
+        gene_str = ','.join(str(s) for s in self.genes)
+        sample_str = ','.join(str(s) for s in self.samples)
         data_str = ';'.join([gene_str, sample_str]) + ';'
         data = data_str.encode('UTF-8') + self.X.tobytes()
         return str(hashlib.md5(data).hexdigest())
@@ -157,8 +146,9 @@ class ExpMatrix(pd.DataFrame):
 
     @property
     def genes(self):
-        """Returns the gene (row) names as a list."""
-        return self.index.values.tolist()
+        """Alias for `DataFrame.index`."""
+        # return tuple(str(g) for g in self.index)
+        return self.index
 
     @genes.setter
     def genes(self, gene_list):
@@ -166,8 +156,9 @@ class ExpMatrix(pd.DataFrame):
 
     @property
     def samples(self):
-        """Returns the sample (column) names as a list."""
-        return self.columns.values.tolist()
+        """Alias for `DataFrame.columns`."""
+        # return tuple(str(s) for s in self.columns)
+        return self.columns
 
     @samples.setter
     def samples(self, sample_list):
@@ -175,27 +166,13 @@ class ExpMatrix(pd.DataFrame):
 
     @property
     def X(self):
-        """Returns the expression values as a numpy array."""
+        """Alias for `DataFrame.values`."""
         return self.values
 
-    @X.setter
-    def X(self, X):
-        self.values[:, :] = X
-
-    def get_genome(self):
-        """Get a ExpGenome representation of the genes in the matrix.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        `genometools.expression.ExpGenome`
-            The genome.
-        """
-        genome = ExpGenome.from_gene_names(self.genes)
-        return genome
+    @property
+    def genome(self):
+        """Get an `ExpGenome` representation of the genes in the matrix."""
+        return ExpGenome.from_gene_names(self.genes.tolist())
 
     def sort_genes(self, stable=True, inplace=False, ascending=True):
         """Sort the rows of the matrix alphabetically by gene name.
@@ -220,23 +197,25 @@ class ExpMatrix(pd.DataFrame):
 
     def center_genes(self, use_median=False, inplace=False):
         """Center the expression of each gene (row)."""
-        matrix = self
-        if not inplace:
-            # make a copy
-            matrix = matrix.copy()
-
         if use_median:
-            matrix.X = matrix.X - \
-                np.tile(np.median(matrix.X, axis=1), (matrix.n, 1)).T
+            X = self.X - \
+                np.tile(np.median(self.X, axis=1), (self.n, 1)).T
         else:
-            matrix.X = matrix.X - \
-                np.tile(np.mean(matrix.X, axis=1), (matrix.n, 1)).T
+            X = self.X - \
+                np.tile(np.mean(self.X, axis=1), (self.n, 1)).T
+
+        if inplace:
+            self.X[:,:] = X
+            matrix = self
+        else:
+            matrix = ExpMatrix(genes=self.genes, samples=self.samples,
+                               X=X)
         return matrix
 
     def standardize_genes(self, inplace=False):
         """Standardize the expression of each gene (row)."""
         matrix = self.center_genes(inplace=inplace)
-        matrix.X = matrix.X / \
+        matrix.X[:,:] = matrix.X / \
             np.tile(np.std(matrix.X, axis=1, ddof=1), (matrix.n, 1)).T
         return matrix
 

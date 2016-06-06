@@ -65,7 +65,7 @@ def _read_colorscale(cmap_file):
 
 
 def get_heatmap(
-        E, colorscale=None, title=None, emin=None, emax=None,
+        matrix, colorscale=None, title=None, emin=None, emax=None,
         width=800, height=400,
         margin_left=100, margin_bottom=60, margin_top=30,
         colorbar_label='Expression', colorbar_size=0.4,
@@ -76,7 +76,7 @@ def get_heatmap(
         font_size=12, title_font_size=None,
         show_sample_labels=True, **kwargs):
     
-    assert isinstance(E, ExpMatrix)
+    assert isinstance(matrix, ExpMatrix)
 
     if colorscale is None:
         # load default colorscale
@@ -84,9 +84,9 @@ def get_heatmap(
 
     # emin and/or emax are unspecified, set to data min/max values
     if emax is None:
-        emax = E.X.max()
+        emax = matrix.X.max()
     if emin is None:
-        emin = E.X.min()
+        emin = matrix.X.min()
 
     if title_font_size is None:
         title_font_size = font_size
@@ -105,9 +105,9 @@ def get_heatmap(
 
     data = [
         go.Heatmap(
-            z=E.X,
-            x=E.samples,
-            y=E.genes,
+            z=matrix.X,
+            x=matrix.samples.tolist(),
+            y=matrix.genes.tolist(),
             zmin=emin,
             zmax=emax,
             colorscale=colorscale,
@@ -122,7 +122,7 @@ def get_heatmap(
         xticks = ''
 
     if xaxis_label is not None:
-        xaxis_label = xaxis_label + ' (n = %d)' % E.n
+        xaxis_label = xaxis_label + ' (n = %d)' % matrix.n
 
     layout = go.Layout(
         width=width,
