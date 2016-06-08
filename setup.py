@@ -26,10 +26,10 @@ from os import path
 
 root = 'genometools'
 name = 'genometools'
-version = '2.0rc3'
+version = '2.0rc4'
 
 here = path.abspath(path.dirname(__file__))
-description = 'GenomeTools: A Python Framework For Analyzing Genomic Data.'
+description = 'GenomeTools: A Python Framework for Analyzing Genomic Data.'
 
 install_requires = [
     'future >= 0.15.2, < 1',
