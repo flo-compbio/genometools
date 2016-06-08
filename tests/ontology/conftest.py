@@ -20,18 +20,12 @@ from __future__ import (absolute_import, division,
 from builtins import open
 from builtins import str as text
 
-import os
+# import os
 import shutil
 
 import pytest
 import requests
 import logging
-
-from genometools.expression import ExpMatrix
-from genometools.basic import GeneSetDB
-from goparser import GOParser
-
-from gopca import GOPCAConfig, GOPCA
 
 logging.basicConfig(level=logging.INFO)
 
