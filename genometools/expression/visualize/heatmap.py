@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Module containing the `ExpHeatMap` class.
+"""Module containing the `ExpHeatmap` class.
 
 """
 
@@ -36,7 +36,7 @@ from collections import Iterable
 logger = logging.getLogger(__name__)
 
 
-class ExpHeatMap(object):
+class ExpHeatmap(object):
 
     # TODO: docstrings, __str__, __repr__, hash
 
@@ -45,7 +45,7 @@ class ExpHeatMap(object):
 
     def __init__(self, matrix,
                  gene_annotations=None, sample_annotations=None,
-                 colorscale=None):
+                 colorscale=None, colorbar_label=None):
 
         if gene_annotations is None:
             gene_annotations = []
@@ -61,11 +61,14 @@ class ExpHeatMap(object):
         assert isinstance(gene_annotations, Iterable)
         assert isinstance(sample_annotations, Iterable)
         assert isinstance(colorscale, Iterable)
+        if colorbar_label is not None:
+            assert isinstance(colorbar_label, str)
 
         self.matrix = matrix
         self.gene_annotations = gene_annotations
         self.sample_annotations = sample_annotations
         self.colorscale = colorscale
+        self.colorbar_label = colorbar_label
 
     @staticmethod
     def _read_colorscale(cmap_file):
@@ -96,9 +99,9 @@ class ExpHeatMap(object):
     def get_figure(
             self, title=None, emin=None, emax=None,
             width=800, height=400,
-            margin_left=100, margin_bottom=60, margin_top=30,
-            colorbar_label='Express`ion', colorbar_size=0.4,
-            xaxis_label='Samples', yaxis_label='Genes',
+            margin_left=100, margin_bottom=60, margin_top=30, margin_right=0,
+            colorbar_size=0.4,
+            xaxis_label=None, yaxis_label=None,
             xaxis_nticks=None, yaxis_nticks=None,
             xtick_angle=30,
             font='"Droid Serif", "Open Serif", serif',
@@ -114,10 +117,15 @@ class ExpHeatMap(object):
         if title_font_size is None:
             title_font_size = font_size
 
+        colorbar_label = self.colorbar_label or 'Expression'
+
         colorbar = go.ColorBar(
             lenmode='fraction',
             len=colorbar_size,
             title=colorbar_label,
+            titlefont = dict(
+                size=title_font_size,
+            ),
             titleside='right',
             xpad=0,
             ypad=0,
@@ -144,8 +152,18 @@ class ExpHeatMap(object):
         if not show_sample_labels:
             xticks = ''
 
-        if xaxis_label is not None:
-            xaxis_label = xaxis_label + ' (n = %d)' % self.matrix.n
+        if xaxis_label is None:
+            if self.matrix.samples.name is not None:
+                xaxis_label = self.matrix.samples.name
+            else:
+                xaxis_label = 'Samples'
+            xaxis_label =  xaxis_label + ' (n = %d)' % self.matrix.n
+
+        if yaxis_label is None:
+            if self.matrix.genes.name is not None:
+                yaxis_label = self.matrix.genes.name
+            else:
+                yaxis_label = 'Genes'
 
         layout = go.Layout(
             width=width,
@@ -179,7 +197,7 @@ class ExpHeatMap(object):
                 l=margin_left,
                 t=margin_top,
                 b=margin_bottom,
-                r=0,
+                r=margin_right,
                 pad=0
             ),
         )
@@ -224,7 +242,7 @@ class ExpHeatMap(object):
                     line=dict(color=ann.color),
                     xaxis='x2',
                     yaxis='y2',
-                    opacity=0.5
+                    opacity=1.0,
                 )
             )
             if ann.label is not None:
@@ -240,7 +258,7 @@ class ExpHeatMap(object):
                         yanchor='bottom',
                         showarrow=False,
                         bgcolor='white',
-                        opacity=0.6,
+                        opacity=1-ann.transparency,
                         borderpad=0,
                         #textangle=30,
                         font=dict(color=ann.color)
@@ -264,7 +282,7 @@ class ExpHeatMap(object):
                     line=dict(color=ann.color),
                     xaxis='x2',
                     yaxis='y2',
-                    opacity=0.5)
+                    opacity=1.0)
             )
             if ann.label is not None:
                 layout.annotations.append(
@@ -279,7 +297,7 @@ class ExpHeatMap(object):
                         yanchor='top',
                         showarrow=False,
                         bgcolor='white',
-                        opacity=0.6,
+                        opacity=1-ann.transparency,
                         borderpad=0,
                         textangle=90,
                         font=dict(color=ann.color)

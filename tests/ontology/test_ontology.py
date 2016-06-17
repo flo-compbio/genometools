@@ -75,6 +75,8 @@ def test_basic(my_term, my_other_term):
     # test iteration
     assert set(list(iter(ontology))) == set([my_term, my_other_term])
 
+
+@pytest.mark.online
 def test_real(my_gene_ontology_file):
     ontology = GeneOntology.read_obo(my_gene_ontology_file)
     assert isinstance(ontology, GeneOntology)

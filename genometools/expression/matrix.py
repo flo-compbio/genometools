@@ -95,6 +95,20 @@ class ExpMatrix(pd.DataFrame):
         if samples is not None:
             self.columns = samples
 
+        # set default index name to "Genes"
+        gene_label = kwargs.pop('gene_label', None)
+        if gene_label is not None:
+            self.index.name = gene_label
+        elif self.index.name is None:
+            self.index.name = 'Genes'
+
+        # set default column name to "Samples"
+        sample_label = kwargs.pop('sample_label', None)
+        if sample_label is not None:
+            self.columns.name = sample_label
+        elif self.columns.name is None:
+            self.columns.name = 'Samples'
+
 
     def __eq__(self, other):
         if self is other:

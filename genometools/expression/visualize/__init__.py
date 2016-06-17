@@ -1,3 +1,3 @@
-from .annotation import HeatMapGeneAnnotation, HeatMapSampleAnnotation
-from .heatmap import ExpHeatMap
+from .annotation import HeatmapGeneAnnotation, HeatmapSampleAnnotation
+from .heatmap import ExpHeatmap
 

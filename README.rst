@@ -21,12 +21,12 @@ GenomeTools
 | |pypi| |versions| |license|
 
 ===========  =================================================
-**latest**   |docs-latest|
+**latest**   |travis-latest| |codecov-latest| |docs-latest|
 **develop**  |travis-develop| |codecov-develop| |docs-develop|
 ===========  =================================================
 
 GenomeTools is a collection of Python classes, functions, and scripts for
-analyzing genomic data. The library is compatible with Python 2.7 and 3.x.
+analyzing genomic data. The library is compatible with Python 2.7 and 3.5.
 
 Installation
 ------------
@@ -79,10 +79,17 @@ Copyright (c) 2015, 2016 Florian Wagner
     :target: https://pypi.python.org/pypi/genometools
     :alt: License
 
+.. |travis-latest| image:: https://travis-ci.org/flo-compbio/genometools.svg?branch=master
+    :alt: Build Status (master branch)
+    :target: https://travis-ci.org/flo-compbio/genometools
+
 .. |travis-develop| image:: https://travis-ci.org/flo-compbio/genometools.svg?branch=develop
     :alt: Build Status (develop branch)
-    :scale: 100%
     :target: https://travis-ci.org/flo-compbio/genometools
+
+.. |codecov-latest| image:: https://codecov.io/github/flo-compbio/genometools/coverage.svg?branch=master
+    :alt: Coverage (master branch)
+    :target: https://codecov.io/github/flo-compbio/genometools?branch=master
 
 .. |codecov-develop| image:: https://codecov.io/github/flo-compbio/genometools/coverage.svg?branch=develop
     :alt: Coverage (develop branch)
@@ -90,12 +97,10 @@ Copyright (c) 2015, 2016 Florian Wagner
 
 .. |docs-latest| image:: https://readthedocs.org/projects/genometools/badge/?version=latest
     :alt: Documentation Status (master branch)
-    :scale: 100%
     :target: https://genometools.readthedocs.org/en/latest
 
 .. |docs-develop| image:: https://readthedocs.org/projects/genometools/badge/?version=develop
     :alt: Documentation Status (develop branch)
-    :scale: 100%
     :target: https://genometools.readthedocs.org/en/develop
 
 .. _gtdocs: https://genometools.readthedocs.org/en/latest/

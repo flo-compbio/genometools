@@ -26,7 +26,7 @@ from os import path
 
 root = 'genometools'
 name = 'genometools'
-version = '2.0rc4'
+version = '2.0rc5'
 
 here = path.abspath(path.dirname(__file__))
 description = 'GenomeTools: A Python Framework for Analyzing Genomic Data.'
@@ -103,7 +103,7 @@ setup(
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
 
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.5',
     ],
 
     keywords='genome genes tools analysis expression sequencing',

@@ -27,31 +27,40 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class HeatMapAnnotation(object):
+class HeatmapAnnotation(object):
+
+    default_transparency = 0.3
 
     # TODO: docstrings, __str__, __repr__, ...
 
-    def __init__(self, key, color, label=None):
+    def __init__(self, key, color, **kwargs):
+
+        label = kwargs.pop('label', None)
+        transparency = kwargs.pop('transparency', self.default_transparency)
 
         # key can be anything allowed as a key in a pandas index.
         assert isinstance(color, str)
-        assert isinstance(label, str)
+        if label is not None:
+            assert isinstance(label, str)
+        if transparency is not None:
+            assert isinstance(transparency, (int, float))
 
         self.key = key
         self.color = color
         self.label = label
+        self.transparency = transparency
 
 
-class HeatMapGeneAnnotation(HeatMapAnnotation):
+class HeatmapGeneAnnotation(HeatmapAnnotation):
 
     # TODO: docstrings, __str__, __repr__, ...
 
-    def __init__(self, gene, color, label=None):
-        HeatMapAnnotation.__init__(self, gene, color, label)
+    def __init__(self, gene, color, **kwargs):
+        HeatmapAnnotation.__init__(self, gene, color, **kwargs)
 
     @property
     def gene(self):
-        """Alias for `HeatMapAnnotation.key`."""
+        """Alias for `HeatmapAnnotation.key`."""
         return self.key
 
     @gene.setter
@@ -59,16 +68,16 @@ class HeatMapGeneAnnotation(HeatMapAnnotation):
         self.key = value
 
 
-class HeatMapSampleAnnotation(HeatMapAnnotation):
+class HeatmapSampleAnnotation(HeatmapAnnotation):
 
     # TODO: docstrings, __str__, __repr__, ...
 
-    def __init__(self, sample, color, label=None):
-        HeatMapAnnotation.__init__(self, sample, color, label)
+    def __init__(self, sample, color, **kwargs):
+        HeatmapAnnotation.__init__(self, sample, color, **kwargs)
 
     @property
     def sample(self):
-        """Alias for `HeatMapAnnotation.key`."""
+        """Alias for `HeatmapAnnotation.key`."""
         return self.key
 
     @sample.setter
