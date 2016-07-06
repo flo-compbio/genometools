@@ -24,10 +24,12 @@ from builtins import *
 
 import logging
 
+import numpy as np
+
 logger = logging.getLogger(__name__)
 
 
-class HeatmapAnnotation(object):
+class HeatmapItemAnnotation(object):
 
     default_transparency = 0.3
 
@@ -51,16 +53,16 @@ class HeatmapAnnotation(object):
         self.transparency = transparency
 
 
-class HeatmapGeneAnnotation(HeatmapAnnotation):
+class HeatmapGeneAnnotation(HeatmapItemAnnotation):
 
     # TODO: docstrings, __str__, __repr__, ...
 
     def __init__(self, gene, color, **kwargs):
-        HeatmapAnnotation.__init__(self, gene, color, **kwargs)
+        HeatmapItemAnnotation.__init__(self, gene, color, **kwargs)
 
     @property
     def gene(self):
-        """Alias for `HeatmapAnnotation.key`."""
+        """Alias for `HeatmapItemAnnotation.key`."""
         return self.key
 
     @gene.setter
@@ -68,18 +70,44 @@ class HeatmapGeneAnnotation(HeatmapAnnotation):
         self.key = value
 
 
-class HeatmapSampleAnnotation(HeatmapAnnotation):
+class HeatmapSampleAnnotation(HeatmapItemAnnotation):
 
     # TODO: docstrings, __str__, __repr__, ...
 
     def __init__(self, sample, color, **kwargs):
-        HeatmapAnnotation.__init__(self, sample, color, **kwargs)
+        HeatmapItemAnnotation.__init__(self, sample, color, **kwargs)
 
     @property
     def sample(self):
-        """Alias for `HeatmapAnnotation.key`."""
+        """Alias for `HeatmapItemAnnotation.key`."""
         return self.key
 
     @sample.setter
     def sample(self, value):
         self.key = value
+
+
+class HeatmapBlockAnnotation(object):
+
+    # TODO: docstrings, __str__, __repr__, ...
+
+    def __init__(self, start_index, end_index, **kwargs):
+
+        label = kwargs.pop('label', None)
+        color = kwargs.pop('color', 'black')
+        transparency = kwargs.pop('transparency', 0.3)
+
+        # key can be anything allowed as a key in a pandas index.
+        assert isinstance(start_index, (int, np.integer))
+        assert isinstance(end_index, (int, np.integer))
+        assert isinstance(color, str)
+        if label is not None:
+            assert isinstance(label, str)
+        assert isinstance(transparency, (int, float, np.integer, np.float))
+
+        self.start_index = start_index
+        self.end_index = end_index
+        self.color = color
+        self.label = label
+        self.transparency = transparency
+

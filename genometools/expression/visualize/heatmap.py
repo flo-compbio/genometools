@@ -30,6 +30,7 @@ import numpy as np
 
 import genometools
 from .. import ExpMatrix
+from . import read_colorscale
 
 from collections import Iterable
 
@@ -55,7 +56,7 @@ class ExpHeatmap(object):
 
         if colorscale is None:
             # use default colorscale
-            colorscale = self._read_colorscale(self._default_cmap_file)
+            colorscale = read_colorscale(self._default_cmap_file)
 
         assert isinstance(matrix, ExpMatrix)
         assert isinstance(gene_annotations, Iterable)
@@ -69,32 +70,6 @@ class ExpHeatmap(object):
         self.sample_annotations = sample_annotations
         self.colorscale = colorscale
         self.colorbar_label = colorbar_label
-
-    @staticmethod
-    def _read_colorscale(cmap_file):
-        """Return a colorscale in the format that plotly expects it.
-
-        Specifically, the scale should be a list containing pairs consisting of
-        a normalized value x (between 0 and 1) and a corresponding "rgb(r,g,b)"
-        string, where r,g,b are integers from 0 to 255.
-
-        The ``cmap_file`` is a tab-separated text file containing four columns
-        (x,r,g,b), so that each row corresponds to an entry in the list described
-        above.
-        """
-        assert isinstance(cmap_file, str)
-
-        cm = np.loadtxt(cmap_file, delimiter='\t', dtype=np.float64)
-        # x = cm[:, 0]
-        rgb = np.int64(cm[:, 1:])  # normalize to 0-1?
-        n = cm.shape[0]
-        colorscale = []
-        for i in range(n):
-            colorscale.append(
-                [i / float(n-1),
-                 'rgb(%d, %d, %d)' % (rgb[i, 0], rgb[i, 1], rgb[i, 2])]
-            )
-        return colorscale
 
     def get_figure(
             self, title=None, emin=None, emax=None,

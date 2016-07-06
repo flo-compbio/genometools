@@ -23,7 +23,7 @@ from builtins import *
 import os
 import logging
 import hashlib
-from collections import OrderedDict
+from collections import OrderedDict, Iterable
 import copy
 
 import unicodecsv as csv
@@ -54,9 +54,11 @@ class ExpGenome(object):
     """
     def __init__(self, exp_genes):
 
-        assert isinstance(exp_genes, (list, tuple))
-        for g in exp_genes:
-            assert isinstance(g, ExpGene)
+        assert isinstance(exp_genes, Iterable)
+
+        exp_genes = list(exp_genes)
+        for eg in exp_genes:
+            assert isinstance(eg, ExpGene)
 
         all_genes = frozenset([eg.name for eg in exp_genes])
         if len(all_genes) != len(exp_genes):
