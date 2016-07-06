@@ -51,6 +51,9 @@ def test_transformation(my_matrix):
     other.standardize_genes(inplace=True)
     assert np.allclose(other.std(axis=1, ddof=1), 1.0)
 
+def test_indices(my_matrix):
+    assert my_matrix.genes.name == 'Genes'
+    assert my_matrix.samples.name == 'Samples'
 
 def test_filter(my_matrix, my_genome):
     other = my_matrix.filter_against_genome(my_genome)

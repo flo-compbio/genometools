@@ -117,10 +117,10 @@ def main(args=None):
 
     # read data
     genome = ExpGenome.read_tsv(gene_file)
-    E = ExpMatrix.read_tsv(expression_file)
+    matrix = ExpMatrix.read_tsv(expression_file)
     e2g = dict(misc.read_all(entrez2gene_file))
 
-    entrez = E.genes
+    entrez = matrix.genes
 
     if strip_affy_suffix:
         # remove "_at" suffix from Entrez IDs
@@ -146,12 +146,12 @@ def main(args=None):
             # check if there are multiple entrez IDs pointing to the same gene
             # assert g not in genes
             genes.append(g)
-            X.append(E.X[i, :])
+            X.append(matrix.X[i, :])
     assert len(genes) == len(set(genes))
     if f > 0:
         logger.warning('Failed to convert %d / %d entrez IDs '
                        'to gene symbols (%.1f%%).',
-                       f, E.p, 100*(f/float(E.p)))
+                       f, matrix.p, 100*(f/float(matrix.p)))
 
     # filter for known protein-coding genes
     X = np.float64(X)
@@ -171,10 +171,12 @@ def main(args=None):
                        f, p, 100 * (f / float(p)))
 
     # generate new matrix (this automatically sorts the genes alphabetically)
-    E_conv = ExpMatrix(genes, E.samples, X)
+    logger.debug('Genes: %d, Samples: %d, matrix: %s',
+                 len(genes), len(matrix.samples), str(X.shape))
+    matrix_conv = ExpMatrix(genes=genes, samples=matrix.samples, X=X)
 
     # write output file
-    E_conv.write_tsv(output_file)
+    matrix_conv.write_tsv(output_file)
  
     return 0
 

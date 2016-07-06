@@ -91,6 +91,13 @@ class ExpProfile(pd.Series):
             # set (overwrite) series name with user-provided sample label
             self.name = label
 
+        # set default index name to "Genes"
+        gene_label = kwargs.pop('gene_label', None)
+        if gene_label is not None:
+            self.index.name = gene_label
+        elif self.index.name is None:
+            self.index.name = 'Genes'
+
     def __eq__(self, other):
         if self is other:
             return True

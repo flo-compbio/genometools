@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Module containing the `ExpHeatMap` class.
+"""Module containing the `ExpHeatmap` class.
 
 """
 
@@ -30,13 +30,14 @@ import numpy as np
 
 import genometools
 from .. import ExpMatrix
+from . import read_colorscale
 
 from collections import Iterable
 
 logger = logging.getLogger(__name__)
 
 
-class ExpHeatMap(object):
+class ExpHeatmap(object):
 
     # TODO: docstrings, __str__, __repr__, hash
 
@@ -45,7 +46,7 @@ class ExpHeatMap(object):
 
     def __init__(self, matrix,
                  gene_annotations=None, sample_annotations=None,
-                 colorscale=None):
+                 colorscale=None, colorbar_label=None):
 
         if gene_annotations is None:
             gene_annotations = []
@@ -55,50 +56,27 @@ class ExpHeatMap(object):
 
         if colorscale is None:
             # use default colorscale
-            colorscale = self._read_colorscale(self._default_cmap_file)
+            colorscale = read_colorscale(self._default_cmap_file)
 
         assert isinstance(matrix, ExpMatrix)
         assert isinstance(gene_annotations, Iterable)
         assert isinstance(sample_annotations, Iterable)
         assert isinstance(colorscale, Iterable)
+        if colorbar_label is not None:
+            assert isinstance(colorbar_label, str)
 
         self.matrix = matrix
         self.gene_annotations = gene_annotations
         self.sample_annotations = sample_annotations
         self.colorscale = colorscale
-
-    @staticmethod
-    def _read_colorscale(cmap_file):
-        """Return a colorscale in the format that plotly expects it.
-
-        Specifically, the scale should be a list containing pairs consisting of
-        a normalized value x (between 0 and 1) and a corresponding "rgb(r,g,b)"
-        string, where r,g,b are integers from 0 to 255.
-
-        The ``cmap_file`` is a tab-separated text file containing four columns
-        (x,r,g,b), so that each row corresponds to an entry in the list described
-        above.
-        """
-        assert isinstance(cmap_file, str)
-
-        cm = np.loadtxt(cmap_file, delimiter='\t', dtype=np.float64)
-        # x = cm[:, 0]
-        rgb = np.int64(cm[:, 1:])  # normalize to 0-1?
-        n = cm.shape[0]
-        colorscale = []
-        for i in range(n):
-            colorscale.append(
-                [i / float(n-1),
-                 'rgb(%d, %d, %d)' % (rgb[i, 0], rgb[i, 1], rgb[i, 2])]
-            )
-        return colorscale
+        self.colorbar_label = colorbar_label
 
     def get_figure(
             self, title=None, emin=None, emax=None,
             width=800, height=400,
-            margin_left=100, margin_bottom=60, margin_top=30,
-            colorbar_label='Express`ion', colorbar_size=0.4,
-            xaxis_label='Samples', yaxis_label='Genes',
+            margin_left=100, margin_bottom=60, margin_top=30, margin_right=0,
+            colorbar_size=0.4,
+            xaxis_label=None, yaxis_label=None,
             xaxis_nticks=None, yaxis_nticks=None,
             xtick_angle=30,
             font='"Droid Serif", "Open Serif", serif',
@@ -114,10 +92,15 @@ class ExpHeatMap(object):
         if title_font_size is None:
             title_font_size = font_size
 
+        colorbar_label = self.colorbar_label or 'Expression'
+
         colorbar = go.ColorBar(
             lenmode='fraction',
             len=colorbar_size,
             title=colorbar_label,
+            titlefont = dict(
+                size=title_font_size,
+            ),
             titleside='right',
             xpad=0,
             ypad=0,
@@ -144,8 +127,18 @@ class ExpHeatMap(object):
         if not show_sample_labels:
             xticks = ''
 
-        if xaxis_label is not None:
-            xaxis_label = xaxis_label + ' (n = %d)' % self.matrix.n
+        if xaxis_label is None:
+            if self.matrix.samples.name is not None:
+                xaxis_label = self.matrix.samples.name
+            else:
+                xaxis_label = 'Samples'
+            xaxis_label =  xaxis_label + ' (n = %d)' % self.matrix.n
+
+        if yaxis_label is None:
+            if self.matrix.genes.name is not None:
+                yaxis_label = self.matrix.genes.name
+            else:
+                yaxis_label = 'Genes'
 
         layout = go.Layout(
             width=width,
@@ -179,7 +172,7 @@ class ExpHeatMap(object):
                 l=margin_left,
                 t=margin_top,
                 b=margin_bottom,
-                r=0,
+                r=margin_right,
                 pad=0
             ),
         )
@@ -224,7 +217,7 @@ class ExpHeatMap(object):
                     line=dict(color=ann.color),
                     xaxis='x2',
                     yaxis='y2',
-                    opacity=0.5
+                    opacity=1.0,
                 )
             )
             if ann.label is not None:
@@ -240,7 +233,7 @@ class ExpHeatMap(object):
                         yanchor='bottom',
                         showarrow=False,
                         bgcolor='white',
-                        opacity=0.6,
+                        opacity=1-ann.transparency,
                         borderpad=0,
                         #textangle=30,
                         font=dict(color=ann.color)
@@ -264,7 +257,7 @@ class ExpHeatMap(object):
                     line=dict(color=ann.color),
                     xaxis='x2',
                     yaxis='y2',
-                    opacity=0.5)
+                    opacity=1.0)
             )
             if ann.label is not None:
                 layout.annotations.append(
@@ -279,7 +272,7 @@ class ExpHeatMap(object):
                         yanchor='top',
                         showarrow=False,
                         bgcolor='white',
-                        opacity=0.6,
+                        opacity=1-ann.transparency,
                         borderpad=0,
                         textangle=90,
                         font=dict(color=ann.color)

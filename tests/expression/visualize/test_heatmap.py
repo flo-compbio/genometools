@@ -20,6 +20,8 @@ from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import str as text, int as newint
 
+import os
+
 import pytest
 # import numpy as np
 from plotly import graph_objs as go
@@ -30,20 +32,25 @@ from genometools.expression.visualize import *
 
 @pytest.fixture
 def my_gene_annotation():
-    return HeatMapGeneAnnotation('b', 'blue', 'Important gene')
-
+    return HeatmapGeneAnnotation('b', 'blue',
+                                 label='Important gene',
+                                 transparency=0.2)
 
 @pytest.fixture
 def my_sample_annotation():
-    return HeatMapSampleAnnotation('s2', 'green', 'Important sample')
+    return HeatmapSampleAnnotation('s2', 'green')
 
+
+@pytest.fixture
+def my_block_annotation():
+    return HeatmapBlockAnnotation(0, 1, label='My label')
 
 @pytest.fixture
 def my_heatmap(my_matrix, my_gene_annotation, my_sample_annotation):
     assert isinstance(my_matrix, ExpMatrix)
-    assert isinstance(my_gene_annotation, HeatMapGeneAnnotation)
-    assert isinstance(my_sample_annotation, HeatMapSampleAnnotation)
-    heatmap = ExpHeatMap(
+    assert isinstance(my_gene_annotation, HeatmapGeneAnnotation)
+    assert isinstance(my_sample_annotation, HeatmapSampleAnnotation)
+    heatmap = ExpHeatmap(
         my_matrix,
         gene_annotations=[my_gene_annotation],
         sample_annotations=[my_sample_annotation]
@@ -51,8 +58,17 @@ def my_heatmap(my_matrix, my_gene_annotation, my_sample_annotation):
     return heatmap
 
 
+@pytest.fixture
+def my_sample_corr_heatmap(my_matrix, my_block_annotation):
+    return None
+
+
+def test_colorscale():
+    assert os.path.isfile(ExpHeatmap._default_cmap_file)
+
+
 def test_basic(my_heatmap):
-    assert isinstance(my_heatmap, ExpHeatMap)
+    assert isinstance(my_heatmap, ExpHeatmap)
     # assert isinstance(repr(my_heatmap), str)
     # assert isinstance(str(my_heatmap), str)
     # assert isinstance(text(my_heatmap), text)

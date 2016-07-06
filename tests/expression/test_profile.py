@@ -53,6 +53,7 @@ def test_init(my_profile, my_profile2, my_genes, my_x):
         assert prof.p == len(my_genes)
         assert np.array_equal(prof.x, my_x)
         assert np.array_equal(prof.genes, my_genes)
+        assert prof.genes.name == 'Genes'
     assert my_profile != my_profile2
     assert my_profile.label != my_profile2.label
 
@@ -60,14 +61,14 @@ def test_init(my_profile, my_profile2, my_genes, my_x):
 def test_expanddim(my_profile):
     matrix = my_profile.to_frame()
     assert isinstance(matrix, ExpMatrix)
-
+    assert matrix.genes.name == 'Genes'
 
 def test_tsv(tmpdir, my_profile):
     tmp_file = tmpdir.join('expression_profile.tsv').strpath
     my_profile.write_tsv(tmp_file)
     other = ExpProfile.read_tsv(tmp_file)
     assert other == my_profile
-
+    assert other.genes.name == 'Genes'
 
 def test_copy(my_profile, my_genes, my_x):
     prof = my_profile.copy()
