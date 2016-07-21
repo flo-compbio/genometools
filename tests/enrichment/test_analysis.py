@@ -26,19 +26,19 @@ import pytest
 
 # from genometools.expression import ExpGenome
 from genometools import misc
-from genometools.enrichment import GSEAnalysis
+from genometools.enrichment import GeneSetEnrichmentAnalysis
 
 logger = misc.get_logger('genometools', verbose=True)
 
 
 @pytest.fixture
 def my_analysis(my_genome, my_gene_set_db):
-    analysis = GSEAnalysis(my_genome, my_gene_set_db)
+    analysis = GeneSetEnrichmentAnalysis(my_genome, my_gene_set_db)
     return analysis
 
 
 def test_init(my_analysis, my_genome):
-    assert isinstance(my_analysis, GSEAnalysis)
+    assert isinstance(my_analysis, GeneSetEnrichmentAnalysis)
     assert isinstance(repr(my_analysis), str)
     assert isinstance(str(my_analysis), str)
     assert isinstance(text(my_analysis), text)
@@ -46,17 +46,18 @@ def test_init(my_analysis, my_genome):
     assert isinstance(my_analysis.genes, list)
     assert len(my_analysis.genes) == len(my_genome)
 
+
 def test_analysis(my_analysis, my_ranked_genes, my_uninteresting_gene_set):
     pval_thresh = 0.025
     X_frac = 0
     X_min = 1
     L = len(my_ranked_genes)
-    enriched = my_analysis.get_enriched_gene_sets(
+    enriched = my_analysis.get_rank_based_enrichment(
         my_ranked_genes, pval_thresh, X_frac, X_min, L)
     assert isinstance(enriched, list)
     assert len(enriched) == 1
 
-    enriched = my_analysis.get_enriched_gene_sets(
+    enriched = my_analysis.get_rank_based_enrichment(
         my_ranked_genes, pval_thresh, X_frac, X_min, L,
         gene_set_ids=[my_uninteresting_gene_set.id])
     assert isinstance(enriched, list)

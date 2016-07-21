@@ -220,7 +220,7 @@ class ExpGenome(object):
             The gene index.
         """
         if not isinstance(gene, str):
-            raise ValueError('Gene name must be a string.')
+            raise TypeError('Gene name must be a string.')
 
         try:
             return self._gene_indices[gene]

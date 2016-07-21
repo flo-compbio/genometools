@@ -128,11 +128,32 @@ class SampleCorrelationHeatmap(object):
             # outlinecolor = '#000000',
         )
 
+        def fix_plotly_label_bug(labels):
+            """
+            This fixes a bug whereby plotly treats labels that look
+            like numbers (integers or floats) as numeric instead of
+            categorical, even when they are passed as strings. The fix consists
+            of appending an underscore to any label that looks like a number.
+            """
+            assert isinstance(labels, Iterable)
+            fixed_labels = []
+            for l in labels:
+                try:
+                    float(l)
+                except ValueError:
+                    fixed_labels.append(str(l))
+                else:
+                    fixed_labels.append(str(l) + '_')
+            return fixed_labels
+
+        x = fix_plotly_label_bug(self.corr_matrix.samples)
+        y = x
+
         data = [
             go.Heatmap(
                 z=self.corr_matrix.X,
-                x=self.corr_matrix.samples.tolist(),
-                y=self.corr_matrix.samples.tolist(),
+                x=x,
+                y=y,
                 zmin=emin,
                 zmax=emax,
                 colorscale=self.colorscale,

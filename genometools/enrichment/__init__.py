@@ -24,7 +24,8 @@ from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import *
 
-from .result import GSEResult
-from .analysis import GSEAnalysis
+from .result import StaticGSEResult, RankBasedGSEResult
+from .analysis import GeneSetEnrichmentAnalysis
 
-__all__ = ['GSEResult', 'GSEAnalysis']
+__all__ = ['StaticGSEResult', 'RankBasedGSEResult',
+           'GeneSetEnrichmentAnalysis']

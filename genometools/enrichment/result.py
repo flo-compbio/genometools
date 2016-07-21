@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Module containing the `GSEResult` class."""
+"""Module containing the `StaticGSEResult` and `RankBasedGSEResult` classes."""
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
@@ -25,7 +25,6 @@ import hashlib
 from collections import Iterable
 
 import numpy as np
-from scipy.stats import hypergeom
 
 from xlmhg import mHGResult
 from ..basic import GeneSet
@@ -33,7 +32,111 @@ from ..basic import GeneSet
 logger = logging.getLogger(__name__)
 
 
-class GSEResult(mHGResult):
+class StaticGSEResult(object):
+    """Result of a hypergeometric test for gene set enrichment."""
+
+    def __init__(self, gene_set, N, n, selected_genes, pval):
+        assert isinstance(gene_set, GeneSet)
+        assert isinstance(N, (int, np.integer))
+        assert isinstance(n, int)
+        assert isinstance(selected_genes, Iterable)
+        assert isinstance(pval, (float, np.float))
+
+        self.N = N
+        self.gene_set = gene_set
+        self.n = n
+        self.selected_genes = set(selected_genes)
+        self.pval = pval
+
+    def __repr__(self):
+        return '<%s object (pval=%.1e, gene_set_id="%s", hash="%s">' \
+               % (self.__class__.__name__,
+                  self.pval, self.gene_set._id, self.hash)
+
+    def __str__(self):
+        return '<%s object (pval=%.1e; N=%d; K=%d; n=%d; k=%d; gene_set=%s)>' \
+               % (self.__class__.__name__, self.pval, self.N, self.K, self.n,
+                  self.k, str(self.gene_set))
+
+    def __eq__(self, other):
+        if self is other:
+            return True
+        elif type(self) is type(other):
+            return self.hash == other.hash
+        else:
+            return NotImplemented
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    @property
+    def hash(self):
+        data_str = ';'.join(
+            [str(repr(var)) for var in
+             [self.gene_set, self.N, self.n, sorted(self.selected_genes),
+              self.pval]])
+        data = data_str.encode('UTF-8')
+        return str(hashlib.md5(data).hexdigest())
+
+    @property
+    def K(self):
+        return self.gene_set.size
+
+    @property
+    def k(self):
+        return len(self.selected_genes)
+
+    @property
+    def fold_enrichment(self):
+        """Returns the fold enrichment of the gene set.
+
+        Fold enrichment is defined as ratio between the observed and the
+        expected number of gene set genes present.
+        """
+        expected = self.K * (self.n/float(self.N))
+        return self.k / expected
+
+    def get_pretty_format(self, max_name_length=0):
+        """Returns a nicely formatted string describing the result.
+
+        Parameters
+        ----------
+        max_name_length: int [0]
+            The maximum length of the gene set name (in characters). If the
+            gene set name is longer than this number, it will be truncated and
+            "..." will be appended to it, so that the final string exactly
+            meets the length requirement. If 0 (default), no truncation is
+            performed. If not 0, must be at least 3.
+
+        Returns
+        -------
+        str
+            The formatted string.
+
+        Raises
+        ------
+        ValueError
+            If an invalid length value is specified.
+        """
+
+        assert isinstance(max_name_length, (int, np.integer))
+
+        if max_name_length < 0 or (1 <= max_name_length <= 2):
+            raise ValueError('max_name_length must be 0 or >= 3.')
+
+        gs_name = self.gene_set._name
+        if max_name_length > 0 and len(gs_name) > max_name_length:
+            assert max_name_length >= 3
+            gs_name = gs_name[:(max_name_length - 3)] + '...'
+
+        param_str = '(%d/%d @ %d/%d, pval=%.1e, fe=%.1fx)' \
+                % (self.k, self.K, self.n, self.N,
+                   self.pval, self.fold_enrichment)
+
+        return '%s %s' % (gs_name, param_str)
+
+
+class RankBasedGSEResult(mHGResult):
     """Result of an XL-mHG-based test for gene set enrichment.
 
     Parameters
@@ -65,6 +168,7 @@ class GSEResult(mHGResult):
     escore_tol: float, optional
         The tolerance used for calculating the E-score. [None]
     """
+
     def __init__(self, gene_set, N, indices, ind_genes, X, L,
                  stat, cutoff, pval,
                  pval_thresh=None, escore_pval_thresh=None, escore_tol=None):
@@ -88,12 +192,12 @@ class GSEResult(mHGResult):
 
     def __repr__(self):
         return '<%s object (N=%d, gene_set_id="%s", hash="%s">' \
-                % (self.__class__.__name__,
-                   self.N, self.gene_set._id, self.hash)
+               % (self.__class__.__name__,
+                  self.N, self.gene_set._id, self.hash)
 
     def __str__(self):
         return '<%s object (gene_set=%s, pval=%.1e)>' \
-                % (self.__class__.__name__, str(self.gene_set), self.pval)
+               % (self.__class__.__name__, str(self.gene_set), self.pval)
 
     def __eq__(self, other):
         if self is other:
@@ -123,9 +227,9 @@ class GSEResult(mHGResult):
         gs_name = self.gene_set._name
         if max_name_length > 0 and len(gs_name) > max_name_length:
             assert max_name_length >= 3
-            gs_name = gs_name[:(max_name_length-3)] + '...'
+            gs_name = gs_name[:(max_name_length - 3)] + '...'
         gs_str = gs_name + ' (%d / %d @ %d)' % \
-                (self.k, len(self.ind_genes), self.cutoff)
+                           (self.k, len(self.ind_genes), self.cutoff)
         param_str = ''
         if not omit_param:
             param_str = ' [X=%d,L=%d,N=%d]' % (self.X, self.L, self.N)
@@ -134,20 +238,3 @@ class GSEResult(mHGResult):
             escore_str = ', e=%.1fx' % self.escore
         details = ', p=%.1e%s%s' % (self.pval, escore_str, param_str)
         return '%s%s' % (gs_str, details)
-
-    def get_pretty_GO_format(self, GO, omit_acc=False, omit_param=True,
-                             max_name_length=0): # pragma: no cover
-        # accepts a GOParser object ("GO")
-        # TO-DO: clean up, commenting
-        term = GO.terms[self.gene_set._id]
-        term_name = term.get_pretty_format(omit_acc=omit_acc,
-                                           max_name_length=max_name_length)
-        term_str = term_name + ' (%d)' % (len(self.ind_genes))
-        param_str = ''
-        if not omit_param:
-            param_str = ' [X=%d,L=%d,N=%d]' % (self.X, self.L, self.N)
-        escore_str = ''
-        if self.escore is not None:
-            escore_str = ', e=%.1fx' % self.escore
-        details = ', p=%.1e%s%s' % (self.pval, escore_str, param_str)
-        return '%s%s' % (term_str, details)

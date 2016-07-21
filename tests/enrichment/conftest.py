@@ -22,15 +22,18 @@ from string import ascii_lowercase
 
 import pytest
 import numpy as np
+from scipy.stats import hypergeom
+
 from xlmhg import get_xlmhg_test_result
 
 from genometools.basic import GeneSet, GeneSetDB
 from genometools.expression import ExpGenome
-from genometools.enrichment import GSEAnalysis, GSEResult
+from genometools.enrichment import *
 
 
 @pytest.fixture
 def my_genome():
+    # we're creating a fake genome consisting of all lowercase ascii characters
     genes = [text(c) for c in ascii_lowercase]
     genome = ExpGenome.from_gene_names(genes)
     return genome
@@ -38,12 +41,16 @@ def my_genome():
 
 @pytest.fixture
 def my_v():
+    # We're creating a ranked list consisting of 20 elements, which we
+    # later map to the first "genes" of the fake genome.
+    # The 1's in this list correspond to genes in an ("imaginary") gene set.
     v = np.uint8([1, 0, 1, 1, 0, 1] + [0] * 12 + [1, 0])
     return v
 
 
 @pytest.fixture
 def my_ranked_genes(my_genome, my_v):
+    # This is where we map the genes names.
     return my_genome.genes[:my_v.size]
 
 
@@ -64,13 +71,23 @@ def my_uninteresting_gene_set(my_ranked_genes):
 
 
 @pytest.fixture
+def my_static_genes(my_ranked_genes):
+    return set(my_ranked_genes[:6])
+
+
+#@pytest.fixture
+#def my_uninteresting_static_genes(my_ranked_genes):
+#    return my_ranked_genes[-6:]
+
+
+@pytest.fixture
 def my_gene_set_db(my_gene_set, my_uninteresting_gene_set):
     db = GeneSetDB([my_gene_set, my_uninteresting_gene_set])
     return db
 
 
 @pytest.fixture
-def my_result(my_v, my_ranked_genes, my_gene_set):
+def my_rank_based_result(my_v, my_ranked_genes, my_gene_set):
     N = my_v.size
     X = 1
     L = N
@@ -81,10 +98,21 @@ def my_result(my_v, my_ranked_genes, my_gene_set):
     res = get_xlmhg_test_result(N, indices, X, L)
     #result = GSEResult(stat, n_star, pval, N, X, L, my_gene_set,
     #                   sel, sel_genes)
-    result = GSEResult(my_gene_set, N, indices, ind_genes, X, L,
-                       res.stat, res.cutoff, res.pval)
+    result = RankBasedGSEResult(my_gene_set, N, indices, ind_genes, X, L,
+                                res.stat, res.cutoff, res.pval)
     return result
 
+
+@pytest.fixture
+def my_static_result(my_v, my_static_genes, my_gene_set):
+    N = my_v.size
+    n = len(my_static_genes)
+    K = my_gene_set.size
+    selected_genes = sorted(my_static_genes & my_gene_set.genes)
+    k = len(selected_genes)
+    pval = hypergeom.sf(k-1, N, K, n)
+    result = StaticGSEResult(my_gene_set, N, n, selected_genes, pval)
+    return result
 
 # @pytest.fixture
 # def my_result(my_v, my_gene_set):

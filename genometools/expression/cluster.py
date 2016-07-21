@@ -95,7 +95,12 @@ def cluster_samples(matrix, metric='euclidean', method='average',
     # note: method = 'average' sometimes causes kernel to crash
     logger.warning(_linkage_warn)
 
-    order_cols = _cluster_ndarray(matrix.X.T, metric=metric, method=method,
+    # workaround for scipy bug when supplied with a row of NaNs
+    # see: https://github.com/scipy/scipy/issues/5142
+    valid_rows = matrix.notnull().all(axis=1)
+    filtered = matrix.loc[valid_rows]
+
+    order_cols = _cluster_ndarray(filtered.X.T, metric=metric, method=method,
                                   reverse=reverse)
     matrix = matrix.iloc[:, order_cols]
     return matrix
