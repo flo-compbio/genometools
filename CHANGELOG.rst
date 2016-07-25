@@ -18,6 +18,11 @@
 Changelog
 =========
 
+Version 2.0 (2016-??-??)
+------------------------
+
+- ?
+
 Version 2.0rc6 (2016-07-21)
 ---------------------------
 - Modified `enrichment` subpackage to support rank-based enrichment (using the
