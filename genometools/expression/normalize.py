@@ -28,7 +28,7 @@ from . import ExpMatrix
 logger = logging.getLogger(__name__)
 
 
-def quantile_normalize(matrix, inplace=False):
+def quantile_normalize(matrix, inplace=False, target=None):
     """Quantile normalization, allowing for missing values (NaN).
 
     In case of nan values, this implementation will calculate evenly
@@ -42,6 +42,11 @@ def quantile_normalize(matrix, inplace=False):
         The expression matrix (rows = genes, columns = samples).
     inplace: bool
         Whether or not to perform the operation in-place. [False]
+    target: `numpy.ndarray`
+        Target distribution to use. needs to be a vector whose first
+        dimension matches that of the expression matrix. If ``None``,
+        the target distribution is calculated based on the matrix
+        itself. [None]
 
     Returns
     -------
@@ -50,6 +55,9 @@ def quantile_normalize(matrix, inplace=False):
     """
     assert isinstance(matrix, ExpMatrix)
     assert isinstance(inplace, bool)
+    if target is not None:
+        assert isinstance(target, np.ndarray) and \
+               np.issubdtype(target.dtype, np.float)
 
     if not inplace:
         # make a copy of the original data
@@ -74,8 +82,14 @@ def quantile_normalize(matrix, inplace=False):
     for j in range(n):
         matrix.iloc[:, j] = matrix.X[A[:, j], j]
 
-    # calculate target distribution
-    target = np.mean(matrix.X, axis=1)
+    # determine target distribution
+    if target is None:
+        # No target distribution is specified, calculate one based on the
+        # expression matrix.
+        target = np.mean(matrix.X, axis=1)
+    else:
+        # Use specified target distribution (after sorting).
+        target = np.sort(target)
 
     # generate indices to reverse sorting
     A = np.argsort(A, axis=0, kind='mergesort')  # mergesort is stable
