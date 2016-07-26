@@ -18,6 +18,19 @@
 Changelog
 =========
 
+Version 2.0 (2016-??-??)
+------------------------
+
+- ?
+
+Version 2.0rc6 (2016-07-21)
+---------------------------
+- Modified `enrichment` subpackage to support rank-based enrichment (using the
+  XL-mHG test) as well as "static" enrichment (testing a fixed set of genes for
+  enrichment of gene sets using the hypergeometric test). In the process,
+  renamed class `GSEAnalysis` to `GeneSetEnrichmentAnalysis`. Also added some
+  simple tests for the "static" enrichment analysis.
+
 Version 2.0rc2 (2016-05-05)
 ---------------------------
 - Made `enrichment` subpackage compatible with `xlmhg` version 2.2.0

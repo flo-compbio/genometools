@@ -20,11 +20,8 @@ The `GSEAnalysis` class performs the tests, and the results are represented
 by `GSEResult` objects.
 """
 
-from __future__ import (absolute_import, division,
-                        print_function, unicode_literals)
-from builtins import *
+from .result import StaticGSEResult, RankBasedGSEResult
+from .analysis import GeneSetEnrichmentAnalysis
 
-from .result import GSEResult
-from .analysis import GSEAnalysis
-
-__all__ = ['GSEResult', 'GSEAnalysis']
+__all__ = ['StaticGSEResult', 'RankBasedGSEResult',
+           'GeneSetEnrichmentAnalysis']

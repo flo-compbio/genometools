@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Module containing the `GSEAnalysis` class."""
+"""Module containing the `GeneSetEnrichmentAnalysis` class."""
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
@@ -23,21 +23,23 @@ from builtins import *
 import logging
 from math import ceil
 import copy
+from collections import Iterable
 
 import numpy as np
+from scipy.stats import hypergeom
 
 import xlmhg
 
 # from ..basic import GeneSet, GeneSetDB
 from ..basic import GeneSetDB
 from ..expression import ExpGenome
-from . import GSEResult
+from . import StaticGSEResult, RankBasedGSEResult
 
 logger = logging.getLogger(__name__)
 
 
-class GSEAnalysis(object):
-    """Test ranked gene lists for gene set enrichment using the XL-mHG test.
+class GeneSetEnrichmentAnalysis(object):
+    """Test a set of genes or a ranked list of genes for gene set enrichment.
 
     Parameters
     ----------
@@ -63,12 +65,12 @@ class GSEAnalysis(object):
     As an example, for a set of p = 10,000 genes and n = 10,000 gene sets, this
     matrix is of size 100 MB in the memory (i.e., p x n bytes).
 
-    Once the class has been initialized, the function `get_enriched_gene_sets`
-    can be called with a ranked list of genes, a significance threshold, and a
-    set of parameters for the XL-mHG test. This function returns a list of
-    `GSEResult` objects, one for each gene set that was found to be
-    significantly enriched.
+    Once the class has been initialized, the function `get_static_enrichment`
+    can be used to test a set of genes for gene set enrichment, and the
+    function `get_rank_based_enrichment` can be used to test a ranked list of
+    genes for gene set enrichment.
     """
+
     def __init__(self, genome, gene_set_db):
 
         assert isinstance(genome, ExpGenome)
@@ -79,7 +81,8 @@ class GSEAnalysis(object):
 
         # generate annotation matrix by going over all gene sets
         logger.info('Generating gene-by-gene set membership matrix...')
-        self._A = np.zeros((len(genome), gene_set_db.n), dtype=np.uint8)
+        gene_memberships = np.zeros((len(genome), gene_set_db.n),
+                                    dtype=np.uint8)
         for j, gs in enumerate(self._gene_set_db.gene_sets):
             for g in gs.genes:
                 try:
@@ -87,7 +90,8 @@ class GSEAnalysis(object):
                 except ValueError:
                     pass
                 else:
-                    self._A[idx, j] = 1
+                    gene_memberships[idx, j] = 1
+        self._gene_memberships = gene_memberships
 
     def __repr__(self):
         return '<%s object (_genome=%s; gene_set_db=%s)>' \
@@ -107,10 +111,98 @@ class GSEAnalysis(object):
     def genome(self):
         return copy.deepcopy(self._genome)
 
-    def get_enriched_gene_sets(
+    def get_static_enrichment(
+            self, genes, pval_thresh, adjust_pval_thresh=True, X=3,
+            gene_set_ids=None):
+        """Find enriched gene sets in a set of genes."""
+        assert isinstance(genes, set)
+        assert isinstance(pval_thresh, (float, np.float))
+        assert isinstance(X, (int, np.integer))
+        if gene_set_ids is not None:
+            assert isinstance(gene_set_ids, Iterable)
+
+        gene_set_db = self._gene_set_db
+        gene_sets = gene_set_db.gene_sets
+        gene_memberships = self._gene_memberships
+        sorted_genes = sorted(genes)
+
+        # test only some terms?
+        if gene_set_ids is not None:
+            gs_indices = np.int64([self._gene_set_db.index(id_)
+                                   for id_ in gene_set_ids])
+            gene_sets = [gene_set_db[id_] for id_ in gene_set_ids]
+            # gene_set_db = GeneSetDB(gene_sets)
+            gene_memberships = gene_memberships[:, gs_indices]  # not a view!
+
+        # determine K's
+        K_vec = np.sum(gene_memberships, axis=0, dtype=np.int64)
+
+        # exclude terms with too few genes
+        sel = np.nonzero(K_vec >= X)[0]
+        K_vec = K_vec[sel]
+        gene_sets = [gene_sets[j] for j in sel]
+        gene_memberships = gene_memberships[:, sel]
+
+        # determine k's, ignoring unknown genes
+        unknown = 0
+        sel = []
+        filtered_genes = []
+        logger.debug('Looking up indices for %d genes...', len(sorted_genes))
+        for i, g in enumerate(sorted_genes):
+            assert isinstance(g, str)
+            try:
+                idx = self._genome.index(g)
+            except ValueError:
+                unknown += 1
+            else:
+                sel.append(idx)
+                filtered_genes.append(g)
+
+        sel = np.int64(sel)
+        gene_indices = np.int64(sel)
+        # gene_memberships = gene_memberships[sel, :]
+        k_vec = np.sum(gene_memberships[sel, :], axis=0, dtype=np.int64)
+        if unknown > 0:
+            logger.warn('%d / %d unknown genes (%.1f %%), will be ignored.',
+                        unknown, len(genes),
+                        100 * (unknown / float(len(genes))))
+
+        # determine n and N
+        n = len(filtered_genes)
+        N, m = gene_memberships.shape
+        logger.info('Conducting %d tests.', m)
+
+        # correct p-value threshold, if specified
+        final_pval_thresh = pval_thresh
+        if adjust_pval_thresh:
+            final_pval_thresh /= float(m)
+            logger.info('Using Bonferroni-corrected p-value threshold: %.1e',
+                        final_pval_thresh)
+
+        # calculate p-values and get significantly enriched gene sets
+        enriched = []
+
+        logger.debug('N=%d, n=%d', N, n)
+        sys.stdout.flush()
+        for j in range(m):
+            pval = hypergeom.sf(k_vec[j] - 1, N, K_vec[j], n)
+            if pval <= final_pval_thresh:
+                # found significant enrichment
+                # sel_genes = [filtered_genes[i] for i in np.nonzero(gene_memberships[:, j])[0]]
+                sel_genes = [self._genome[i] for i in
+                             np.nonzero(gene_memberships[gene_indices, j])[0]]
+                enriched.append(
+                    StaticGSEResult(N, gene_sets[j], n, set(sel_genes), pval))
+
+        return enriched
+
+    def get_rank_based_enrichment(
             self, ranked_genes, pval_thresh, X_frac, X_min, L,
-            escore_pval_thresh=None, gene_set_ids=None, table=None):
-        """Tests gene set enrichment given a ranked list of genes.
+            adjust_pval_thresh=True, escore_pval_thresh=None,
+            gene_set_ids=None, table=None):
+        """Find enriched gene sets in a ranked list of genes.
+
+        This function uses the XL-mHG test to identify enriched gene sets.
 
         This function also calculates XL-mHG E-scores for the enriched gene
         sets, using ``escore_pval_thresh`` as the p-value threshold "psi".
@@ -118,59 +210,123 @@ class GSEAnalysis(object):
         if isinstance(X_frac, (int, np.integer)):
             X_frac = float(X_frac)
 
-        # checks
-        assert isinstance(ranked_genes, (list, tuple))
-        for g in ranked_genes:
-            assert isinstance(g, str)
-        assert isinstance(pval_thresh, float)
-        assert isinstance(X_frac, float)
-        assert isinstance(X_min, int)
-        assert isinstance(L, int)
+        # type checks
+        assert isinstance(ranked_genes, Iterable)
+        assert isinstance(pval_thresh, (float, np.float))
+        assert isinstance(X_frac, (float, np.float))
+        assert isinstance(X_min, (int, np.integer))
+        assert isinstance(L, (int, np.integer))
+        assert isinstance(adjust_pval_thresh, bool)
 
         if escore_pval_thresh is not None:
-            assert isinstance(escore_pval_thresh, float)
+            assert isinstance(escore_pval_thresh, (float, np.float))
         if gene_set_ids is not None:
-            assert isinstance(gene_set_ids, (list, tuple))
-            for id_ in gene_set_ids:
-                assert isinstance(id_, str)
+            assert isinstance(gene_set_ids, Iterable)
         if table is not None:
-            assert isinstance(table, np.ndarray)
-        
-        gene_set_db = self._gene_set_db
-        A = self._A
+            assert isinstance(table, np.ndarray) and \
+                   np.issubdtype(table.dtype, np.longdouble)
 
+        gene_set_db = self._gene_set_db
+        gene_memberships = self._gene_memberships
+
+        # postpone this
         if escore_pval_thresh is None:
             # if no separate E-score p-value threshold is specified, use the
             # p-value threshold (this results in very conservative E-scores)
-            logger.warning('Setting the E-score p-value threshold to the '
+            logger.warning('No E-score p-value threshold supplied Setting the '
+                           'E-score '
+                           'p-value threshold to the '
                            'global significance threshold results in '
                            'conservative E-scores.')
-            escore_pval_thresh = pval_thresh
 
         # test only some terms?
         if gene_set_ids is not None:
             gs_indices = np.int64([self._gene_set_db.index(id_)
-                                  for id_ in gene_set_ids])
+                                   for id_ in gene_set_ids])
             gene_sets = [gene_set_db[id_] for id_ in gene_set_ids]
             gene_set_db = GeneSetDB(gene_sets)
-            A = A[:, gs_indices]  # not a view!
+            gene_memberships = gene_memberships[:, gs_indices]  # not a view!
 
         # reorder rows in annotation matrix to match the given gene ranking
         # also exclude genes not in the ranking
-        gene_indices = np.int64([self._genome.index(g) for g in ranked_genes])
+        unknown = 0
+        L_adj = L
+        sel = []
+        filtered_genes = []
+        logger.debug('Looking up indices for %d genes...' % len(ranked_genes))
+        for i, g in enumerate(ranked_genes):
+            assert isinstance(g, str)
+            try:
+                idx = self._genome.index(g)
+            except ValueError:
+                unknown += 1
+                # adjust L if the gene was above the original L cutoff
+                if i < L:
+                    L_adj -= 1
+            else:
+                sel.append(idx)
+                filtered_genes.append(g)
+        sel = np.int64(sel)
+        #gene_indices = np.int64(sel)
+        logger.debug('Adjusted L: %d', L_adj)
 
-        A = A[gene_indices, :]  # not a view either!
+        # the following also copies the data (not a view)
+        gene_memberships = gene_memberships[sel, :]
+        N, m = gene_memberships.shape
+        if unknown > 0:
+            # Some genes in the ranked list were unknown (i.e., not present in
+            # the specified genome).
+            logger.warn('%d / %d unknown genes (%.1f %%), will be ignored.',
+                        unknown, len(genes),
+                        100 * (unknown / float(len(genes))))
 
-        # determine largest K
-        K_lim = np.sum(A[:L, :], axis=0, dtype=np.int64)
-        K_rem = np.sum(A[L:, :], axis=0, dtype=np.int64)
-        K = K_lim + K_rem
-        K_max = np.amax(K)
 
-        # prepare matrix for XL-mHG p-value calculation
-        p, m = A.shape
+        # Determine the number of gene set genes above the L'th cutoff,
+        # for all gene sets. This quantity is useful, because we don't need
+        # to perform any more work for gene sets that have less than X genes
+        # above the cutoff.
+        k_above_L = np.sum(gene_memberships[:L_adj, :], axis=0, dtype=np.int64)
+
+        # Determine the number of genes below the L'th cutoff, for all gene
+        # sets.
+        k_below_L = np.sum(gene_memberships[L_adj:, :], axis=0, dtype=np.int64)
+
+        # Determine the total number K of genes in each gene set that are
+        # present in the ranked list (this is equal to k_above_L + k_below_L)
+        K_vec = k_above_L + k_below_L
+
+        # Determine the largest K across all gene sets.
+        K_max = np.amax(K_vec)
+
+        # Determine X for all gene sets.
+        X = np.amax(
+            np.c_[np.tile(X_min, m), np.int64(np.ceil(X_frac * K_vec))],
+            axis=1)
+
+        # Determine the number of tests (we do not conduct a test if the
+        # total number of gene set genes in the ranked list is below X).
+        num_tests = np.sum(K_vec-X >= 0)
+        logger.info('Conducting %d tests.', num_tests)
+
+        # determine Bonferroni-corrected p-value, if desired
+        final_pval_thresh = pval_thresh
+        if adjust_pval_thresh and num_tests > 0:
+            final_pval_thresh /= float(num_tests)
+            logger.info('Using Bonferroni-corrected p-value threshold: %.1e',
+                        final_pval_thresh)
+
+
+        # Prepare the matrix that holds the dynamic programming table for
+        # the calculation of the XL-mHG p-value.
         if table is None:
-            table = np.empty((K_max+1, p+1), dtype=np.longdouble)
+            table = np.empty((K_max+1, N+1), dtype=np.longdouble)
+        else:
+            if table.shape[0] < K_max+1 or table.shape[1] < N+1:
+                raise ValueError(
+                    'The supplied array is too small (%d x %d) to hold the '
+                    'entire dynamic programming table. The required size is'
+                    '%d x %d (rows x columns).'
+                    % (table.shape[0], table.shape[1], K_max+1, N+1))
 
         # find enriched GO terms
         logger.info('Testing %d gene sets for enrichment...', m)
@@ -178,31 +334,32 @@ class GSEAnalysis(object):
                      len(ranked_genes), X_frac, X_min, L, K_max)
 
         enriched = []
-        tested = 0  # number of tests conducted
-        N, m = A.shape
+        num_tests = 0  # number of tests conducted
         for j in range(m):
-            # determine gene set-specific value for X (based on K[j])
-            X = max(X_min, int(ceil(X_frac*float(K[j]))))
+            # determine gene set-specific value for X
+            X = max(X_min, int(ceil(X_frac * float(K_vec[j]))))
 
-            # determine significance of gene set enrichment using XL-mHG test
-            # (only if there are at least X gene set genes in the list)
-            if K[j] >= X:
-                tested += 1
+            # Determine significance of gene set enrichment using the XL-mHG
+            # test (only if there are at least X gene set genes in the list).
+            if K_vec[j] >= X:
+                num_tests += 1
 
-                # we only need to perform the XL-mHG test if there are enough
-                # gene set genes at or above L'th rank (otherwise, pval = 1.0)
-                if K_lim[j] >= X:
-
+                # We only need to perform the XL-mHG test if there are enough
+                # gene set genes above the L'th cutoff (otherwise, pval = 1.0).
+                if k_above_L[j] >= X:
                     # perform test
-                    indices = np.uint16(np.nonzero(A[:, j])[0])
+
+                    # Determine the ranks of the gene set genes in the
+                    # ranked list.
+                    indices = np.uint16(np.nonzero(gene_memberships[:, j])[0])
                     res = xlmhg.get_xlmhg_test_result(
                         N, indices, X, L, table=table)
 
                     # check if gene set is significantly enriched
                     if res.pval <= pval_thresh:
-                        # generate GSEResult
+                        # generate RankedGSEResult
                         ind_genes = [ranked_genes[i] for i in indices]
-                        gse_result = GSEResult(
+                        gse_result = RankBasedGSEResult(
                             gene_set_db[j], N, indices, ind_genes,
                             X, L, res.stat, res.cutoff, res.pval,
                             escore_pval_thresh=escore_pval_thresh
@@ -211,11 +368,11 @@ class GSEAnalysis(object):
 
         # report results
         q = len(enriched)
-        ignored = m-tested
+        ignored = m - num_tests
         if ignored > 0:
             logger.debug('%d / %d gene sets (%.1f%%) had less than X genes '
                          'annotated with them and were ignored.',
-                         ignored, m, 100*(ignored/float(m)))
+                         ignored, m, 100 * (ignored / float(m)))
 
         logger.info('%d / %d gene sets were found to be significantly '
                     'enriched (p-value <= %.1e).', q, m, pval_thresh)

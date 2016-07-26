@@ -20,6 +20,7 @@
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import *
+import six
 
 # import sys
 import argparse
@@ -33,9 +34,20 @@ float_mv = '<float>'
 name_mv = '<name>'
 str_mv = '<str>'
 
-# def str_type(s):
-#    # return encode(s, sys.getfilesystemencoding())
-#    return str(s)
+SYS_ENCODING = sys.getfilesystemencoding()
+
+
+def str_type(a):
+    """A string type for the `argparse.add_argument` ``type`` argument.
+
+    This function fixes some issue where Python 2.7's argparse does not accept
+    unicode values passed as arguments that are of the `future.types.newstr`
+    type.
+    """
+    if six.PY2:
+        return str(a, SYS_ENCODING)
+    else:
+        return str(a)
 
 
 def get_argument_parser(prog=None, desc=None, formatter_class=None):
