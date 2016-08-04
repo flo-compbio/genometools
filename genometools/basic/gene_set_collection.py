@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Module containing the `GeneSetDB` class.
+"""Module containing the `GeneSetCollection` class.
 
 Class supports unicode using UTF-8.
 
@@ -39,8 +39,8 @@ from . import GeneSet
 logger = logging.getLogger(__name__)
 
 
-class GeneSetDB(object):
-    """A gene set database.
+class GeneSetCollection(object):
+    """A collection of gene sets.
 
     This is a class that basically just contains a list of gene sets, and
     supports different ways of accessing individual gene sets. The gene sets
@@ -67,7 +67,7 @@ class GeneSetDB(object):
         # make sure all IDs are unique
         all_ids = [gs.id for gs in gene_sets]
         if len(all_ids) != len(set(all_ids)):
-            raise ValueError('Cannot create GeneSetDB: gene set IDs are not '
+            raise ValueError('Cannot create GeneSetCollection: gene set IDs are not '
                              'unique!')
 
         self._gene_sets = OrderedDict([gs.id, gs] for gs in gene_sets)
@@ -265,7 +265,7 @@ class GeneSetDB(object):
 
         Returns
         -------
-        GeneSetDB
+        GeneSetCollection
             The gene set database containing the MSigDB gene sets.
         """
 

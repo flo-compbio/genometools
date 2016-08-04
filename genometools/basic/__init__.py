@@ -19,6 +19,6 @@ from __future__ import (absolute_import, division,
 from builtins import *
 
 from .geneset import GeneSet
-from .genesetdb import GeneSetDB
+from .gene_set_collection import GeneSetCollection
 
-__all__ = ['GeneSet', 'GeneSetDB']
+__all__ = ['GeneSet', 'GeneSetCollection']

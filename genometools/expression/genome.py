@@ -48,7 +48,7 @@ class ExpGenome(object):
 
     Notes
     -----
-    The implementation is very similar to the `genometools.basic.GeneSetDB`
+    The implementation is very similar to the `genometools.basic.GeneSetCollection`
     class. It uses ordered dictionaries to support efficient access by gene
     name or index, as well as looking up the index of specific gene.
     """
