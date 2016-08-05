@@ -292,14 +292,22 @@ class ExpMatrix(pd.DataFrame):
         assert isinstance(encoding, str)
 
         # use pd.read_csv to parse the tsv file into a DataFrame
-        E = cls(pd.read_csv(path, sep='\t', index_col=0, header=0,
-                            encoding=encoding))
+        matrix = cls(pd.read_csv(path, sep='\t', index_col=0, header=0,
+                                 encoding=encoding))
+
+        # parse index column separately
+        # (this seems to be the only way we can prevent pandas from converting
+        #  "nan" or "NaN" to floats in the index)
+        ind = pd.read_csv(path, sep='\t', usecols=[0, ], header=0,
+                           encoding=encoding, na_filter=False)
+
+        matrix.index = ind.iloc[:, 0]
 
         if genome is not None:
             # filter genes
-            E = E.filter_against_genome(genome)
+            matrix = matrix.filter_against_genome(genome)
 
-        return E
+        return matrix
 
     def write_tsv(self, path, encoding='UTF-8'):
         """Write expression matrix to a tab-delimited text file.

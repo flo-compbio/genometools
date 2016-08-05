@@ -48,9 +48,10 @@ class ExpGenome(object):
 
     Notes
     -----
-    The implementation is very similar to the `genometools.basic.GeneSetCollection`
-    class. It uses ordered dictionaries to support efficient access by gene
-    name or index, as well as looking up the index of specific gene.
+    The implementation is very similar to the
+    `genometools.basic.GeneSetCollection` class. It uses ordered dictionaries
+    to support efficient access by gene name or index, as well as looking up
+    the index of specific gene.
     """
     def __init__(self, exp_genes):
 
@@ -155,7 +156,7 @@ class ExpGenome(object):
         """
         assert isinstance(genes, (list, tuple))
         for g in genes:
-            assert isinstance(g, str)
+            assert isinstance(g, str), type(g)
 
         genome = cls([ExpGene(g) for g in genes])
         return genome
