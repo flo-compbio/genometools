@@ -128,7 +128,7 @@ setup(
             'mock',
         ],
         'tests': [
-            'pytest>=2.8.5, <3'
+            'pytest>=2.8.5, <3',
             'pytest-cov>=2.2.1, <3',
         ],
     },
