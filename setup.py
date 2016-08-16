@@ -26,18 +26,18 @@ from os import path
 
 root = 'genometools'
 name = 'genometools'
-version = '2.0rc6'
+version = '2.0.0'
 
 here = path.abspath(path.dirname(__file__))
 description = 'GenomeTools: A Python Framework for Analyzing Genomic Data.'
 
 install_requires = [
-    'future >= 0.15.2, < 1',
-    'six >= 1.10.0, < 2',
-    'unicodecsv >= 0.14.1, < 1',
-    'xmltodict >= 0.10.1, < 1',
-    'requests >= 2.9.1, < 3',
-    'ftputil >= 3.3.1, < 4',
+    'future>=0.15.2, <1',
+    'six>=1.10.0, <2',
+    'unicodecsv>=0.14.1, <1',
+    'xmltodict>=0.10.1, <1',
+    'requests>=2.9.1, <3',
+    'ftputil>=3.3.1, <4',
 ]
 
 # do not require installation if built by ReadTheDocs
@@ -45,11 +45,11 @@ install_requires = [
 if 'READTHEDOCS' not in os.environ or \
         os.environ['READTHEDOCS'] != 'True':
     install_requires.extend([
-        'numpy >= 1.8, < 2',
-        'pandas >= 0.18, < 1',
-        'scipy >= 0.14, < 1',
-        'plotly >= 1.9.6, < 2',
-        'xlmhg >= 2.2.0, < 3',
+        'numpy>=1.8, <2',
+        'pandas>=0.18, <1',
+        'scipy>=0.14, <1',
+        'plotly>=1.9.6, <2',
+        'xlmhg>=2.2.0, <3',
     ])
 
 # get long description from file
@@ -73,8 +73,10 @@ class CleanCommand(Command):
 
     def run(self):
         error_msg = 'You must run this command in the package root!'
-        assert os.getcwd() == here, error_msg
-        os.system('rm -rf ./dist ./build ./*.egg-info ')
+        if not os.getcwd() == here:
+            raise OSError(error_msg)
+        else:
+            os.system('rm -rf ./dist ./build ./*.egg-info ')
 
 setup(
     name=name,
@@ -94,7 +96,7 @@ setup(
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
 
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
@@ -116,13 +118,19 @@ setup(
 
     install_requires=install_requires,
 
-    tests_require=[
-        'pytest >= 2.8.5, < 3',
-        'pytest-cov >= 2.2.1, < 3',
-    ],
+    # tests_require=[],
 
     extras_require={
-        'docs': ['sphinx', 'sphinx-rtd-theme', 'sphinx-argparse', 'mock']
+        'docs': [
+            'sphinx',
+            'sphinx-rtd-theme',
+            'sphinx-argparse',
+            'mock',
+        ],
+        'tests': [
+            'pytest>=2.8.5, <3',
+            'pytest-cov>=2.2.1, <3',
+        ],
     },
 
     # data

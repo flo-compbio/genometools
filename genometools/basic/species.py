@@ -27,7 +27,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class Species(object): # pragma: no cover
+class Species(object):  # pragma: no cover
     """A species.
 
     Parameters

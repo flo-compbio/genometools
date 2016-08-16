@@ -121,7 +121,7 @@ class ExpHeatmap(object):
             for l in labels:
                 try:
                     float(l)
-                except ValueError:
+                except (ValueError, TypeError):
                     fixed_labels.append(str(l))
                 else:
                     fixed_labels.append(str(l) + '_')

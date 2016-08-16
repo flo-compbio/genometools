@@ -24,14 +24,15 @@ import logging
 from math import ceil
 import copy
 from collections import Iterable
+import sys
 
 import numpy as np
 from scipy.stats import hypergeom
 
 import xlmhg
 
-# from ..basic import GeneSet, GeneSetDB
-from ..basic import GeneSetDB
+# from ..basic import GeneSet, GeneSetCollection
+from ..basic import GeneSetCollection
 from ..expression import ExpGenome
 from . import StaticGSEResult, RankBasedGSEResult
 
@@ -45,21 +46,21 @@ class GeneSetEnrichmentAnalysis(object):
     ----------
     genome: `ExpGenome` object
         See :attr:`_genome` attribute.
-    gene_set_db: `GeneSetDB` object
-        See :attr:`geneset_db` attribute.
+    gene_set_coll: `GeneSetCollection` object
+        See :attr:`gene_set_coll` attribute.
 
     Attributes
     ----------
     genome: `ExpGenome` object
         The universe of genes.
-    gene_set_db: `GeneSetDB` object
-        The gene set database.
+    gene_set_coll: `GeneSetCollection` object
+        The list of gene sets to be tested.
 
     Notes
     -----
     The class is initialized with a set of valid gene names (an `ExpGenome`
-    object), as well as a set of gene sets (a `GeneSetDB` object). During
-    initialization, a binary "gene-by-gene set" matrix is constructed,
+    object), as well as a set of gene sets (a `GeneSetCollection` object).
+    During initialization, a binary "gene-by-gene set" matrix is constructed,
     which stores information about which gene is contained in each gene set.
     This matrix is quite sparse, and requires a significant amount of memory.
     As an example, for a set of p = 10,000 genes and n = 10,000 gene sets, this
@@ -71,19 +72,19 @@ class GeneSetEnrichmentAnalysis(object):
     genes for gene set enrichment.
     """
 
-    def __init__(self, genome, gene_set_db):
+    def __init__(self, genome, gene_set_coll):
 
         assert isinstance(genome, ExpGenome)
-        assert isinstance(gene_set_db, GeneSetDB)
+        assert isinstance(gene_set_coll, GeneSetCollection)
 
         self._genome = genome
-        self._gene_set_db = gene_set_db
+        self._gene_set_coll = gene_set_coll
 
         # generate annotation matrix by going over all gene sets
         logger.info('Generating gene-by-gene set membership matrix...')
-        gene_memberships = np.zeros((len(genome), gene_set_db.n),
+        gene_memberships = np.zeros((len(genome), gene_set_coll.n),
                                     dtype=np.uint8)
-        for j, gs in enumerate(self._gene_set_db.gene_sets):
+        for j, gs in enumerate(self._gene_set_coll.gene_sets):
             for g in gs.genes:
                 try:
                     idx = self._genome.index(g)
@@ -94,14 +95,14 @@ class GeneSetEnrichmentAnalysis(object):
         self._gene_memberships = gene_memberships
 
     def __repr__(self):
-        return '<%s object (_genome=%s; gene_set_db=%s)>' \
+        return '<%s object (genome=%s; gene_set_coll=%s)>' \
                % (self.__class__.__name__,
-                  repr(self._genome), repr(self._gene_set_db))
+                  repr(self._genome), repr(self._gene_set_coll))
 
     def __str__(self):
         return '<%s object (%d genes in _genome; %d gene sets)>' \
                % (self.__class__.__name__,
-                  len(self._genome), len(self._gene_set_db))
+                  len(self._genome), len(self._gene_set_coll))
 
     @property
     def genes(self):
@@ -121,17 +122,17 @@ class GeneSetEnrichmentAnalysis(object):
         if gene_set_ids is not None:
             assert isinstance(gene_set_ids, Iterable)
 
-        gene_set_db = self._gene_set_db
-        gene_sets = gene_set_db.gene_sets
+        gene_set_coll = self._gene_set_coll
+        gene_sets = gene_set_coll.gene_sets
         gene_memberships = self._gene_memberships
         sorted_genes = sorted(genes)
 
         # test only some terms?
         if gene_set_ids is not None:
-            gs_indices = np.int64([self._gene_set_db.index(id_)
+            gs_indices = np.int64([self._gene_set_coll.index(id_)
                                    for id_ in gene_set_ids])
-            gene_sets = [gene_set_db[id_] for id_ in gene_set_ids]
-            # gene_set_db = GeneSetDB(gene_sets)
+            gene_sets = [gene_set_coll[id_] for id_ in gene_set_ids]
+            # gene_set_coll = GeneSetCollection(gene_sets)
             gene_memberships = gene_memberships[:, gs_indices]  # not a view!
 
         # determine K's
@@ -226,7 +227,7 @@ class GeneSetEnrichmentAnalysis(object):
             assert isinstance(table, np.ndarray) and \
                    np.issubdtype(table.dtype, np.longdouble)
 
-        gene_set_db = self._gene_set_db
+        gene_set_coll = self._gene_set_coll
         gene_memberships = self._gene_memberships
 
         # postpone this
@@ -241,10 +242,10 @@ class GeneSetEnrichmentAnalysis(object):
 
         # test only some terms?
         if gene_set_ids is not None:
-            gs_indices = np.int64([self._gene_set_db.index(id_)
+            gs_indices = np.int64([self._gene_set_coll.index(id_)
                                    for id_ in gene_set_ids])
-            gene_sets = [gene_set_db[id_] for id_ in gene_set_ids]
-            gene_set_db = GeneSetDB(gene_sets)
+            gene_sets = [gene_set_coll[id_] for id_ in gene_set_ids]
+            gene_set_coll = GeneSetCollection(gene_sets)
             gene_memberships = gene_memberships[:, gs_indices]  # not a view!
 
         # reorder rows in annotation matrix to match the given gene ranking
@@ -277,8 +278,8 @@ class GeneSetEnrichmentAnalysis(object):
             # Some genes in the ranked list were unknown (i.e., not present in
             # the specified genome).
             logger.warn('%d / %d unknown genes (%.1f %%), will be ignored.',
-                        unknown, len(genes),
-                        100 * (unknown / float(len(genes))))
+                        unknown, len(ranked_genes),
+                        100 * (unknown / float(len(ranked_genes))))
 
 
         # Determine the number of gene set genes above the L'th cutoff,
@@ -360,7 +361,7 @@ class GeneSetEnrichmentAnalysis(object):
                         # generate RankedGSEResult
                         ind_genes = [ranked_genes[i] for i in indices]
                         gse_result = RankBasedGSEResult(
-                            gene_set_db[j], N, indices, ind_genes,
+                            gene_set_coll[j], N, indices, ind_genes,
                             X, L, res.stat, res.cutoff, res.pval,
                             escore_pval_thresh=escore_pval_thresh
                         )

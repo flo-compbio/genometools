@@ -26,7 +26,7 @@ from scipy.stats import hypergeom
 
 from xlmhg import get_xlmhg_test_result
 
-from genometools.basic import GeneSet, GeneSetDB
+from genometools.basic import GeneSet, GeneSetCollection
 from genometools.expression import ExpGenome
 from genometools.enrichment import *
 
@@ -82,7 +82,7 @@ def my_static_genes(my_ranked_genes):
 
 @pytest.fixture
 def my_gene_set_db(my_gene_set, my_uninteresting_gene_set):
-    db = GeneSetDB([my_gene_set, my_uninteresting_gene_set])
+    db = GeneSetCollection([my_gene_set, my_uninteresting_gene_set])
     return db
 
 
