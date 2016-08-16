@@ -18,7 +18,7 @@ from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import *
 
-from .geneset import GeneSet
+from .gene_set import GeneSet
 from .gene_set_collection import GeneSetCollection
 
 __all__ = ['GeneSet', 'GeneSetCollection']
