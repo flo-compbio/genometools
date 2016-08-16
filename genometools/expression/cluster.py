@@ -44,20 +44,22 @@ def bicluster(
         sample_cluster_metric='euclidean',
         cluster_method='average',
         reverse_genes=False,
-        reverse_samples=False
-    ):
+        reverse_samples=False):
+
     matrix = cluster_genes(
         matrix,
         metric=gene_cluster_metric,
         method=cluster_method,
         reverse=reverse_genes
     )
+
     matrix = cluster_samples(
         matrix,
         metric=sample_cluster_metric,
         method=cluster_method,
         reverse=reverse_samples
     )
+
     return matrix
 
 

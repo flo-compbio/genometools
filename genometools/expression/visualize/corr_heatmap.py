@@ -97,6 +97,10 @@ class SampleCorrelationHeatmap(object):
         annotation_font_size = kwargs.pop('annotation_font_size', None)
         show_sample_labels = kwargs.pop('show_sample_labels', 'x')
 
+        if show_sample_labels not in ['none', 'x', 'both']:
+            raise ValueError('"show_sample_labels" must be "none", "x", or '
+                             '"both".')
+
         padding_top = kwargs.pop('padding_top', 0.1)
         padding_right = kwargs.pop('padding_top', 0.1)
 
@@ -163,16 +167,20 @@ class SampleCorrelationHeatmap(object):
             ),
         ]
 
+        xshowticklabels = False
+        yshowticklabels = False
+
         ### set up layout
-        if show_sample_labels == 'none':
-            xticks = ''
-            yticks = ''
-        elif show_sample_labels == 'x':
-            xticks = 'outside'
-            yticks = ''
+        if show_sample_labels == 'x':
+            xshowticklabels = True
+        elif show_sample_labels == 'y':
+            yshowticklabels = True
         elif show_sample_labels == 'both':
-            xticks = 'outside'
-            yticks = 'outside'
+            xshowticklabels = True
+            yshowticklabels = True
+
+        xticks = 'outside'
+        yticks = 'outside'
 
         if xaxis_label is None:
             if self.corr_matrix.samples.name is not None:
@@ -198,7 +206,7 @@ class SampleCorrelationHeatmap(object):
             xaxis=go.XAxis(
                 title=xaxis_label,
                 titlefont=dict(size=title_font_size),
-                showticklabels=show_sample_labels,
+                showticklabels=xshowticklabels,
                 ticks=xticks,
                 nticks=xaxis_nticks,
                 tickangle=xticks_angle,
@@ -210,6 +218,7 @@ class SampleCorrelationHeatmap(object):
             yaxis=go.YAxis(
                 title=yaxis_label,
                 titlefont=dict(size=title_font_size),
+                showticklabels=yshowticklabels,
                 ticks=xticks,
                 nticks=xaxis_nticks,
                 autorange='reversed',
