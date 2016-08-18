@@ -32,17 +32,17 @@ class GOTerm(object):
     Parameters
     ----------
     id_: str
-        See ``id`` attribute.
+        See :attr:`id` attribute.
     name: str
-        See ``name`` attribute.
+        See :attr:`name` attribute.
     definition: str, optional
-        See ``definition`` attribute.
+        See :attr:`definition` attribute.
     domain: str, optional
-        See ``domain`` attribute.
+        See :attr:`domain` attribute.
     is_a: Iterable of str, optional
-        See ``is_a`` attribute.
+        See :attr:`is_a` attribute.
     part_of: Iterable of str, optional.
-        See ``part_of`` attribute.
+        See :attr:`part_of` attribute.
 
     Attributes
     ----------

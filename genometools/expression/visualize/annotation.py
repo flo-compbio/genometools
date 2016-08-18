@@ -62,7 +62,7 @@ class HeatmapGeneAnnotation(HeatmapItemAnnotation):
 
     @property
     def gene(self):
-        """Alias for `HeatmapItemAnnotation.key`."""
+        """(property) The gene to be annotated."""
         return self.key
 
     @gene.setter
@@ -79,7 +79,7 @@ class HeatmapSampleAnnotation(HeatmapItemAnnotation):
 
     @property
     def sample(self):
-        """Alias for `HeatmapItemAnnotation.key`."""
+        """(property) The sample to be annotated."""
         return self.key
 
     @sample.setter

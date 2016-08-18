@@ -16,7 +16,7 @@ Contents
     :maxdepth: 2
 
     overview
-    gene_sets
+    api/index
     license
 
 .. A link to :mod:`genometools.misc.misc` and another link to :mod:`misc` and one to `misc`.

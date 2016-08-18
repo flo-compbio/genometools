@@ -45,14 +45,14 @@ class ExpMatrix(pd.DataFrame):
 
     Parameters
     ----------
-    X: 2-dimensional `numpy.ndarray`
+    X : 2-dimensional `numpy.ndarray`
         See :attr:`X` attribute.
 
     Keyword-only Parameters
     -----------------------
-    genes: list or tuple of str
+    genes : list or tuple of str
         See :attr:`genes` attribute.
-    samples: list or tuple of str
+    samples : list or tuple of str
         See :attr:`samples` attribute.
 
     Additional Parameters
@@ -61,11 +61,11 @@ class ExpMatrix(pd.DataFrame):
 
     Attributes
     ----------
-    genes: tuple of str
+    genes : tuple of str
         The names of the genes (rows) in the matrix.
-    samples: tuple of str
+    samples : tuple of str
         The names of the samples (columns) in the matrix.
-    X: 2-dimensional `numpy.ndarray`
+    X : 2-dimensional `numpy.ndarray`
         The matrix of expression values.
     """
     def __init__(self, *args, **kwargs):
@@ -202,12 +202,36 @@ class ExpMatrix(pd.DataFrame):
         
         Returns
         -------
-        None
+        `ExpMatrix`
+            The sorted matrix.
         """
         kind = 'quicksort'
         if stable:
             kind = 'mergesort'
         return self.sort_index(kind=kind, inplace=inplace, ascending=ascending)
+
+    def sort_samples(self, stable=True, inplace=False, ascending=True):
+        """Sort the columns of the matrix alphabetically by sample name.
+
+        Parameters
+        ----------
+        stable: bool, optional
+            Whether to use a stable sorting algorithm. [True]
+        inplace: bool, optional
+            Whether to perform the operation in place.[False]
+        ascending: bool, optional
+            Whether to sort in ascending order [True]
+
+        Returns
+        -------
+        `ExpMatrix`
+            The sorted matrix.
+        """
+        kind = 'quicksort'
+        if stable:
+            kind = 'mergesort'
+        return self.sort_index(axis=1, kind=kind, inplace=inplace,
+                               ascending=ascending)
 
     def center_genes(self, use_median=False, inplace=False):
         """Center the expression of each gene (row)."""

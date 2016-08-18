@@ -43,6 +43,18 @@ def test_slice(my_matrix):
     assert isinstance(profile, ExpProfile)
 
 
+def test_sort(my_matrix):
+    other = my_matrix.copy()
+    sorted = my_matrix.sort_genes()
+    assert sorted != my_matrix
+    assert my_matrix == other
+    sorted = my_matrix.sort_genes(ascending=False)
+    assert sorted == my_matrix
+    assert sorted is not my_matrix
+    sorted = my_matrix.sort_samples(ascending=False)
+    assert sorted is not my_matrix
+    assert sorted != my_matrix
+
 def test_transformation(my_matrix):
     other = my_matrix.copy()
     other.center_genes(inplace=True)
