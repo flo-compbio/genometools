@@ -82,7 +82,7 @@ def cluster_genes(matrix, metric='correlation', method='average',
     assert isinstance(matrix, ExpMatrix)
 
     # note: method = 'average' sometimes causes kernel to crash
-    logger.warning(_linkage_warn)
+    logger.debug(_linkage_warn)
 
     order_rows = _cluster_ndarray(matrix.X, metric=metric, method=method,
                                   reverse=reverse)
