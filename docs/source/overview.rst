@@ -4,11 +4,11 @@ Overview
 Main Features
 -------------
 
-- Script to extract a list of all protein-coding genes from Ensembl GTF files: :ref:`extract_genes`
-- Script to extract a mapping from Entrez IDs to gene symbols: :ref:`extract_e2g`
-- Basic classes for working with genomic data: `genometools.basic <basic>`
-- Classes for working with expression data: `genometools.expression <expression>`
-- Miscellaneous convenience functions: :doc:`genometools.misc <misc>`
+- Basic classes for working with genomic data: `genometools.basic <api/basic>`
+- Classes for working with expression data: `genometools.expression <api/expression>`
+- Classes for working with Gene Ontology data: `genometools.ontology <api/expression>`
+- Classes for performing GO enrichment analyses: `genometools.enrichment <api/enrichment>`
+- Miscellaneous convenience functions: `genometools.misc <api/misc>`
 
 Demo Notebooks
 --------------

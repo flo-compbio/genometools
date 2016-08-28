@@ -30,7 +30,9 @@ class Mock(MagicMock):
     def __getattr__(cls, name):
             return Mock()
 
-MOCK_MODULES = ['cython', 'numpy', 'pandas', 'scipy', 'plotly', 'xlmhg']
+MOCK_MODULES = ['cython',
+                'scipy', 'scipy.stats', 'scipy.spatial', 'scipy.cluster',
+                'scipy.cluster.hierarchy']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 def get_version():
@@ -59,6 +61,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinxarg.ext',
+    'sphinx.ext.autosummary',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -131,6 +134,7 @@ default_role = 'any'
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
+highlight_language = 'text'
 
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
@@ -326,4 +330,7 @@ texinfo_documents = [
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'python': ('https://docs.python.org/2.7', None)}
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3/', None),
+    'numpy': ('https://docs.scipy.org/doc/numpy/', None),
+}

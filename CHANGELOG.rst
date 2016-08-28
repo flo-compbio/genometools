@@ -18,10 +18,19 @@
 Changelog
 =========
 
-Version 2.0 (2016-??-??)
+Version 2.0 (2016-08-16)
 ------------------------
 
-- ?
+- Renamed `GeneSetDB` to `GeneSetCollection` in `genometools.basic`.
+
+- Fixed a bug where pandas would interpret the D. melanogaster "nan" gene as a
+  "NaN" (not a number) floating point value when reading an expression matrix
+  from a .tsv file.
+
+2.0.1 (2016-08-26)
+------------------
+
+- Minor fixes
 
 Version 2.0rc6 (2016-07-21)
 ---------------------------

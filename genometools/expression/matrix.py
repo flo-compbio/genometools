@@ -45,14 +45,14 @@ class ExpMatrix(pd.DataFrame):
 
     Parameters
     ----------
-    X: 2-dimensional `numpy.ndarray`
+    X : 2-dimensional `numpy.ndarray`
         See :attr:`X` attribute.
 
     Keyword-only Parameters
     -----------------------
-    genes: list or tuple of str
+    genes : list or tuple of str
         See :attr:`genes` attribute.
-    samples: list or tuple of str
+    samples : list or tuple of str
         See :attr:`samples` attribute.
 
     Additional Parameters
@@ -61,11 +61,11 @@ class ExpMatrix(pd.DataFrame):
 
     Attributes
     ----------
-    genes: tuple of str
+    genes : tuple of str
         The names of the genes (rows) in the matrix.
-    samples: tuple of str
+    samples : tuple of str
         The names of the samples (columns) in the matrix.
-    X: 2-dimensional `numpy.ndarray`
+    X : 2-dimensional `numpy.ndarray`
         The matrix of expression values.
     """
     def __init__(self, *args, **kwargs):
@@ -188,6 +188,48 @@ class ExpMatrix(pd.DataFrame):
         """Get an `ExpGenome` representation of the genes in the matrix."""
         return ExpGenome.from_gene_names(self.genes.tolist())
 
+    def get_heatmap(self, **kwargs):
+        """Generate a heatmap (`ExpHeatmap`) of the matrix.
+
+        See :class:`ExpHeatmap` constructor for keyword arguments.
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        `ExpHeatmap`
+            The heatmap.
+        """
+        from .visualize import ExpHeatmap
+        return ExpHeatmap(self, **kwargs)
+
+    def get_figure(self, heatmap_kw=None, **kwargs):
+        """Generate a plotly figure showing the matrix as a heatmap.
+
+        This is a shortcut for ``ExpMatrix.get_heatmap(...).get_figure(...)``.
+
+        See :func:`ExpHeatmap.get_figure` for keyword arguments.
+
+        Parameters
+        ----------
+        heatmap_kw: dict or None
+            If not None, dictionary containing keyword arguments to be passed
+            to the `ExpHeatmap` constructor.
+
+        Returns
+        -------
+        `plotly.graph_objs.Figure`
+            The plotly figure.
+        """
+        if heatmap_kw is not None:
+            assert isinstance(heatmap_kw, dict)
+
+        if heatmap_kw is None:
+            heatmap_kw = {}
+
+        return self.get_heatmap(**heatmap_kw).get_figure(**kwargs)
+
     def sort_genes(self, stable=True, inplace=False, ascending=True):
         """Sort the rows of the matrix alphabetically by gene name.
 
@@ -202,12 +244,36 @@ class ExpMatrix(pd.DataFrame):
         
         Returns
         -------
-        None
+        `ExpMatrix`
+            The sorted matrix.
         """
         kind = 'quicksort'
         if stable:
             kind = 'mergesort'
         return self.sort_index(kind=kind, inplace=inplace, ascending=ascending)
+
+    def sort_samples(self, stable=True, inplace=False, ascending=True):
+        """Sort the columns of the matrix alphabetically by sample name.
+
+        Parameters
+        ----------
+        stable: bool, optional
+            Whether to use a stable sorting algorithm. [True]
+        inplace: bool, optional
+            Whether to perform the operation in place.[False]
+        ascending: bool, optional
+            Whether to sort in ascending order [True]
+
+        Returns
+        -------
+        `ExpMatrix`
+            The sorted matrix.
+        """
+        kind = 'quicksort'
+        if stable:
+            kind = 'mergesort'
+        return self.sort_index(axis=1, kind=kind, inplace=inplace,
+                               ascending=ascending)
 
     def center_genes(self, use_median=False, inplace=False):
         """Center the expression of each gene (row)."""
