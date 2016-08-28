@@ -47,13 +47,13 @@ class GeneSetEnrichmentAnalysis(object):
     genome: `ExpGenome` object
         See :attr:`_genome` attribute.
     gene_set_coll: `GeneSetCollection` object
-        See :attr:`gene_set_coll` attribute.
+        See :attr:`_gene_set_coll` attribute.
 
     Attributes
     ----------
-    genome: `ExpGenome` object
+    _genome: `ExpGenome` object
         The universe of genes.
-    gene_set_coll: `GeneSetCollection` object
+    _gene_set_coll: `GeneSetCollection` object
         The list of gene sets to be tested.
 
     Notes
@@ -113,12 +113,29 @@ class GeneSetEnrichmentAnalysis(object):
         return copy.deepcopy(self._genome)
 
     def get_static_enrichment(
-            self, genes, pval_thresh, adjust_pval_thresh=True, X=3,
+            self, genes, pval_thresh, adjust_pval_thresh=True, K_min=3,
             gene_set_ids=None):
-        """Find enriched gene sets in a set of genes."""
+        """Find enriched gene sets in a set of genes.
+
+        Parameters
+        ----------
+        genes : set of str
+            The set of genes to test for gene set enrichment.
+        pval_thresh : float
+            The significance level (p-value threshold) to use in the analysis.
+        adjust_pval_thresh : bool, optional
+            Whether to adjust the p-value threshold using a Bonferroni
+            correction. (Warning: This is a very conservative correction!)
+            [True]
+        K_min : int, optional
+            The minimum number of gene set genes present in the analysis. [3]
+        gene_set_ids : Iterable or None
+            A list of gene set IDs to test. If ``None``, all gene sets are
+            tested that meet the :attr:`K_min` criterion.
+        """
         assert isinstance(genes, set)
         assert isinstance(pval_thresh, (float, np.float))
-        assert isinstance(X, (int, np.integer))
+        assert isinstance(K_min, (int, np.integer))
         if gene_set_ids is not None:
             assert isinstance(gene_set_ids, Iterable)
 
@@ -139,7 +156,7 @@ class GeneSetEnrichmentAnalysis(object):
         K_vec = np.sum(gene_memberships, axis=0, dtype=np.int64)
 
         # exclude terms with too few genes
-        sel = np.nonzero(K_vec >= X)[0]
+        sel = np.nonzero(K_vec >= K_min)[0]
         K_vec = K_vec[sel]
         gene_sets = [gene_sets[j] for j in sel]
         gene_memberships = gene_memberships[:, sel]
@@ -200,7 +217,7 @@ class GeneSetEnrichmentAnalysis(object):
     def get_rank_based_enrichment(
             self, ranked_genes, pval_thresh, X_frac, X_min, L,
             adjust_pval_thresh=True, escore_pval_thresh=None,
-            gene_set_ids=None, table=None):
+            exact_pval='always', gene_set_ids=None, table=None):
         """Find enriched gene sets in a ranked list of genes.
 
         This function uses the XL-mHG test to identify enriched gene sets.
@@ -218,6 +235,7 @@ class GeneSetEnrichmentAnalysis(object):
         assert isinstance(X_min, (int, np.integer))
         assert isinstance(L, (int, np.integer))
         assert isinstance(adjust_pval_thresh, bool)
+        assert isinstance(exact_pval, str)
 
         if escore_pval_thresh is not None:
             assert isinstance(escore_pval_thresh, (float, np.float))
@@ -354,7 +372,8 @@ class GeneSetEnrichmentAnalysis(object):
                     # ranked list.
                     indices = np.uint16(np.nonzero(gene_memberships[:, j])[0])
                     res = xlmhg.get_xlmhg_test_result(
-                        N, indices, X, L, table=table)
+                        N, indices, X, L, pval_thresh=pval_thresh,
+                        exact_pval=exact_pval, table=table)
 
                     # check if gene set is significantly enriched
                     if res.pval <= pval_thresh:

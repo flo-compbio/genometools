@@ -46,7 +46,7 @@ class ExpHeatmap(object):
 
     def __init__(self, matrix,
                  gene_annotations=None, sample_annotations=None,
-                 colorscale=None, colorbar_label=None):
+                 colorscale=None, colorbar_label=None, title=None):
 
         if gene_annotations is None:
             gene_annotations = []
@@ -70,6 +70,7 @@ class ExpHeatmap(object):
         self.sample_annotations = sample_annotations
         self.colorscale = colorscale
         self.colorbar_label = colorbar_label
+        self.title = title
 
     def get_figure(
             self, title=None, emin=None, emax=None,
@@ -88,6 +89,9 @@ class ExpHeatmap(object):
             emax = self.matrix.X.max()
         if emin is None:
             emin = self.matrix.X.min()
+
+        if title is None:
+            title = self.title
 
         if title_font_size is None:
             title_font_size = font_size

@@ -145,7 +145,7 @@ class RankBasedGSEResult(mHGResult):
         The gene set.
     N: int
         The total number of genes in the ranked list.
-    indices: np.ndarray of integers
+    indices: `numpy.ndarray` of integers
         The indices of the gene set genes in the ranked list.
     ind_genes: list of str
         The names of the genes corresponding to the indices.
@@ -168,7 +168,6 @@ class RankBasedGSEResult(mHGResult):
     escore_tol: float, optional
         The tolerance used for calculating the E-score. [None]
     """
-
     def __init__(self, gene_set, N, indices, ind_genes, X, L,
                  stat, cutoff, pval,
                  pval_thresh=None, escore_pval_thresh=None, escore_tol=None):
@@ -233,8 +232,5 @@ class RankBasedGSEResult(mHGResult):
         param_str = ''
         if not omit_param:
             param_str = ' [X=%d,L=%d,N=%d]' % (self.X, self.L, self.N)
-        escore_str = ''
-        if self.escore is not None:
-            escore_str = ', e=%.1fx' % self.escore
-        details = ', p=%.1e%s%s' % (self.pval, escore_str, param_str)
+        details = ', p=%.1e, e=%.1e%s' % (self.pval, self.escore, param_str)
         return '%s%s' % (gs_str, details)
