@@ -188,13 +188,19 @@ class ExpMatrix(pd.DataFrame):
         """Get an `ExpGenome` representation of the genes in the matrix."""
         return ExpGenome.from_gene_names(self.genes.tolist())
 
-    def get_heatmap(self, **kwargs):
+    def get_heatmap(self,
+                    highlight_genes=None, highlight_color=None,
+                    **kwargs):
         """Generate a heatmap (`ExpHeatmap`) of the matrix.
 
         See :class:`ExpHeatmap` constructor for keyword arguments.
 
         Parameters
         ----------
+        highlight_genes : list of str
+            List of genes to highlight
+        highlight_color : str
+            Color to use for highlighting
 
         Returns
         -------
@@ -202,7 +208,25 @@ class ExpMatrix(pd.DataFrame):
             The heatmap.
         """
         from .visualize import ExpHeatmap
-        return ExpHeatmap(self, **kwargs)
+        from .visualize import HeatmapGeneAnnotation
+
+        if highlight_genes is not None:
+            assert isinstance(highlight_genes, Iterable)
+        if highlight_color is not None:
+            assert isinstance(highlight_color, str)
+
+        if highlight_color is None:
+            highlight_color = 'blue'
+
+        if highlight_genes is None:
+            highlight_genes = []
+
+        gene_annotations = kwargs.pop('gene_annotations', [])
+        for g in highlight_genes:
+            gene_annotations.append(
+                HeatmapGeneAnnotation(g, highlight_color, label=g))
+
+        return ExpHeatmap(self, gene_annotations=gene_annotations, **kwargs)
 
     def get_figure(self, heatmap_kw=None, **kwargs):
         """Generate a plotly figure showing the matrix as a heatmap.
@@ -213,7 +237,7 @@ class ExpMatrix(pd.DataFrame):
 
         Parameters
         ----------
-        heatmap_kw: dict or None
+        heatmap_kw : dict or None
             If not None, dictionary containing keyword arguments to be passed
             to the `ExpHeatmap` constructor.
 

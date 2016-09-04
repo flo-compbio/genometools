@@ -97,9 +97,9 @@ class SampleCorrelationHeatmap(object):
         annotation_font_size = kwargs.pop('annotation_font_size', None)
         show_sample_labels = kwargs.pop('show_sample_labels', 'x')
 
-        if show_sample_labels not in ['none', 'x', 'both']:
-            raise ValueError('"show_sample_labels" must be "none", "x", or '
-                             '"both".')
+        if show_sample_labels not in ['none', 'x', 'y', 'both']:
+            raise ValueError('"show_sample_labels" must be "none", "x", "y", '
+                             'or "both".')
 
         padding_top = kwargs.pop('padding_top', 0.1)
         padding_right = kwargs.pop('padding_top', 0.1)

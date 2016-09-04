@@ -242,7 +242,7 @@ class ExpHeatmap(object):
                     line=dict(color=ann.color),
                     xaxis='x2',
                     yaxis='y2',
-                    opacity=1.0,
+                    opacity=0.5,
                 )
             )
             if ann.label is not None:

@@ -86,6 +86,9 @@ class GeneSetCollection(object):
     def __len__(self):
         return len(self._gene_sets)
 
+    def __iter__(self):
+        return iter(self._gene_sets.values())
+
     def __getitem__(self, key):
         """Simple interface for querying the database.
 
