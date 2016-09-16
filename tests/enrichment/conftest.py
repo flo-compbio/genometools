@@ -75,13 +75,8 @@ def my_static_genes(my_ranked_genes):
     return set(my_ranked_genes[:6])
 
 
-#@pytest.fixture
-#def my_uninteresting_static_genes(my_ranked_genes):
-#    return my_ranked_genes[-6:]
-
-
 @pytest.fixture
-def my_gene_set_db(my_gene_set, my_uninteresting_gene_set):
+def my_gene_set_coll(my_gene_set, my_uninteresting_gene_set):
     db = GeneSetCollection([my_gene_set, my_uninteresting_gene_set])
     return db
 

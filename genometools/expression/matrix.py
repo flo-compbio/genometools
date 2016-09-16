@@ -188,9 +188,8 @@ class ExpMatrix(pd.DataFrame):
         """Get an `ExpGenome` representation of the genes in the matrix."""
         return ExpGenome.from_gene_names(self.genes.tolist())
 
-    def get_heatmap(self,
-                    highlight_genes=None, highlight_color=None,
-                    **kwargs):
+    def get_heatmap(self, highlight_genes=None, highlight_samples=None,
+                          highlight_color=None, **kwargs):
         """Generate a heatmap (`ExpHeatmap`) of the matrix.
 
         See :class:`ExpHeatmap` constructor for keyword arguments.
@@ -209,8 +208,11 @@ class ExpMatrix(pd.DataFrame):
         """
         from .visualize import ExpHeatmap
         from .visualize import HeatmapGeneAnnotation
+        from .visualize import HeatmapSampleAnnotation
 
         if highlight_genes is not None:
+            assert isinstance(highlight_genes, Iterable)
+        if highlight_samples is not None:
             assert isinstance(highlight_genes, Iterable)
         if highlight_color is not None:
             assert isinstance(highlight_color, str)
@@ -221,12 +223,24 @@ class ExpMatrix(pd.DataFrame):
         if highlight_genes is None:
             highlight_genes = []
 
+        if highlight_samples is None:
+            highlight_samples = []
+
         gene_annotations = kwargs.pop('gene_annotations', [])
         for g in highlight_genes:
             gene_annotations.append(
                 HeatmapGeneAnnotation(g, highlight_color, label=g))
 
-        return ExpHeatmap(self, gene_annotations=gene_annotations, **kwargs)
+        sample_annotations = kwargs.pop('sample_annotations', [])
+        for s in highlight_samples:
+            sample_annotations.append(
+                HeatmapSampleAnnotation(s, highlight_color, label=s)
+            )
+
+        return ExpHeatmap(self,
+                          gene_annotations=gene_annotations,
+                          sample_annotations=sample_annotations,
+                          **kwargs)
 
     def get_figure(self, heatmap_kw=None, **kwargs):
         """Generate a plotly figure showing the matrix as a heatmap.

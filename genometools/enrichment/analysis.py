@@ -140,7 +140,7 @@ class GeneSetEnrichmentAnalysis(object):
             assert isinstance(gene_set_ids, Iterable)
 
         gene_set_coll = self._gene_set_coll
-        gene_sets = gene_set_coll.gene_sets
+        gene_sets = self._gene_set_coll.gene_sets
         gene_memberships = self._gene_memberships
         sorted_genes = sorted(genes)
 
@@ -210,7 +210,7 @@ class GeneSetEnrichmentAnalysis(object):
                 sel_genes = [self._genome[i] for i in
                              np.nonzero(gene_memberships[gene_indices, j])[0]]
                 enriched.append(
-                    StaticGSEResult(N, gene_sets[j], n, set(sel_genes), pval))
+                    StaticGSEResult(gene_sets[j], N, n, set(sel_genes), pval))
 
         return enriched
 
