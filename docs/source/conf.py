@@ -30,7 +30,7 @@ class Mock(MagicMock):
     def __getattr__(cls, name):
             return Mock()
 
-MOCK_MODULES = ['cython',
+MOCK_MODULES = ['cython', 'pandas',
                 'scipy', 'scipy.stats', 'scipy.spatial', 'scipy.cluster',
                 'scipy.cluster.hierarchy']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
