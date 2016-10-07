@@ -28,7 +28,7 @@ import os
 import io
 import logging
 import hashlib
-from collections import OrderedDict
+from collections import OrderedDict, Iterable
 
 import numpy as np
 import xmltodict
@@ -60,15 +60,17 @@ class GeneSetCollection(object):
     """
     def __init__(self, gene_sets):
         
-        assert isinstance(gene_sets, (list, tuple))
+        assert isinstance(gene_sets, Iterable)
+
+        gene_sets = list(gene_sets)
         for gs in gene_sets:
             assert isinstance(gs, GeneSet)
 
         # make sure all IDs are unique
         all_ids = [gs.id for gs in gene_sets]
         if len(all_ids) != len(set(all_ids)):
-            raise ValueError('Cannot create GeneSetCollection: gene set IDs are not '
-                             'unique!')
+            raise ValueError('Cannot create GeneSetCollection:'
+                             'gene set IDs are not unique!')
 
         self._gene_sets = OrderedDict([gs.id, gs] for gs in gene_sets)
         self._gene_set_ids = list(self._gene_sets.keys())

@@ -20,6 +20,7 @@
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
+_oldstr = str
 from builtins import *
 
 import os
@@ -32,6 +33,7 @@ import gzip
 import logging
 import contextlib
 import subprocess as subproc
+import locale
 
 import unicodecsv as csv
 import requests
@@ -276,6 +278,8 @@ def get_file_size(path):
 def get_file_checksum(path):
     """Get the checksum of a file (using ``sum``, Unix-only).
 
+    This function is only available on certain platforms.
+
     Parameters
     ----------
     path: str
@@ -291,7 +295,12 @@ def get_file_checksum(path):
     IOError
         If the file does not exist.
     """
-    assert isinstance(path, str)
+
+    if not (sys.platform.startswith('linux') or \
+                        sys.platform in ['darwin', 'cygwin']):
+        raise OSError('This function is not available on your platform.')
+
+    assert isinstance(path, (str, _oldstr))
 
     if not os.path.isfile(path): # not a file
         raise IOError('File "%s" does not exist.' %(path))
@@ -300,7 +309,12 @@ def get_file_checksum(path):
     sub = subproc.Popen('sum "%s"' %(path), bufsize = -1, shell = True, stdout = subproc.PIPE)
     stdoutdata = sub.communicate()[0]
     assert sub.returncode == 0
-    file_checksum = int(stdoutdata.split(' ')[0])
+
+    # in Python 3, communicate() returns bytes that need to be decoded
+    encoding = locale.getpreferredencoding()
+    stdoutstr = str(stdoutdata, encoding=encoding)
+
+    file_checksum = int(stdoutstr.split(' ')[0])
     logger.debug('Checksum of file "%s": %d', path, file_checksum)
     return file_checksum
 
@@ -324,7 +338,7 @@ def test_file_checksum(path, checksum):
     IOError
         If the file does not exist.
     """
-    assert isinstance(path, str)
+    assert isinstance(path, (str, _oldstr))
     assert isinstance(checksum, int)
 
     # calculate file checksum and compare to given checksum
@@ -355,7 +369,6 @@ def open_plain_or_gzip(fn, mode = 'rb'):
     The script then reads the file from stdin.
 
     """
-
     try:
         next(gzip.open(fn, 'rb'))
     except IOError:
