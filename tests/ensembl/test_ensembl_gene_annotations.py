@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import str as text
+from builtins import int as newint
 
 import os
 
@@ -33,7 +34,7 @@ logger = misc.get_logger()
 @pytest.mark.online
 def test_latest_release():
     release = ensembl.get_latest_release()
-    assert isinstance(release, int)
+    assert isinstance(release, newint)
     logger.info('Current release: %d', release)
 
 @pytest.mark.online

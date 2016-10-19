@@ -189,6 +189,9 @@ class RankBasedGSEResult(mHGResult):
         self.gene_set = gene_set
         self.ind_genes = list(ind_genes)
 
+    # @classmethod
+    # def from_mHGResult(...)
+
     def __repr__(self):
         return '<%s object (N=%d, gene_set_id="%s", hash="%s">' \
                % (self.__class__.__name__,
@@ -232,5 +235,5 @@ class RankBasedGSEResult(mHGResult):
         param_str = ''
         if not omit_param:
             param_str = ' [X=%d,L=%d,N=%d]' % (self.X, self.L, self.N)
-        details = ', p=%.1e, e=%.1e%s' % (self.pval, self.escore, param_str)
+        details = ', p=%.1e, e=%.1fx%s' % (self.pval, self.escore, param_str)
         return '%s%s' % (gs_str, details)

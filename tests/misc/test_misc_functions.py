@@ -28,6 +28,13 @@ from genometools import misc
 
 logger = misc.get_logger()
 
+@pytest.mark.linux
+@pytest.mark.darwin
 def test_checksum(my_checksum_file):
     assert misc.get_file_checksum(my_checksum_file) == 2761
     assert misc.test_file_checksum(my_checksum_file, 2761)
+
+
+def test_ftp_download(my_readme_file):
+    misc.ftp_download('ftp://ftp.ensembl.org/pub/current_README',                                 my_readme_file)
+    assert os.stat(my_readme_file).st_size > 0

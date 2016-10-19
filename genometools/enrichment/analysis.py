@@ -18,6 +18,7 @@
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
+_oldstr = str
 from builtins import *
 
 import logging
@@ -167,7 +168,7 @@ class GeneSetEnrichmentAnalysis(object):
         filtered_genes = []
         logger.debug('Looking up indices for %d genes...', len(sorted_genes))
         for i, g in enumerate(sorted_genes):
-            assert isinstance(g, str)
+            assert isinstance(g, (str, _oldstr))
             try:
                 idx = self._genome.index(g)
             except ValueError:
@@ -215,15 +216,48 @@ class GeneSetEnrichmentAnalysis(object):
         return enriched
 
     def get_rank_based_enrichment(
-            self, ranked_genes, pval_thresh, X_frac, X_min, L,
+            self, ranked_genes, pval_thresh=0.05,
+            X_frac=0.25, X_min=5, L=None,
             adjust_pval_thresh=True, escore_pval_thresh=None,
             exact_pval='always', gene_set_ids=None, table=None):
-        """Find enriched gene sets in a ranked list of genes.
+        """Test for gene set enrichment at the top of a ranked list of genes.
 
         This function uses the XL-mHG test to identify enriched gene sets.
 
         This function also calculates XL-mHG E-scores for the enriched gene
         sets, using ``escore_pval_thresh`` as the p-value threshold "psi".
+
+        Parameters
+        ----------
+        ranked_genes : list of str
+            The ranked list of genes.
+        pval_thresh : float, optional
+            The p-value threshold used to determine significance.
+            See also :param:`adjust_pval_thresh`. [0.05]
+        X_frac : float, optional
+            The min. fraction of genes from a gene set required for enrichment. [0.25]
+        X_min : int, optional
+            The min. no. of genes from a gene set required for enrichment. [5]
+        L : int, optional
+            The lowest cutoff to test for enrichment. If ``None``,
+            int(0.25*(no. of genes)) will be used. [None]
+        adjust_pval_thresh : bool, optional
+            Whether to adjust the p-value thershold for multiple testing,
+            using the Bonferroni method. [True]
+        escore_pval_thresh : float or None, optional
+            The "psi" p-value threshold used in calculating E-scores. [None]
+        exact_pval : str
+            Choices are: "always", "if_significant", "if_necessary". Parameter
+            will be passed to `xlmhg.get_xlmhg_test_result`. ["always"]
+        gene_set_ids : list of str or None, optional
+            A list of gene set IDs to specify which gene sets should be tested for enrichment. If ``None``, all gene sets will be tested. [None]
+        table : 2-dim numpy.ndarray of type numpy.longdouble or None, optional
+            The dynamic programming table used by the algorithm for calculating XL-mHG p-values. Passing this avoids memory re-allocation when calling this function repetitively. [None]
+
+        Returns
+        -------
+        list of `RankBasedGSEResult`
+            A list of all significantly enriched gene sets. 
         """
         if isinstance(X_frac, (int, np.integer)):
             X_frac = float(X_frac)
@@ -233,9 +267,10 @@ class GeneSetEnrichmentAnalysis(object):
         assert isinstance(pval_thresh, (float, np.float))
         assert isinstance(X_frac, (float, np.float))
         assert isinstance(X_min, (int, np.integer))
-        assert isinstance(L, (int, np.integer))
+        if L is not None:
+            assert isinstance(L, (int, np.integer))
         assert isinstance(adjust_pval_thresh, bool)
-        assert isinstance(exact_pval, str)
+        assert isinstance(exact_pval, (str, _oldstr))
 
         if escore_pval_thresh is not None:
             assert isinstance(escore_pval_thresh, (float, np.float))
@@ -245,18 +280,20 @@ class GeneSetEnrichmentAnalysis(object):
             assert isinstance(table, np.ndarray) and \
                    np.issubdtype(table.dtype, np.longdouble)
 
+        if L is None:
+            L = int(len(ranked_genes)/4.0)
+
         gene_set_coll = self._gene_set_coll
         gene_memberships = self._gene_memberships
 
         # postpone this
         if escore_pval_thresh is None:
             # if no separate E-score p-value threshold is specified, use the
-            # p-value threshold (this results in very conservative E-scores)
-            logger.warning('No E-score p-value threshold supplied Setting the '
-                           'E-score '
-                           'p-value threshold to the '
-                           'global significance threshold results in '
-                           'conservative E-scores.')
+            # p-value threshold (this results in conservative E-scores)
+            logger.warning('No E-score p-value threshold supplied. '
+                           'The E-score p-value threshold will be set to the'
+                           'global significance threshold. This will result '
+                           'in conservative E-scores.')
 
         # test only some terms?
         if gene_set_ids is not None:
@@ -274,7 +311,7 @@ class GeneSetEnrichmentAnalysis(object):
         filtered_genes = []
         logger.debug('Looking up indices for %d genes...' % len(ranked_genes))
         for i, g in enumerate(ranked_genes):
-            assert isinstance(g, str)
+            assert isinstance(g, (str, _oldstr))
             try:
                 idx = self._genome.index(g)
             except ValueError:
@@ -286,7 +323,6 @@ class GeneSetEnrichmentAnalysis(object):
                 sel.append(idx)
                 filtered_genes.append(g)
         sel = np.int64(sel)
-        #gene_indices = np.int64(sel)
         logger.debug('Adjusted L: %d', L_adj)
 
         # the following also copies the data (not a view)
@@ -334,6 +370,14 @@ class GeneSetEnrichmentAnalysis(object):
             logger.info('Using Bonferroni-corrected p-value threshold: %.1e',
                         final_pval_thresh)
 
+        if escore_pval_thresh is None:
+            escore_pval_thresh = final_pval_thresh
+
+        elif escore_pval_thresh < final_pval_thresh:
+            logger.warning('The E-score p-value threshold is smaller than '
+                           'the p-value threshold. Setting E-score p-value '
+                           'threshold to the p-value threshold.')
+            escore_pval_thresh = final_pval_thresh
 
         # Prepare the matrix that holds the dynamic programming table for
         # the calculation of the XL-mHG p-value.
@@ -348,7 +392,7 @@ class GeneSetEnrichmentAnalysis(object):
                     % (table.shape[0], table.shape[1], K_max+1, N+1))
 
         # find enriched GO terms
-        logger.info('Testing %d gene sets for enrichment...', m)
+        # logger.info('Testing %d gene sets for enrichment...', m)
         logger.debug('(N=%d, X_frac=%.2f, X_min=%d, L=%d; K_max=%d)',
                      len(ranked_genes), X_frac, X_min, L, K_max)
 
@@ -372,11 +416,12 @@ class GeneSetEnrichmentAnalysis(object):
                     # ranked list.
                     indices = np.uint16(np.nonzero(gene_memberships[:, j])[0])
                     res = xlmhg.get_xlmhg_test_result(
-                        N, indices, X, L, pval_thresh=pval_thresh,
+                        N, indices, X, L, pval_thresh=final_pval_thresh,
+                        escore_pval_thresh=escore_pval_thresh,
                         exact_pval=exact_pval, table=table)
 
                     # check if gene set is significantly enriched
-                    if res.pval <= pval_thresh:
+                    if res.pval <= final_pval_thresh:
                         # generate RankedGSEResult
                         ind_genes = [ranked_genes[i] for i in indices]
                         gse_result = RankBasedGSEResult(
@@ -395,6 +440,6 @@ class GeneSetEnrichmentAnalysis(object):
                          ignored, m, 100 * (ignored / float(m)))
 
         logger.info('%d / %d gene sets were found to be significantly '
-                    'enriched (p-value <= %.1e).', q, m, pval_thresh)
+                    'enriched (p-value <= %.1e).', q, m, final_pval_thresh)
 
         return enriched

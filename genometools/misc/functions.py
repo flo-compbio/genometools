@@ -59,9 +59,9 @@ def smart_open_read(path = None, mode = 'rb', encoding = None, try_gzip = False)
     """
 
     assert mode in ('r', 'rb')
-    assert path is None or isinstance(path, str)
-    assert isinstance (mode, str)
-    assert encoding is None or isinstance(encoding, str)
+    assert path is None or isinstance(path, (str, _oldstr))
+    assert isinstance (mode, (str, _oldstr))
+    assert encoding is None or isinstance(encoding, (str, _oldstr))
     assert isinstance(try_gzip, bool)
 
     fh = None
@@ -236,7 +236,7 @@ def make_sure_dir_exists(dir_, create_subfolders=False):
     OSError
         If a file system error occurs.
     """
-    assert isinstance(dir_, str)
+    assert isinstance(dir_, (str, _oldstr))
     assert isinstance(create_subfolders, bool)
 
     try:
@@ -268,7 +268,7 @@ def get_file_size(path):
     OSError
         If a file system error occurs.
     """
-    assert isinstance(path, str)
+    assert isinstance(path, (str, _oldstr))
 
     if not os.path.isfile(path):
         raise IOError('File "%s" does not exist.', path)
@@ -317,6 +317,55 @@ def get_file_checksum(path):
     file_checksum = int(stdoutstr.split(' ')[0])
     logger.debug('Checksum of file "%s": %d', path, file_checksum)
     return file_checksum
+
+
+def ftp_download(url, download_file, user_name='anonymous', password='', blocksize=4194304):
+    """Downloads a file from an FTP server.
+
+    Parameters
+    ----------
+    user_name : str
+        The user name to use for logging into the FTP server.
+    password : str
+        The password to use for logging into the FTP server.
+    url : str
+        The URL of the file to download.
+    download_file : str
+        The path of the local file to download to. 
+    """
+    import ftplib
+    import six
+
+    if six.PY3:
+        from urllib import parse
+    else:
+        import urlparse as parse
+
+
+    assert isinstance(url, (str, _oldstr))
+    assert isinstance(download_file, (str, _oldstr))
+    assert isinstance(user_name, (str, _oldstr))
+    assert isinstance(password, (str, _oldstr))
+
+    u = parse.urlparse(url)
+    assert u.scheme == 'ftp'
+
+    ftp_server = u.netloc
+    ftp_path = u.path
+
+    if six.PY3:
+        with ftplib.FTP(ftp_server) as ftp:
+            ftp.login(user_name, password)
+            with open(download_file, 'wb') as ofh:
+                ftp.retrbinary('RETR %s' % ftp_path,
+                            callback=ofh.write, blocksize=blocksize)
+    else:
+        ftp = ftplib.FTP(ftp_server)
+        ftp.login(user_name, password)
+        with open(download_file, 'wb') as ofh:
+            ftp.retrbinary('RETR %s' % ftp_path,
+                        callback=ofh.write, blocksize=blocksize)
+        ftp.close()
 
 def test_file_checksum(path, checksum):
     """Test if a file has a given checksum (using ``sum``, Unix-only).
@@ -487,7 +536,7 @@ def read_single(path, encoding = 'UTF-8'):
         A list containing the elements in the first column.
 
     """
-    assert isinstance(path, str)
+    assert isinstance(path, (str, _oldstr))
     data = []
     with smart_open_read(path, mode = 'rb', try_gzip = True) as fh:
         reader = csv.reader(fh, dialect = 'excel-tab', encoding = encoding)
@@ -513,7 +562,7 @@ def read_all(path, encoding = 'UTF-8'):
         A list, which each element containing the contents of a row
         (as a tuple).
     """
-    assert isinstance(path, str)
+    assert isinstance(path, (str, _oldstr))
     data = []
     with smart_open_read(path, mode = 'rb', try_gzip = True) as fh:
         reader = csv.reader(fh, dialect = 'excel-tab', encoding = encoding)

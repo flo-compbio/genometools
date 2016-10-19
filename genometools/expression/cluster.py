@@ -18,6 +18,7 @@
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
+_oldstr = str
 from builtins import *
 
 import sys
@@ -65,8 +66,8 @@ def bicluster(
 
 def _cluster_ndarray(X, metric, method, reverse):
     assert isinstance(X, np.ndarray)
-    assert isinstance(metric, str)
-    assert isinstance(method, str)
+    assert isinstance(metric, (str, _oldstr))
+    assert isinstance(method, (str, _oldstr))
     assert isinstance(reverse, bool)
 
     distxy = squareform(pdist(X, metric=metric))

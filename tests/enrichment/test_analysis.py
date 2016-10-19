@@ -57,13 +57,15 @@ def test_rank_based_analysis(my_analysis, my_ranked_genes,
 
     # test if rank-based enrichment works
     enriched = my_analysis.get_rank_based_enrichment(
-        my_ranked_genes, pval_thresh, X_frac, X_min, L)
+        my_ranked_genes, pval_thresh, X_frac, X_min, L,
+        adjust_pval_thresh=False)
     assert isinstance(enriched, list)
     assert len(enriched) == 1
 
     # test if selective testing of individual gene sets works
     enriched = my_analysis.get_rank_based_enrichment(
         my_ranked_genes, pval_thresh, X_frac, X_min, L,
+        adjust_pval_thresh=False,
         gene_set_ids=[my_uninteresting_gene_set.id])
     assert isinstance(enriched, list)
     assert len(enriched) == 0

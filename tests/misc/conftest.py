@@ -19,8 +19,21 @@ from __future__ import (absolute_import, division,
 from builtins import open
 from builtins import str as text
 
+import sys
 import pytest
 
+
+ALL = set("darwin linux win32".split())
+
+def pytest_runtest_setup(item):
+    # modified from: http://doc.pytest.org/en/latest/example/markers.html 
+    if isinstance(item, item.Function):
+        plat = sys.platform
+        if plat.startswith('linux'):
+            plat = 'linux'
+        if not item.get_marker(plat):
+            if ALL.intersection(item.keywords):
+                pytest.skip("cannot run on platform %s" %(plat))
 
 @pytest.fixture(scope='session')
 def my_temp_dir(tmpdir_factory):
@@ -35,3 +48,9 @@ def my_checksum_file(my_temp_dir):
         ofh.write('Hello world!')
     print('Test:', open(checksum_file).read())
     return checksum_file
+
+
+@pytest.fixture(scope='session')
+def my_readme_file(my_temp_dir):
+    readme_file = text(my_temp_dir.join('current_README.txt'))
+    return readme_file

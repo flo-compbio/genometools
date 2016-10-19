@@ -18,6 +18,7 @@
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
+_oldstr = str
 from builtins import *
 
 import hashlib
@@ -69,15 +70,15 @@ class GeneSet(object):
     def __init__(self, id, name, genes,
                  source=None, collection=None, description=None):
 
-        assert isinstance(id, str)
+        assert isinstance(id, (str, _oldstr))
         assert isinstance(name, Iterable)
 
         if source is not None:
-            assert isinstance(source, str)
+            assert isinstance(source, (str, _oldstr))
         if collection is not None:
-            assert isinstance(collection, str)
+            assert isinstance(collection, (str, _oldstr))
         if description is not None:
-            assert isinstance(description, str)
+            assert isinstance(description, (str, _oldstr))
 
         self._id = id
         self._name = name

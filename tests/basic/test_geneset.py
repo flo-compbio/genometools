@@ -31,7 +31,7 @@ def test_basic(my_gene_set, my_gene_set2, my_genes):
         assert isinstance(repr(gs), str)
         assert isinstance(str(gs), str)
         assert isinstance(text(gs), text)
-        assert isisntance(gs.hash, text)
+        assert isinstance(gs.hash, text)
         assert gs.size == len(my_genes)
     assert my_gene_set != my_gene_set2
 

@@ -22,6 +22,7 @@ Class supports unicode using UTF-8.
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
+_oldstr = str
 from builtins import *
 
 import os
@@ -276,9 +277,9 @@ class GeneSetCollection(object):
 
         # note: is XML file really encoded in UTF-8?
 
-        assert isinstance(path, str)
+        assert isinstance(path, (str, _oldstr))
         assert isinstance(entrez2gene, (dict, OrderedDict))
-        assert species is None or isinstance(species, str)
+        assert species is None or isinstance(species, (str, _oldstr))
 
         logger.debug('Path: %s', path)
         logger.debug('entrez2gene type: %s', str(type(entrez2gene)))
