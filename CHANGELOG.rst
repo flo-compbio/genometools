@@ -37,6 +37,11 @@ Version 2.0 (2016-08-16)
 
 - Minor fixes
 
+2.0.3 (2016-10-19)
+~~~~~~~~~~~~~~~~~~
+
+- Several bug fixes
+
 Version 2.0rc6 (2016-07-21)
 ---------------------------
 - Modified `enrichment` subpackage to support rank-based enrichment (using the
