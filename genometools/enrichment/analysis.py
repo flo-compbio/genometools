@@ -233,7 +233,7 @@ class GeneSetEnrichmentAnalysis(object):
             The ranked list of genes.
         pval_thresh : float, optional
             The p-value threshold used to determine significance.
-            See also :param:`adjust_pval_thresh`. [0.05]
+            See also ``adjust_pval_thresh``. [0.05]
         X_frac : float, optional
             The min. fraction of genes from a gene set required for enrichment. [0.25]
         X_min : int, optional

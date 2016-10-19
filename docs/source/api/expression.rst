@@ -20,3 +20,4 @@ Classes for working with expression data (`genometools.expression`)
 .. automodule:: genometools.expression
     :members:
 
+.. autoclass:: genometools.expression.ExpMatrix

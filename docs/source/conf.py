@@ -30,10 +30,14 @@ class Mock(MagicMock):
     def __getattr__(cls, name):
             return Mock()
 
-MOCK_MODULES = ['numpy', 'cython', 'pandas', 'plotly', 'xlmhg',
+MOCK_CLASSES = ['pandas.DataFrame', 'pandas.Series', 'xlmhg.mHGResult']
+sys.modules.update((mod_name, Mock) for mod_name in MOCK_CLASSES)
+
+MOCK_MODULES = ['cython', 'plotly', 'plotly.graph_objs',
                 'scipy', 'scipy.stats', 'scipy.spatial', 'scipy.cluster',
                 'scipy.cluster.hierarchy']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+
 
 def get_version():
     ver_pat = re.compile(r'(\d+)\.(\d+)')
