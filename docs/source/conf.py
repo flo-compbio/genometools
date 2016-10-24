@@ -45,8 +45,6 @@ def get_version():
     ver = (int(m.group(1)), int(m.group(2)))
     return ver
 
-pkg_resources.require('pandas>=0.18')
-
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
