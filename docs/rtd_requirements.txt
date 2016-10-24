@@ -2,4 +2,4 @@ sphinx
 sphinx-rtd-theme
 sphinx-argparse
 mock
-six>1.10.0,<2
+six>=1.10.0,<2
