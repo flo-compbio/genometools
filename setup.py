@@ -34,10 +34,12 @@ description = 'GenomeTools: A Python Framework for Analyzing Genomic Data.'
 install_requires = [
     'six>=1.10.0, <2',
     'future>=0.15.2, <1',
+    'requests>=2.9.1, <3',
     'unicodecsv>=0.14.1, <1',
     'xmltodict>=0.10.1, <1',
     'ftputil>=3.3.1, <4',
     'numpy>=1.8, <2',
+    'pandas>=0.18, <1',
 ]
 
 # do not require installation if built by ReadTheDocs
@@ -45,16 +47,13 @@ install_requires = [
 if 'READTHEDOCS' not in os.environ or \
         os.environ['READTHEDOCS'] != 'True':
     install_requires.extend([
-        'requests>=2.9.1, <3',
         'plotly>=1.9.6, <2',
         'xlmhg>=2.2.0, <3',
         'scipy>=0.14, <1',
-        'pandas>=0.18, <1',
     ])
 else:
     install_requires.extend([
-        'requests>=2.2.1, <3',
-        'pandas>=0.13, <1',
+        #'pandas>=0.13, <1',
     ])
 
 # get long description from file
