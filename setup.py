@@ -32,6 +32,7 @@ here = path.abspath(path.dirname(__file__))
 description = 'GenomeTools: A Python Framework for Analyzing Genomic Data.'
 
 install_requires = [
+    'six>=1.10.0, <2',
     'future>=0.15.2, <1',
     'unicodecsv>=0.14.1, <1',
     'xmltodict>=0.10.1, <1',
