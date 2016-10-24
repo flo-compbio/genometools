@@ -40,6 +40,7 @@ install_requires = [
     'ftputil>=3.3.1, <4',
     'numpy>=1.8, <2',
     'pandas>=0.18, <1',
+    'xlmhg>=2.4.3, <3',
 ]
 
 # do not require installation if built by ReadTheDocs
@@ -47,9 +48,8 @@ install_requires = [
 if 'READTHEDOCS' not in os.environ or \
         os.environ['READTHEDOCS'] != 'True':
     install_requires.extend([
-        'plotly>=1.9.6, <2',
-        'xlmhg>=2.2.0, <3',
         'scipy>=0.14, <1',
+        'plotly>=1.9.6, <2',
     ])
 else:
     install_requires.extend([
