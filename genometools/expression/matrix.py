@@ -44,6 +44,8 @@ logger = logging.getLogger(__name__)
 class ExpMatrix(pd.DataFrame):
     """A gene expression matrix.
 
+    This class inherits from `pandas.DataFrame`.
+
     Parameters
     ----------
     X : 2-dimensional `numpy.ndarray`
