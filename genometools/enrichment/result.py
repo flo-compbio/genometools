@@ -141,14 +141,14 @@ class RankBasedGSEResult(mHGResult):
 
     Parameters
     ----------
-    gene_set `genometools.basic.GeneSet`
-        The gene set.
+    gene_set : `genometools.basic.GeneSet`
+        See :attr:`gene_set` attribute.
     N: int
         The total number of genes in the ranked list.
     indices: `numpy.ndarray` of integers
         The indices of the gene set genes in the ranked list.
     ind_genes: list of str
-        The names of the genes corresponding to the indices.
+        See :attr:`ind_genes` attribute.
     X: int
         The XL-mHG X parameter.
     L: int
@@ -167,6 +167,13 @@ class RankBasedGSEResult(mHGResult):
         conservative E-score. [None]
     escore_tol: float, optional
         The tolerance used for calculating the E-score. [None]
+
+    Attributes
+    ----------
+    gene_set : `genometools.basic.GeneSet`
+        The gene set.
+    ind_genes : list of str
+        The names of the genes corresponding to the indices.
     """
     def __init__(self, gene_set, N, indices, ind_genes, X, L,
                  stat, cutoff, pval,
