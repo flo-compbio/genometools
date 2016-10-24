@@ -139,12 +139,15 @@ class StaticGSEResult(object):
 class RankBasedGSEResult(mHGResult):
     """Result of an XL-mHG-based test for gene set enrichment.
 
+    This class inherits from `xlmhg.mHGResult`.
+
     Parameters
     ----------
     gene_set : `genometools.basic.GeneSet`
         See :attr:`gene_set` attribute.
     N: int
         The total number of genes in the ranked list.
+        See also :attr:`xlmhg.mHGResult.N`.
     indices: `numpy.ndarray` of integers
         The indices of the gene set genes in the ranked list.
     ind_genes: list of str
