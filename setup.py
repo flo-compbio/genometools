@@ -33,7 +33,6 @@ description = 'GenomeTools: A Python Framework for Analyzing Genomic Data.'
 
 install_requires = [
     'future>=0.15.2, <1',
-    'six>=1.10.0, <2',
     'unicodecsv>=0.14.1, <1',
     'xmltodict>=0.10.1, <1',
     'ftputil>=3.3.1, <4',
@@ -50,11 +49,13 @@ if 'READTHEDOCS' not in os.environ or \
         'xlmhg>=2.2.0, <3',
         'scipy>=0.14, <1',
         'pandas>=0.18, <1',
+        'six>=1.10.0, <2',
     ])
 else:
     install_requires.extend([
         'requests>=2.2.1, <3',
         'pandas>=0.13, <1',
+        'six>=1.5.2, <2',
     ])
 
 # get long description from file
