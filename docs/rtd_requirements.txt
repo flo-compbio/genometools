@@ -2,5 +2,3 @@ sphinx
 sphinx-rtd-theme
 sphinx-argparse
 mock
-cython
-pandas>=0.18
