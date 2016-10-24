@@ -18,8 +18,8 @@
 # The `GSEAnalysis` class performs the tests, and the results are represented
 # by `GSEResult` objects.
 
-from .analysis import GeneSetEnrichmentAnalysis
 from .result import StaticGSEResult, RankBasedGSEResult
+from .analysis import GeneSetEnrichmentAnalysis
 
 __all__ = ['GeneSetEnrichmentAnalysis',
            'StaticGSEResult', 'RankBasedGSEResult']
