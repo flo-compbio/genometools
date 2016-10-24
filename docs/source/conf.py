@@ -35,7 +35,7 @@ class Mock(MagicMock):
 
 MOCK_MODULES = ['cython', 'plotly', 'plotly.graph_objs',
                 'scipy', 'scipy.stats', 'scipy.spatial', 'scipy.cluster',
-                'scipy.cluster.hierarchy', 'requests']
+                'scipy.cluster.hierarchy']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 
