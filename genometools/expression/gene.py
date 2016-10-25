@@ -20,6 +20,7 @@
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
+_oldstr = str
 from builtins import *
 
 import logging
@@ -68,13 +69,13 @@ class ExpGene(object):
             ensembl_ids = []
 
         # type checks
-        assert isinstance(name, str)
+        assert isinstance(name, (str, _oldstr))
         assert isinstance(chromosomes, (list, tuple))
         for chrom in chromosomes:
-            assert isinstance(chrom, str)
+            assert isinstance(chrom, (str, _oldstr))
         assert isinstance(ensembl_ids, (list, tuple))
         for id_ in ensembl_ids:
-            assert isinstance(id_, str)
+            assert isinstance(id_, (str, _oldstr))
 
         self._name = name
         self._chromosomes = tuple(chromosomes)

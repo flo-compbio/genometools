@@ -25,12 +25,13 @@ from builtins import str as text
 from genometools.basic import GeneSet
 
 
-def test_init(my_gene_set, my_gene_set2, my_genes):
+def test_basic(my_gene_set, my_gene_set2, my_genes):
     for gs in [my_gene_set, my_gene_set2]:
         assert isinstance(gs, GeneSet)
         assert isinstance(repr(gs), str)
         assert isinstance(str(gs), str)
         assert isinstance(text(gs), text)
+        assert isinstance(gs.hash, text)
         assert gs.size == len(my_genes)
     assert my_gene_set != my_gene_set2
 

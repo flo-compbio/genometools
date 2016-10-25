@@ -18,6 +18,7 @@
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
+_oldstr = str
 from builtins import *
 
 import logging
@@ -242,10 +243,10 @@ class ExpProfile(pd.Series):
             The expression profile.
         """
         # checks
-        assert isinstance(path, str)
+        assert isinstance(path, (str, _oldstr))
         if genome is not None:
             assert isinstance(genome, ExpGenome)
-        assert isinstance(encoding, str)
+        assert isinstance(encoding, (str, _oldstr))
 
         # "squeeze = True" ensures that a pd.read_tsv returns a series
         # as long as there is only one column
@@ -272,8 +273,8 @@ class ExpProfile(pd.Series):
         -------
         None
         """
-        assert isinstance(path, str)
-        assert isinstance(encoding, str)
+        assert isinstance(path, (str, _oldstr))
+        assert isinstance(encoding, (str, _oldstr))
 
         sep = '\t'
         if six.PY2:

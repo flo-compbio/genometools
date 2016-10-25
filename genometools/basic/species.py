@@ -20,6 +20,7 @@
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
+_oldstr = str
 from builtins import *
 
 import logging
@@ -46,8 +47,8 @@ class Species(object):  # pragma: no cover
     """
     def __init__(self, name, common_name=None):
         # checks
-        assert isinstance(name, str)
-        assert common_name is None or isinstance(common_name, str)
+        assert isinstance(name, (str, _oldstr))
+        assert common_name is None or isinstance(common_name, (str, _oldstr))
 
         self.name = name
         self.common_name = common_name

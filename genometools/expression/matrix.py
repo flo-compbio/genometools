@@ -18,6 +18,7 @@
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
+_oldstr = str
 from builtins import *
 
 import logging
@@ -42,6 +43,8 @@ logger = logging.getLogger(__name__)
 
 class ExpMatrix(pd.DataFrame):
     """A gene expression matrix.
+
+    This class inherits from `pandas.DataFrame`.
 
     Parameters
     ----------
@@ -118,7 +121,7 @@ class ExpMatrix(pd.DataFrame):
                     self.columns.equals(other.columns) and \
                     self.equals(other))
         else:
-            return NotImplemented
+            return pd.DataFrame.__eq__(self, other)
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -188,9 +191,18 @@ class ExpMatrix(pd.DataFrame):
         """Get an `ExpGenome` representation of the genes in the matrix."""
         return ExpGenome.from_gene_names(self.genes.tolist())
 
-    def get_heatmap(self,
-                    highlight_genes=None, highlight_color=None,
-                    **kwargs):
+
+    def filter_variance(self, top):
+        from .filter import filter_variance
+        if top > self.p:
+            raise ValueError('filter_variance() called with top=%d, but '
+                             'there are only %d genes in the matrix.'
+                             %(top, matrix.p))
+        return filter_variance(self, top)
+        
+
+    def get_heatmap(self, highlight_genes=None, highlight_samples=None,
+                          highlight_color=None, **kwargs):
         """Generate a heatmap (`ExpHeatmap`) of the matrix.
 
         See :class:`ExpHeatmap` constructor for keyword arguments.
@@ -209,11 +221,14 @@ class ExpMatrix(pd.DataFrame):
         """
         from .visualize import ExpHeatmap
         from .visualize import HeatmapGeneAnnotation
+        from .visualize import HeatmapSampleAnnotation
 
         if highlight_genes is not None:
             assert isinstance(highlight_genes, Iterable)
+        if highlight_samples is not None:
+            assert isinstance(highlight_genes, Iterable)
         if highlight_color is not None:
-            assert isinstance(highlight_color, str)
+            assert isinstance(highlight_color, (str, _oldstr))
 
         if highlight_color is None:
             highlight_color = 'blue'
@@ -221,12 +236,25 @@ class ExpMatrix(pd.DataFrame):
         if highlight_genes is None:
             highlight_genes = []
 
+        if highlight_samples is None:
+            highlight_samples = []
+
         gene_annotations = kwargs.pop('gene_annotations', [])
         for g in highlight_genes:
             gene_annotations.append(
                 HeatmapGeneAnnotation(g, highlight_color, label=g))
 
-        return ExpHeatmap(self, gene_annotations=gene_annotations, **kwargs)
+        sample_annotations = kwargs.pop('sample_annotations', [])
+        for s in highlight_samples:
+            sample_annotations.append(
+                HeatmapSampleAnnotation(s, highlight_color, label=s)
+            )
+
+        return ExpHeatmap(self,
+                          gene_annotations=gene_annotations,
+                          sample_annotations=sample_annotations,
+                          **kwargs)
+
 
     def get_figure(self, heatmap_kw=None, **kwargs):
         """Generate a plotly figure showing the matrix as a heatmap.
@@ -253,6 +281,7 @@ class ExpMatrix(pd.DataFrame):
             heatmap_kw = {}
 
         return self.get_heatmap(**heatmap_kw).get_figure(**kwargs)
+
 
     def sort_genes(self, stable=True, inplace=False, ascending=True):
         """Sort the rows of the matrix alphabetically by gene name.
@@ -376,10 +405,10 @@ class ExpMatrix(pd.DataFrame):
             The expression matrix.
         """
         # checks
-        assert isinstance(path, str)
+        assert isinstance(path, (str, _oldstr))
         if genome is not None:
             assert isinstance(genome, ExpGenome)
-        assert isinstance(encoding, str)
+        assert isinstance(encoding, (str, _oldstr))
 
         # use pd.read_csv to parse the tsv file into a DataFrame
         matrix = cls(pd.read_csv(path, sep='\t', index_col=0, header=0,
@@ -413,8 +442,8 @@ class ExpMatrix(pd.DataFrame):
         -------
         None
         """
-        assert isinstance(path, str)
-        assert isinstance(encoding, str)
+        assert isinstance(path, (str, _oldstr))
+        assert isinstance(encoding, (str, _oldstr))
 
         # sep = str('\t')
         sep = '\t'

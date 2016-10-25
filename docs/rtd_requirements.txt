@@ -2,3 +2,7 @@ sphinx
 sphinx-rtd-theme
 sphinx-argparse
 mock
+pip>=8.1.2
+numpy>=1.8,<2
+pandas>=0.18,<1
+xlmhg>=2.4.3,<3

@@ -48,4 +48,7 @@ species_chrompat = OrderedDict([
 """Regular expressions implicitly defining "valid" Ensembl chromosome names for
 each species."""
 
-__all__ = ['species_names', 'species_scientific', 'species_chrompat']
+from .functions import *
+
+
+# __all__ = ['species_names', 'species_scientific', 'species_chrompat']

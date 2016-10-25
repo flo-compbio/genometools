@@ -21,5 +21,5 @@
 from .result import StaticGSEResult, RankBasedGSEResult
 from .analysis import GeneSetEnrichmentAnalysis
 
-__all__ = ['StaticGSEResult', 'RankBasedGSEResult',
-           'GeneSetEnrichmentAnalysis']
+__all__ = ['GeneSetEnrichmentAnalysis',
+           'StaticGSEResult', 'RankBasedGSEResult']

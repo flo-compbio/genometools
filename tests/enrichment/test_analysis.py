@@ -32,12 +32,12 @@ logger = misc.get_logger('genometools', verbose=True)
 
 
 @pytest.fixture
-def my_analysis(my_genome, my_gene_set_db):
-    analysis = GeneSetEnrichmentAnalysis(my_genome, my_gene_set_db)
+def my_analysis(my_genome, my_gene_set_coll):
+    analysis = GeneSetEnrichmentAnalysis(my_genome, my_gene_set_coll)
     return analysis
 
 
-def test_init(my_analysis, my_genome):
+def test_basic(my_analysis, my_genome):
     assert isinstance(my_analysis, GeneSetEnrichmentAnalysis)
     assert isinstance(repr(my_analysis), str)
     assert isinstance(str(my_analysis), str)
@@ -47,18 +47,35 @@ def test_init(my_analysis, my_genome):
     assert len(my_analysis.genes) == len(my_genome)
 
 
-def test_analysis(my_analysis, my_ranked_genes, my_uninteresting_gene_set):
+def test_rank_based_analysis(my_analysis, my_ranked_genes,
+                             my_uninteresting_gene_set):
+    """Tests rank-based gene set enrichment analysis."""
     pval_thresh = 0.025
     X_frac = 0
     X_min = 1
     L = len(my_ranked_genes)
+
+    # test if rank-based enrichment works
     enriched = my_analysis.get_rank_based_enrichment(
-        my_ranked_genes, pval_thresh, X_frac, X_min, L)
+        my_ranked_genes, pval_thresh, X_frac, X_min, L,
+        adjust_pval_thresh=False)
     assert isinstance(enriched, list)
     assert len(enriched) == 1
 
+    # test if selective testing of individual gene sets works
     enriched = my_analysis.get_rank_based_enrichment(
         my_ranked_genes, pval_thresh, X_frac, X_min, L,
+        adjust_pval_thresh=False,
         gene_set_ids=[my_uninteresting_gene_set.id])
     assert isinstance(enriched, list)
     assert len(enriched) == 0
+
+
+def test_static_analysis(my_analysis, my_static_genes):
+    """Tests static gene set enrichment analysis."""
+    pval_thresh = 0.05
+
+    enriched = my_analysis.get_static_enrichment(
+        my_static_genes, pval_thresh, adjust_pval_thresh=False)
+    assert isinstance(enriched, list)
+    assert len(enriched) == 1

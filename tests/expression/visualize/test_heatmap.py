@@ -45,16 +45,25 @@ def my_sample_annotation():
 def my_block_annotation():
     return HeatmapBlockAnnotation(0, 1, label='My label')
 
+
 @pytest.fixture
-def my_heatmap(my_matrix, my_gene_annotation, my_sample_annotation):
-    assert isinstance(my_matrix, ExpMatrix)
+def my_heatmap_kw(my_gene_annotation, my_sample_annotation):
     assert isinstance(my_gene_annotation, HeatmapGeneAnnotation)
     assert isinstance(my_sample_annotation, HeatmapSampleAnnotation)
-    heatmap = ExpHeatmap(
-        my_matrix,
+    heatmap_kw = dict(
         gene_annotations=[my_gene_annotation],
-        sample_annotations=[my_sample_annotation]
+        sample_annotations=[my_sample_annotation],
+        colorbar_label='My colorbar',
+        title='Heatmap title',
     )
+    return heatmap_kw
+
+
+@pytest.fixture
+def my_heatmap(my_matrix, my_heatmap_kw):
+    assert isinstance(my_matrix, ExpMatrix)
+    assert isinstance(my_heatmap_kw, dict)
+    heatmap = ExpHeatmap(my_matrix, **my_heatmap_kw)
     return heatmap
 
 
@@ -77,3 +86,25 @@ def test_basic(my_heatmap):
 def test_figure(my_heatmap):
     figure = my_heatmap.get_figure()
     assert isinstance(figure, go.Figure)
+
+
+
+def test_matrix_heatmap(my_matrix, my_gene_annotation, my_sample_annotation,
+                        my_heatmap_kw):
+    heatmap = my_matrix.get_heatmap(
+        highlight_genes=[my_gene_annotation.gene],
+        highlight_samples=[my_sample_annotation.sample],
+        highlight_color=my_gene_annotation.color)
+    assert isinstance(heatmap, ExpHeatmap)
+
+    heatmap = my_matrix.get_heatmap(**my_heatmap_kw)
+    assert isinstance(heatmap, ExpHeatmap)
+
+
+
+def test_matrix_figure(my_matrix, my_heatmap_kw):
+    fig = my_matrix.get_figure(heatmap_kw=my_heatmap_kw)
+    assert isinstance(fig, go.graph_objs.Figure)
+
+#def test_matrix_figure(my_matrix, my_heatmap_kw):
+#    fig = my_matrix.get_figure()

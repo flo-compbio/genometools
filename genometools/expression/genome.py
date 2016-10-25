@@ -18,6 +18,7 @@
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
+_oldstr = str
 from builtins import *
 
 import os
@@ -118,7 +119,7 @@ class ExpGenome(object):
         return not (self == other)
 
     def __contains__(self, gene):
-        if isinstance(gene, str):
+        if isinstance(gene, (str, _oldstr)):
             return gene in self._all_genes
         elif isinstance(gene, ExpGene):
             return gene.name in self._all_genes
@@ -156,7 +157,7 @@ class ExpGenome(object):
         """
         assert isinstance(genes, (list, tuple))
         for g in genes:
-            assert isinstance(g, str), type(g)
+            assert isinstance(g, (str, _oldstr)), type(g)
 
         genome = cls([ExpGene(g) for g in genes])
         return genome
@@ -174,7 +175,7 @@ class ExpGenome(object):
         `genometools.expression.ExpGene`
             The gene.
         """
-        if not isinstance(gene, str):
+        if not isinstance(gene, (str, _oldstr)):
             raise ValueError('Gene name must be a string.')
 
         try:
@@ -220,7 +221,7 @@ class ExpGenome(object):
         int
             The gene index.
         """
-        if not isinstance(gene, str):
+        if not isinstance(gene, (str, _oldstr)):
             raise TypeError('Gene name must be a string.')
 
         try:

@@ -67,10 +67,16 @@ def test_indices(my_matrix):
     assert my_matrix.genes.name == 'Genes'
     assert my_matrix.samples.name == 'Samples'
 
-def test_filter(my_matrix, my_genome):
+
+def test_filter_genome(my_matrix, my_genome):
     other = my_matrix.filter_against_genome(my_genome)
     assert other is not my_matrix
     assert other == my_matrix
+
+
+def test_filter_variance(my_matrix):
+    other = my_matrix.filter_variance(top=2)
+    other.genes.tolist() == ['c', 'd']
 
 
 def test_genome(my_matrix, my_genes):

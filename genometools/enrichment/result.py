@@ -33,8 +33,34 @@ logger = logging.getLogger(__name__)
 
 
 class StaticGSEResult(object):
-    """Result of a hypergeometric test for gene set enrichment."""
+    """Result of a hypergeometric test for gene set enrichment.
+    
+    Parameters
+    ----------
+    gene_set : `genometools.basic.GeneSet`
+        See :attr:`gene_set`.
+    N : int
+        See :attr:`N`.
+    n : int
+        See :attr:`n`.
+    selected_genes : iterable of `ExpGene`
+        See :attr:`selected_genes`.
+    pval : float
+        See :attr:`pval`.
 
+    Attributes
+    ----------
+    gene_set : `genometools.basic.GeneSet`
+        The gene set.
+    N : int
+        The total number of genes in the analysis.
+    n : int
+        The number of genes selected.
+    selected_genes : set of `ExpGene`
+        The genes from the gene set found present.
+    pval : float
+        The hypergeometric p-value.   
+    """
     def __init__(self, gene_set, N, n, selected_genes, pval):
         assert isinstance(gene_set, GeneSet)
         assert isinstance(N, (int, np.integer))
@@ -42,8 +68,8 @@ class StaticGSEResult(object):
         assert isinstance(selected_genes, Iterable)
         assert isinstance(pval, (float, np.float))
 
-        self.N = N
         self.gene_set = gene_set
+        self.N = N
         self.n = n
         self.selected_genes = set(selected_genes)
         self.pval = pval
@@ -139,16 +165,19 @@ class StaticGSEResult(object):
 class RankBasedGSEResult(mHGResult):
     """Result of an XL-mHG-based test for gene set enrichment.
 
+    This class inherits from `xlmhg.mHGResult`.
+
     Parameters
     ----------
-    gene_set `genometools.basic.GeneSet`
-        The gene set.
+    gene_set : `genometools.basic.GeneSet`
+        See :attr:`gene_set` attribute.
     N: int
         The total number of genes in the ranked list.
+        See also :attr:`xlmhg.mHGResult.N`.
     indices: `numpy.ndarray` of integers
         The indices of the gene set genes in the ranked list.
     ind_genes: list of str
-        The names of the genes corresponding to the indices.
+        See :attr:`ind_genes` attribute.
     X: int
         The XL-mHG X parameter.
     L: int
@@ -167,6 +196,13 @@ class RankBasedGSEResult(mHGResult):
         conservative E-score. [None]
     escore_tol: float, optional
         The tolerance used for calculating the E-score. [None]
+
+    Attributes
+    ----------
+    gene_set : `genometools.basic.GeneSet`
+        The gene set.
+    ind_genes : list of str
+        The names of the genes corresponding to the indices.
     """
     def __init__(self, gene_set, N, indices, ind_genes, X, L,
                  stat, cutoff, pval,
@@ -188,6 +224,9 @@ class RankBasedGSEResult(mHGResult):
 
         self.gene_set = gene_set
         self.ind_genes = list(ind_genes)
+
+    # @classmethod
+    # def from_mHGResult(...)
 
     def __repr__(self):
         return '<%s object (N=%d, gene_set_id="%s", hash="%s">' \
@@ -232,5 +271,5 @@ class RankBasedGSEResult(mHGResult):
         param_str = ''
         if not omit_param:
             param_str = ' [X=%d,L=%d,N=%d]' % (self.X, self.L, self.N)
-        details = ', p=%.1e, e=%.1e%s' % (self.pval, self.escore, param_str)
+        details = ', p=%.1e, e=%.1fx%s' % (self.pval, self.escore, param_str)
         return '%s%s' % (gs_str, details)
