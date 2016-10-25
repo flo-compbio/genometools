@@ -33,8 +33,34 @@ logger = logging.getLogger(__name__)
 
 
 class StaticGSEResult(object):
-    """Result of a hypergeometric test for gene set enrichment."""
+    """Result of a hypergeometric test for gene set enrichment.
+    
+    Parameters
+    ----------
+    gene_set : `genometools.basic.GeneSet`
+        See :attr:`gene_set`.
+    N : int
+        See :attr:`N`.
+    n : int
+        See :attr:`n`.
+    selected_genes : iterable of `ExpGene`
+        See :attr:`selected_genes`.
+    pval : float
+        See :attr:`pval`.
 
+    Attributes
+    ----------
+    gene_set : `genometools.basic.GeneSet`
+        The gene set.
+    N : int
+        The total number of genes in the analysis.
+    n : int
+        The number of genes selected.
+    selected_genes : set of `ExpGene`
+        The genes from the gene set found present.
+    pval : float
+        The hypergeometric p-value.   
+    """
     def __init__(self, gene_set, N, n, selected_genes, pval):
         assert isinstance(gene_set, GeneSet)
         assert isinstance(N, (int, np.integer))
@@ -42,8 +68,8 @@ class StaticGSEResult(object):
         assert isinstance(selected_genes, Iterable)
         assert isinstance(pval, (float, np.float))
 
-        self.N = N
         self.gene_set = gene_set
+        self.N = N
         self.n = n
         self.selected_genes = set(selected_genes)
         self.pval = pval

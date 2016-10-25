@@ -133,6 +133,11 @@ class GeneSetEnrichmentAnalysis(object):
         gene_set_ids : Iterable or None
             A list of gene set IDs to test. If ``None``, all gene sets are
             tested that meet the :attr:`K_min` criterion.
+
+        Returns
+        -------
+        list of `StaticGSEResult`
+            A list of all significantly enriched gene sets. 
         """
         assert isinstance(genes, set)
         assert isinstance(pval_thresh, (float, np.float))
@@ -214,6 +219,7 @@ class GeneSetEnrichmentAnalysis(object):
                     StaticGSEResult(gene_sets[j], N, n, set(sel_genes), pval))
 
         return enriched
+
 
     def get_rank_based_enrichment(
             self, ranked_genes, pval_thresh=0.05,
