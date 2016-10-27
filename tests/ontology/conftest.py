@@ -31,6 +31,9 @@ logging.basicConfig(level=logging.INFO)
 
 logger = logging.getLogger(__name__)
 
+from genometools import misc
+from genometools.ontology import GOTerm, GeneOntology
+
 
 def download_file(url, path):
     r = requests.get(url, stream=True)
@@ -53,3 +56,22 @@ def my_gene_ontology_file(my_data_pypath):
     path = text(my_data_pypath.join('go-basic_2016-01-18.obo'))
     download_file(url, path)
     return path
+
+@pytest.fixture(scope='session')
+def my_gene_ontology(my_gene_ontology_file):
+    gene_ontology = GeneOntology.read_obo(my_gene_ontology_file)
+    return gene_ontology
+
+@pytest.fixture(scope='session')
+def my_goa_file(my_data_pypath):
+    logger.info('Starting download of GO annotation file...')
+    url = r'ftp://ftp.ebi.ac.uk/pub/databases/GO/goa/HUMAN/goa_human.gaf.gz'
+    path = text(my_data_pypath.join('goa_human.gaf.gz'))
+    misc.ftp_download(url, path)
+    return path
+
+@pytest.fixture(scope='session')
+def my_go_term():
+    go_term = GOTerm('GO:0000000', 'regulation of test process',
+                  'biological_process', 'This is a test GO term.')
+    return go_term

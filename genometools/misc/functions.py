@@ -35,6 +35,7 @@ import contextlib
 import subprocess as subproc
 import locale
 
+import six
 import unicodecsv as csv
 import requests
 
@@ -57,7 +58,6 @@ def smart_open_read(path = None, mode = 'rb', encoding = None, try_gzip = False)
     Adapted from StackOverflow user "Wolph"
     (http://stackoverflow.com/a/17603000).
     """
-
     assert mode in ('r', 'rb')
     assert path is None or isinstance(path, (str, _oldstr))
     assert isinstance (mode, (str, _oldstr))
@@ -69,7 +69,7 @@ def smart_open_read(path = None, mode = 'rb', encoding = None, try_gzip = False)
     gzfh = None
     if path is None:
         # open stdin
-        fh = io.open(sys.stdin.fileno(), mode = mode, encoding = encoding)
+        fh = io.open(sys.stdin.fileno(), mode=mode, encoding=encoding)
 
     else:
         # open an actual file
@@ -396,34 +396,57 @@ def test_file_checksum(path, checksum):
             file_checksum, checksum, str(file_checksum == checksum))
     return file_checksum == checksum
 
-def open_plain_or_gzip(fn, mode = 'rb'):
-    """Returns a handle for a file that is either gzip'ed or not.
+# @contextlib.contextmanager
+def gzip_open_text(path, encoding=None):
+    """Opens a plain-text file that may be gzip'ed.
 
     Parameters
     ----------
-    fn: str
-        The path of the file.
-    mode: str
-        The mode to be used in opening the file if it is not gzip'ed.
+    path : str
+        The file.
+    encoding : str, optional
+        The encoding to use.
 
     Returns
     -------
-    file
-        A file object.
+    file-like
+        A file-like object.
 
     Notes
     -----
     Generally, reading gzip'ed files with gzip.open is very slow, and it is
     preferable to pipe the file into the python script using ``gunzip -c``.
     The script then reads the file from stdin.
-
     """
+    if encoding is None:
+        encoding = sys.getdefaultencoding()
+
+    assert os.path.isfile(path)
+
+    is_compressed = False
     try:
-        next(gzip.open(fn, 'rb'))
+        gzip.open(path, mode='rb').read(1)
     except IOError:
-        return io.open(fn, mode)
+        pass
     else:
-        return gzip.open(fn, 'rb')
+        is_compressed = True
+
+    if is_compressed:
+        if six.PY2:
+            import codecs
+            zf = gzip.open(path, 'rb')
+            reader = codecs.getreader(encoding)
+            fh = reader(zf)
+
+        else:
+            fh = gzip.open(path, mode='rt', encoding=encoding)
+
+    else:
+        # the following works in Python 2.7, thanks to future
+        fh = open(path, mode='r', encoding=encoding)
+
+    return fh
+
 
 def flatten(l):
     """Flattens a list of lists.
