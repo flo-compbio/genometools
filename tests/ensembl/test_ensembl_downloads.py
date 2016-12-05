@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Tests for functions in `cluster` module."""
+"""Tests for functions that access the Enesembl FTP server."""
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
@@ -26,6 +26,7 @@ import os
 import pytest
 
 from genometools import ensembl
+
 from genometools import misc
 
 logger = misc.get_logger()
@@ -36,22 +37,9 @@ def test_latest_release():
     assert isinstance(release, newint)
     logger.info('Current release: %d', release)
 
-@pytest.mark.online
-@pytest.mark.linux
-@pytest.mark.darwin
-@pytest.mark.cygwin
-def test_download(my_download_dir):
-    assert isinstance(my_download_dir, text)
 
-    species = [
-        'Homo_sapiens',
-        'Mus_musculus',
-    ]
-    #dl_files = ensembl.download_gene_annotations(species, my_download_dir)
-    species_data = ensembl.get_annotation_urls_and_checksums(species)
-    assert len(species_data) == len(species)
-    for spec, (url, chksum) in species_data.items():
-        assert isinstance(url, text)
-        assert isinstance(chksum, newint)
-    #for fn in dl_files:
-    #    assert os.path.isfile(fn)
+@pytest.mark.online
+def test_cdna_url():
+    species = 'homo_sapiens' 
+    url = ensembl.get_cdna_url(species, release=None, ftp=None)
+    assert isinstance(url, text) and url != ''

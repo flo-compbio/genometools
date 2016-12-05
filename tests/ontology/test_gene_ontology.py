@@ -29,23 +29,16 @@ from genometools.ontology import GOTerm, GeneOntology
 
 
 @pytest.fixture
-def my_term():
-    term = GOTerm('GO:0000000', 'regulation of test process',
-                  'biological_process', 'This is a test GO term.')
-    return term
-
-
-@pytest.fixture
 def my_other_term():
-    term = GOTerm('GO:0000001', 'positive regulation of test process',
+    go_term = GOTerm('GO:0000001', 'positive regulation of test process',
                   'biological_process', 'This is another test GO term.',
                   is_a=['GO:0000000'])
-    return term
+    return go_term
 
 
-def test_basic(my_term, my_other_term):
+def test_basic(my_go_term, my_other_term):
 
-    ontology = GeneOntology([my_term, my_other_term])
+    ontology = GeneOntology([my_go_term, my_other_term])
 
     assert isinstance(ontology, GeneOntology)
     assert isinstance(repr(ontology), str)
@@ -55,16 +48,16 @@ def test_basic(my_term, my_other_term):
 
     # test access methods
     assert len(ontology) == 2
-    assert my_term.id in ontology
-    assert ontology[my_term.id] == my_term
-    del ontology[my_term.id]
-    assert my_term.id not in ontology
-    ontology[my_term.id] = my_term
-    assert my_term.id in ontology
+    assert my_go_term.id in ontology
+    assert ontology[my_go_term.id] == my_go_term
+    del ontology[my_go_term.id]
+    assert my_go_term.id not in ontology
+    ontology[my_go_term.id] = my_go_term
+    assert my_go_term.id in ontology
 
     # test additional access methods
-    assert ontology.get_term_by_id(my_term.id) == my_term
-    assert ontology.get_term_by_acc(my_term.acc) == my_term
+    assert ontology.get_term_by_id(my_go_term.id) == my_go_term
+    assert ontology.get_term_by_acc(my_go_term.acc) == my_go_term
 
     # test comparisons
     other = copy.deepcopy(ontology)
@@ -73,10 +66,9 @@ def test_basic(my_term, my_other_term):
     assert other != ontology
 
     # test iteration
-    assert set(list(iter(ontology))) == set([my_term, my_other_term])
+    assert set(list(iter(ontology))) == set([my_go_term, my_other_term])
 
 
 @pytest.mark.online
-def test_real(my_gene_ontology_file):
-    ontology = GeneOntology.read_obo(my_gene_ontology_file)
-    assert isinstance(ontology, GeneOntology)
+def test_real(my_gene_ontology):
+    assert isinstance(my_gene_ontology, GeneOntology)
