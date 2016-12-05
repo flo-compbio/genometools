@@ -412,3 +412,32 @@ class GOAnnotation(object):
     #              %(self.target,self.term.get_pretty_format(),self.evidence,
     #               '|'.join(self.db_ref))
     #    return pretty
+
+def get_latest_goa_release(species):
+    """Query the UniProt-GOA FTP server to determine the latest release.
+
+    Parameters
+    ----------
+    species : str
+        The name of the species.
+
+    Returns
+    -------
+    (int, str)
+        The version number and date of the latest release.
+    """
+    assert isinstance(species, (str, _oldstr))
+
+    with tempfile.NamedTemporaryFile as tf:
+        misc.ftp_download('ftp://ftp.ebi.ac.uk/pub/databases/GO/goa/'
+                          'current_release_numbers.txt',
+                          tf.name)
+        df = pd.read_csv(tf.name, sep='\t', comment='!', header=None)
+
+    species_rel = {}
+    for i, row in df.iterrows():
+        species_rel[row[0]] = (int(row[1]), str(row[2]))
+        logger.debug(str(species_rel[row[0]]))
+
+    return species_rel[species]
+

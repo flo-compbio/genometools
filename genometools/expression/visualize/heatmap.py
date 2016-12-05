@@ -20,6 +20,7 @@
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
+_oldstr = str
 from builtins import *
 
 import os
@@ -63,7 +64,7 @@ class ExpHeatmap(object):
         assert isinstance(sample_annotations, Iterable)
         assert isinstance(colorscale, Iterable)
         if colorbar_label is not None:
-            assert isinstance(colorbar_label, str)
+            assert isinstance(colorbar_label, (str, _oldstr))
 
         self.matrix = matrix
         self.gene_annotations = gene_annotations
@@ -164,6 +165,7 @@ class ExpHeatmap(object):
                 yaxis_label = self.matrix.genes.name
             else:
                 yaxis_label = 'Genes'
+            yaxis_label = yaxis_label + ' (p = %d)' % self.matrix.p
 
         layout = go.Layout(
             width=width,

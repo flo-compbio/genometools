@@ -7,7 +7,8 @@
 from .term import GOTerm
 from .ontology import GeneOntology
 from .annotation import GOAnnotation
-from .gaf import parse_gaf 
+from .gaf import parse_gaf, get_goa_gene_sets
+from .functions import get_current_ontology_date
 
-__all__ = ['GOTerm', 'GeneOntology',
-           'GOAnnotation', 'parse_gaf']
+#__all__ = ['GOTerm', 'GeneOntology',
+#           'GOAnnotation', 'parse_gaf', 'get_goa_gene_sets']

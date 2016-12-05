@@ -32,13 +32,14 @@ import numpy as np
 
 from . import GOTerm, GeneOntology, GOAnnotation
 from .. import misc
+from ..basic import GeneSet, GeneSetCollection
 
 logger = logging.getLogger(__name__)
 
 
 def parse_gaf(path_or_buffer, gene_ontology, genome=None,
               db=None, ev_codes=None):
-    """Parse a GAF 2.1 file.
+    """Parse a GAF 2.1 file containing GO annotations.
     
     Parameters
     ----------
@@ -101,6 +102,15 @@ def parse_gaf(path_or_buffer, gene_ontology, genome=None,
             (~sel).sum(), sel.size, 100*((~sel).sum()/float(sel.size)))
         df = df.loc[sel]
 
+    # filter rows for genome
+    if genome is not None:
+        all_genes = genome.all_genes
+        sel = df.iloc[:, 2].isin(all_genes)
+        logger.info(
+            'Excluding %d / %d annotations (%.1f %%) with wrong genes.',
+            (~sel).sum(), sel.size, 100*((~sel).sum()/float(sel.size)))
+        df = df.loc[sel]
+
     # filter rows for evidence value
     if ev_codes is not None:
         sel = (df.iloc[:, 6].isin(ev_codes))
@@ -118,3 +128,30 @@ def parse_gaf(path_or_buffer, gene_ontology, genome=None,
     logger.info('Read %d GO annotations.', len(go_annotations))
 
     return go_annotations
+
+
+def get_goa_gene_sets(go_annotations):
+    """Generate a list of gene sets from a collection of GO annotations.
+
+    Each gene set corresponds to all genes annotated with a certain GO term.
+    """
+    go_term_genes = OrderedDict()
+    term_ids = {}
+    for ann in go_annotations:
+        term_ids[ann.go_term.id] = ann.go_term
+        try:
+            go_term_genes[ann.go_term.id].append(ann.db_symbol)
+        except KeyError:
+            go_term_genes[ann.go_term.id] = [ann.db_symbol]
+    
+    go_term_genes = OrderedDict(sorted(go_term_genes.items()))
+    gene_sets = []
+    for tid, genes in go_term_genes.items():
+        go_term = term_ids[tid]
+        gs = GeneSet(id=tid, name=go_term.name, genes=genes,
+                     source='GO',
+                     collection=go_term.domain_short,
+                     description=go_term.definition)
+        gene_sets.append(gs)
+    gene_sets = GeneSetCollection(gene_sets)
+    return gene_sets

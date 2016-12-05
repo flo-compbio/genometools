@@ -24,8 +24,9 @@ import copy
 
 import pytest
 
-from genometools.ontology import GeneOntology, GOAnnotation, parse_gaf
-
+from genometools.ontology import GeneOntology, GOAnnotation, \
+                                 parse_gaf, get_goa_gene_sets
+from genometools.basic import GeneSetCollection
 
 @pytest.fixture
 def my_go_annotation(my_go_term):
@@ -76,10 +77,11 @@ def test_list(my_go_annotation, my_go_term):
 
 
 @pytest.mark.online
-def test_parser(my_goa_file, my_gene_ontology):
+def test_parser(my_goa_file, my_genome, my_gene_ontology):
 
     ev_codes = ['IEA', 'TAS']
     go_annotations = parse_gaf(my_goa_file, my_gene_ontology,
+                               genome=my_genome,
                                db='UniProtKB', ev_codes=ev_codes)
     
     assert isinstance(go_annotations, list)
@@ -87,3 +89,6 @@ def test_parser(my_goa_file, my_gene_ontology):
     for ann in go_annotations:
         assert isinstance(ann, GOAnnotation)
         assert ann.ev_code in ev_codes
+
+    gene_sets = get_goa_gene_sets(go_annotations)
+    assert isinstance(gene_sets, GeneSetCollection)

@@ -36,6 +36,12 @@ import subprocess as subproc
 import locale
 
 import six
+
+if six.PY3:
+    from urllib import parse as urlparse
+else:
+    import urlparse
+
 import unicodecsv as csv
 import requests
 
@@ -202,7 +208,7 @@ def get_url_size(url):
 
     Parameters
     ----------
-    url: str
+    url : str
         The URL.
 
     Returns
@@ -213,6 +219,23 @@ def get_url_size(url):
     r = requests.head(url, headers = {'Accept-Encoding': 'identity'})
     size = int(r.headers['content-length'])
     return size
+
+
+def get_url_file_name(url):
+    """Get the file name from an url
+    
+    Parameters
+    ----------
+    url : str
+
+    Returns
+    -------
+    str
+        The file name 
+    """
+
+    assert isinstance(url, (str, _oldstr))
+    return urlparse.urlparse(url).path.split('/')[-1]
 
 def make_sure_dir_exists(dir_, create_subfolders=False):
     """Ensures that a directory exists.

@@ -16,20 +16,23 @@
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
+_oldstr = str
 from builtins import *
 
 import os
 import sys
 import ftplib
 import re
-from collections import Iterable
+import logging
+from collections import Iterable, OrderedDict
 
 from .. import misc
 
-logger = misc.get_logger()
+logger = logging.getLogger(__file__)
 
 #ftp_server = 'ftp.ensembl.org'
 #user = 'anonymous'
+
 
 def get_latest_release(ftp=None):
     """Use files on the Ensembl FTP server to determine the latest release.
@@ -73,72 +76,44 @@ def get_latest_release(ftp=None):
     return latest
 
 
-def download_gene_annotations(species, download_dir, release=None,
-                              ftp=None, avoid_redownload=True):
-    """Download gene annotations (in GTF format) from Ensembl FTP server.
-
+def get_annotation_urls_and_checksums(species_list, release=None, ftp=None):
+    """Get FTP URLs and checksums for Ensembl genome annotations.
+    
     Parameters
     ----------
-    species : list of str
-        List of species for which to download gene annotations.
-        Each species must be specified by its scientific name, with an
-        undescore separating genus and species. (e.g., 'Homo_sapiens').
-    download_dir : str
-        The path of the download directory. Must be an existing directory.
+    species_list : list of str
+        The list of species to include (e.g., "Homo_sapiens").
     release : int, optional
-        The Ensembl release number.
-        If ``None``, download data for the latest release. [None]
+        The release number to look up. If `None`, use latest release. [None]
     ftp : ftplib.FTP, optional
-        The FTP connection to use. [None]
-    avoid_redownload : bool
-        Whether to avoid re-downloading files if their checksums agree.
-        Only available on platforms that have the "sum" unix program.
-
-    Returns
-    -------
-    list of str
-        The paths of the downloaded file(s).
+        The FTP connection to use. If `None`, the function will open and close
+        its own connection using user "anonymous".
     """
-    assert isinstance(species, Iterable)
+    ### type checks
+    assert isinstance(species_list, Iterable)
     if release is not None:
         assert isinstance(release, int)
-    assert isinstance(download_dir, str)
-
-    if not os.path.isdir(download_dir):
-        raise OSError('Download directory "%s" does not exist.' % download_dir)
-
     if ftp is not None:
         assert isinstance(ftp, ftplib.FTP)
 
+    ### open FTP connection if necessary
     close_connection = False
+    ftp_server = 'ftp.ensembl.org'
+    ftp_user = 'anonymous'
     if ftp is None:
-        ftp_server = 'ftp.ensembl.org'
-        user = 'anonymous'
         ftp = ftplib.FTP(ftp_server)
-        ftp.login(user)
-        close_connection = True
+        ftp.login(ftp_user)
+        close_connection = True    
 
+    ### determine release if necessary
     if release is None:
         # use latest release
         release = get_latest_release(ftp=ftp)
 
-    # determine whether we can call the unix "sum" program to calculate checksums
-    test_checksum = False
-    if sys.platform.startswith('linux') or sys.platform in ['cygwin',
-                                                            'darwin']:
-        test_checksum = True
+    species_data = OrderedDict()
+    for spec in species_list:
 
-    downloaded_files = []
-
-    ### update gene annotations for all species
-    for spec in species:
-        logger.info('Now processing species "%s"', spec)
-
-        # spec_name = species_names[spec]
-
-        # find the precise name of the GTF file that we're interested in
-        # Note: Ensembl uses lower-case scientific species names as folder names
-        #      e.g., "homo_sapiens").
+        ### get the GTF file URL
         species_dir = '/pub/release-%d/gtf/%s' % (release, spec.lower())
         data = []
         ftp.dir(species_dir, data.append)
@@ -150,60 +125,86 @@ def download_gene_annotations(species, download_dir, release=None,
                 gtf_file.append(fn)
         assert len(gtf_file) == 1
         gtf_file = gtf_file[0]
-        # self.logger.debug(gtf_file)
+        logger.debug('GTF file: %s', gtf_file)
 
-        # download the CHECKSUMS file and create a mapping of file names to checksums
+        ### get the checksum for the GTF file
         cs_path = '/'.join([species_dir, 'CHECKSUMS'])
         data = []
         ftp.retrbinary('RETR %s' % cs_path, data.append)
-        print(data)
+        # print(data)
         data = ''.join(d.decode('utf-8') for d in data).split('\n')[:-1]
-        checksums = {}
+        file_checksums = {}
         for d in data:
             file_name = d[(d.rindex(' ') + 1):]
             sum_ = int(d[:d.index(' ')])
-            checksums[file_name] = sum_
-        print(checksums)
+            file_checksums[file_name] = sum_
+        gtf_checksum = file_checksums[gtf_file]
+        logger.debug('GTF file checksum: %d', gtf_checksum)
 
-        # compare checksums to see if we need to download the file
-        download_file = os.path.join(download_dir, gtf_file)
-        if avoid_redownload and test_checksum and os.path.isfile(download_file) \
-                and misc.test_file_checksum(download_file,
-                                            checksums[gtf_file]):
-            logger.info(
-                'File "%s" already present and checksums agree. Skipping download.',
-                gtf_file)
-        else:
-            download_path = '/'.join([species_dir, gtf_file])
-            logger.debug('Download path: %s', download_path)
-            logger.debug('Downloading to file: %s', download_file)
-            with open(download_file, 'wb') as ofh:
-                ftp.retrbinary('RETR %s' % download_path, ofh.write)
+        gtf_url = 'ftp://%s%s/%s' %(ftp_server, species_dir, gtf_file)
 
-            logger.debug('Done!')
-            success = True
-            if test_checksum:
-                if not misc.test_file_checksum(download_file,
-                                               checksums[gtf_file]):
-                    logger.error(
-                        'Checksums don''t agree! Deleting downloaded file...')
-                    success = False
-            else:
-                if (not os.path.isfile(download_file)) or os.path.getsize(
-                        download_file) == 0:
-                    success = False
-
-            if not success:
-                logger.error('Something went wrong with the file download.')
-                try:
-                    os.remove(download_file)
-                except OSError:
-                    pass
-                download_file = None
-        if download_file is not None:
-            downloaded_files.append(download_file)
+        species_data[spec] = (gtf_url, gtf_checksum)
 
     if close_connection:
         ftp.close()
 
-    return downloaded_files
+    return species_data
+
+
+def get_cdna_url(species, release=None, ftp=None):
+    """Returns the URL for a cDNA file hosted on the Ensembl FTP server.
+
+    Parameters
+    ----------
+    species: str
+        The scientific name of the species. It should be all lower-case,
+        and the genus and species parts should be separated by an underscore
+        (e.g., "homo_sapiens").
+    release: int or ``None``, optional
+        The Ensembl release number. If ``None``, the latest release is used.
+        [None]
+    ftp: ftplib.FTP or ``None``, optional
+        The FTP connection. If ``None``, create a new connection. [None]
+    """    
+    #species_list, release=None, ftp=None
+
+    ### type checks
+    assert isinstance(species, (str, _oldstr))
+    if release is not None:
+        assert isinstance(release, int)
+    if ftp is not None:
+        assert isinstance(ftp, ftplib.FTP)
+
+    ### open FTP connection if necessary
+    close_connection = False
+    if ftp is None:
+        ftp_server = 'ftp.ensembl.org'
+        ftp_user = 'anonymous'
+        ftp = ftplib.FTP(ftp_server)
+        ftp.login(ftp_user)
+        close_connection = True
+
+    ### determine release if necessary
+    if release is None:
+        # use latest release
+        release = get_latest_release(ftp=ftp)
+    
+    # check if species exists
+    #species_dir = 
+    fasta_dir = '/pub/release-%d/fasta' % release 
+    ftp.cwd(fasta_dir)
+    if not species in ftp.nlst():
+        logger.error('Species "%s" not found on Ensembl FTP server.', species)
+        fasta_url = 'ftp://%s%s' %(ftp_server, fasta_dir)
+        raise ValueError('Species "%s" not found. '
+                         'See %s for a list of species available.'
+                         % (species, fasta_url))
+    
+    cdna_dir = '/pub/release-%d/fasta/%s/cdna' %(release, species)
+    ftp.cwd(cdna_dir)
+    files = ftp.nlst()
+    cdna_file = [f for f in files if f.endswith('.cdna.all.fa.gz')][0]
+
+    cdna_url = 'ftp://%s%s/%s' %(ftp_server, cdna_dir, cdna_file)
+
+    return cdna_url
