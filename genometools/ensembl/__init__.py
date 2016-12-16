@@ -49,6 +49,6 @@ species_chrompat = OrderedDict([
 each species."""
 
 from .functions import *
-
+from . import annotations
 
 # __all__ = ['species_names', 'species_scientific', 'species_chrompat']

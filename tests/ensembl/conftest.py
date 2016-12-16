@@ -16,11 +16,11 @@
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
-from builtins import open
+#from builtins import open
 from builtins import str as text
 
 import sys
-import os
+#import os
 
 import pytest
 # import numpy as np

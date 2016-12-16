@@ -31,10 +31,20 @@ logger = misc.get_logger()
 @pytest.mark.linux
 @pytest.mark.darwin
 def test_checksum(my_checksum_file):
+    """Tests functions that calculate checksums using Unix "sum" utility."""
     assert misc.get_file_checksum(my_checksum_file) == 2761
     assert misc.test_file_checksum(my_checksum_file, 2761)
 
 
 def test_ftp_download(my_readme_file):
-    misc.ftp_download('ftp://ftp.ensembl.org/pub/current_README',                                 my_readme_file)
+    """Tests `ftp_download` function."""
+    misc.ftp_download('ftp://ftp.ensembl.org/pub/current_README',
+                      my_readme_file)
     assert os.stat(my_readme_file).st_size > 0
+
+
+def test_http_download(my_temp_dir):
+    """Tests `http_download` function."""
+    download_file = text(my_temp_dir.join('google.htm'))
+    misc.http_download('https://www.google.com', download_file)
+    assert os.stat(download_file).st_size > 0

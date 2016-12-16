@@ -37,7 +37,7 @@ def pytest_runtest_setup(item):
 
 @pytest.fixture(scope='session')
 def my_temp_dir(tmpdir_factory):
-    temp_dir = tmpdir_factory.mktemp('gopca_output', numbered=False)
+    temp_dir = tmpdir_factory.mktemp('genometools_test', numbered=False)
     return temp_dir
 
 
