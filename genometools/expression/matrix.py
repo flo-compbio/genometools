@@ -197,7 +197,7 @@ class ExpMatrix(pd.DataFrame):
         if top > self.p:
             raise ValueError('filter_variance() called with top=%d, but '
                              'there are only %d genes in the matrix.'
-                             %(top, matrix.p))
+                             %(top, self.p))
         return filter_variance(self, top)
         
 

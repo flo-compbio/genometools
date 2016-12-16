@@ -76,13 +76,14 @@ def get_latest_release(ftp=None):
     return latest
 
 
-def get_annotation_urls_and_checksums(species_list, release=None, ftp=None):
+def get_annotation_urls_and_checksums(species, release=None, ftp=None):
     """Get FTP URLs and checksums for Ensembl genome annotations.
     
     Parameters
     ----------
-    species_list : list of str
-        The list of species to include (e.g., "Homo_sapiens").
+    species : str or list of str
+        The species or list of species for which to get genome annotations
+        (e.g., "Homo_sapiens").
     release : int, optional
         The release number to look up. If `None`, use latest release. [None]
     ftp : ftplib.FTP, optional
@@ -90,7 +91,7 @@ def get_annotation_urls_and_checksums(species_list, release=None, ftp=None):
         its own connection using user "anonymous".
     """
     ### type checks
-    assert isinstance(species_list, Iterable)
+    assert isinstance(species, (str, _oldstr)) or isinstance(species, Iterable)
     if release is not None:
         assert isinstance(release, int)
     if ftp is not None:
@@ -111,6 +112,10 @@ def get_annotation_urls_and_checksums(species_list, release=None, ftp=None):
         release = get_latest_release(ftp=ftp)
 
     species_data = OrderedDict()
+    if isinstance(species, (str, _oldstr)):
+        species_list = [species]
+    else:
+        species_list = species
     for spec in species_list:
 
         ### get the GTF file URL

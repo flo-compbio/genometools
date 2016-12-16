@@ -3,15 +3,15 @@
 # This file is part of GenomeTools.
 #
 # GenomeTools is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License, Version 3,
+# it under the terms of the GNU Affero General Public License, Version 3,
 # as published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# GNU Affero General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 """Miscellaneous functions that are useful in many different contexts.
@@ -34,6 +34,7 @@ import logging
 import contextlib
 import subprocess as subproc
 import locale
+import ftplib
 
 import six
 
@@ -42,10 +43,12 @@ if six.PY3:
 else:
     import urlparse
 
+
 import unicodecsv as csv
 import requests
 
 logger = logging.getLogger(__name__)
+
 
 def try_open_gzip(path):
     fh = None
@@ -57,8 +60,58 @@ def try_open_gzip(path):
         fh = gzip.open(path)
     return fh
 
+
+def http_download(url, download_file,
+                  overwrite=False, raise_http_exception=True):
+    """Download a file over HTTP(S).
+    
+    See: http://stackoverflow.com/a/13137873/5651021 
+
+    Parameters
+    ----------
+    url : str
+        The URL.
+    download_file : str
+        The path of the local file to write to.
+    overwrite : bool, optional
+        Whether to overwrite an existing file (if present). [False]
+    raise_http_exception : bool, optional
+        Whether to raise an exception if there is an HTTP error. [True]
+
+    Raises
+    ------
+    OSError
+        If the file already exists and overwrite is set to False.
+    `requests.HTTPError`
+        If an HTTP error occurred and `raise_http_exception` was set to `True`.
+    """
+
+    assert isinstance(url, (str, _oldstr))
+    assert isinstance(download_file, (str, _oldstr))
+    assert isinstance(overwrite, bool)
+    assert isinstance(raise_http_exception, bool)
+
+    u = urlparse.urlparse(url)
+    assert u.scheme in ['http', 'https']
+
+    if os.path.isfile(download_file) and not overwrite:
+        raise OSError('File "%s" already exists!' % download_file)
+    
+    r = requests.get(url, stream=True)
+    if raise_http_exception:
+        r.raise_for_status()
+    if r.status_code == 200:
+        with open(download_file, 'wb') as fh:
+            r.raw.decode_content = True
+            shutil.copyfileobj(r.raw, fh)
+        logger.info('Downloaded file "%s".', download_file)
+    else:
+        logger.error('Failed to download url "%s": HTTP status %d/%s',
+                     url, r.status_code, r.reason)
+
+
 @contextlib.contextmanager
-def smart_open_read(path = None, mode = 'rb', encoding = None, try_gzip = False):
+def smart_open_read(path=None, mode='rb', encoding=None, try_gzip=False):
     """Open a file for reading or return ``stdin``.
 
     Adapted from StackOverflow user "Wolph"
@@ -66,7 +119,7 @@ def smart_open_read(path = None, mode = 'rb', encoding = None, try_gzip = False)
     """
     assert mode in ('r', 'rb')
     assert path is None or isinstance(path, (str, _oldstr))
-    assert isinstance (mode, (str, _oldstr))
+    assert isinstance(mode, (str, _oldstr))
     assert encoding is None or isinstance(encoding, (str, _oldstr))
     assert isinstance(try_gzip, bool)
 
@@ -91,10 +144,10 @@ def smart_open_read(path = None, mode = 'rb', encoding = None, try_gzip = False)
             if 'b' not in mode:
                 # add a text wrapper on top
                 logger.debug('Adding text wrapper.')
-                fh = io.TextIOWrapper(binfh, encoding = encoding)
+                fh = io.TextIOWrapper(binfh, encoding=encoding)
 
         else:
-            fh = io.open(path, mode = mode, encoding = encoding)
+            fh = io.open(path, mode=mode, encoding=encoding)
 
     yield_fh = fh
     if fh is None:
@@ -116,8 +169,9 @@ def smart_open_read(path = None, mode = 'rb', encoding = None, try_gzip = False)
         if gzfh is not None:
             gzfh.close()
         
+
 @contextlib.contextmanager
-def smart_open_write(path = None, mode = 'wb', encoding = None):
+def smart_open_write(path=None, mode='wb', encoding=None):
     """Open a file for writing or return ``stdout``.
 
     Adapted from StackOverflow user "Wolph"
@@ -125,10 +179,10 @@ def smart_open_write(path = None, mode = 'wb', encoding = None):
     """
     if path is not None:
         # open a file
-        fh = io.open(path, mode = mode, encoding = encoding)
+        fh = io.open(path, mode=mode, encoding=encoding)
     else:
         # open stdout
-        fh = io.open(sys.stdout.fileno(), mode = mode, encoding = encoding)
+        fh = io.open(sys.stdout.fileno(), mode=mode, encoding=encoding)
         #fh = sys.stdout
 
     try:
@@ -216,7 +270,7 @@ def get_url_size(url):
     int
         The size of the URL in bytes.
     """
-    r = requests.head(url, headers = {'Accept-Encoding': 'identity'})
+    r = requests.head(url, headers={'Accept-Encoding': 'identity'})
     size = int(r.headers['content-length'])
     return size
 
@@ -329,7 +383,8 @@ def get_file_checksum(path):
         raise IOError('File "%s" does not exist.' %(path))
 
     # calculate checksum
-    sub = subproc.Popen('sum "%s"' %(path), bufsize = -1, shell = True, stdout = subproc.PIPE)
+    sub = subproc.Popen('sum "%s"' %(path), bufsize=-1, shell=True,
+                        stdout=subproc.PIPE)
     stdoutdata = sub.communicate()[0]
     assert sub.returncode == 0
 
@@ -342,36 +397,35 @@ def get_file_checksum(path):
     return file_checksum
 
 
-def ftp_download(url, download_file, user_name='anonymous', password='', blocksize=4194304):
+def ftp_download(url, download_file, overwrite=False,
+                 user_name='anonymous', password='', blocksize=4194304):
     """Downloads a file from an FTP server.
 
     Parameters
     ----------
-    user_name : str
-        The user name to use for logging into the FTP server.
-    password : str
-        The password to use for logging into the FTP server.
     url : str
         The URL of the file to download.
     download_file : str
         The path of the local file to download to. 
+    overwrite : bool, optional
+        Whether to overwrite existing files. [False]
+    user_name : str, optional
+        The user name to use for logging into the FTP server. ['anonymous']
+    password : str, optional
+        The password to use for logging into the FTP server. ['']
+    blocksize : int, optional
+        The blocksize (in bytes) to use for downloading. [4194304]
     """
-    import ftplib
-    import six
-
-    if six.PY3:
-        from urllib import parse
-    else:
-        import urlparse as parse
-
-
     assert isinstance(url, (str, _oldstr))
     assert isinstance(download_file, (str, _oldstr))
     assert isinstance(user_name, (str, _oldstr))
     assert isinstance(password, (str, _oldstr))
 
-    u = parse.urlparse(url)
+    u = urlparse.urlparse(url)
     assert u.scheme == 'ftp'
+
+    if os.path.isfile(download_file) and not overwrite:
+        raise OSError('File "%s" already exists.' % download_file)
 
     ftp_server = u.netloc
     ftp_path = u.path
@@ -381,14 +435,16 @@ def ftp_download(url, download_file, user_name='anonymous', password='', blocksi
             ftp.login(user_name, password)
             with open(download_file, 'wb') as ofh:
                 ftp.retrbinary('RETR %s' % ftp_path,
-                            callback=ofh.write, blocksize=blocksize)
+                               callback=ofh.write, blocksize=blocksize)
     else:
         ftp = ftplib.FTP(ftp_server)
         ftp.login(user_name, password)
         with open(download_file, 'wb') as ofh:
             ftp.retrbinary('RETR %s' % ftp_path,
-                        callback=ofh.write, blocksize=blocksize)
+                           callback=ofh.write, blocksize=blocksize)
         ftp.close()
+    logger.info('Downloaded file "%s" over FTP.', download_file)
+
 
 def test_file_checksum(path, checksum):
     """Test if a file has a given checksum (using ``sum``, Unix-only).
@@ -416,8 +472,9 @@ def test_file_checksum(path, checksum):
     # calculate file checksum and compare to given checksum
     file_checksum = get_file_checksum(path)
     logger.debug('File checksum: %d. Reference checksum: %d. Match: %s.',
-            file_checksum, checksum, str(file_checksum == checksum))
+                 file_checksum, checksum, str(file_checksum == checksum))
     return file_checksum == checksum
+
 
 # @contextlib.contextmanager
 def gzip_open_text(path, encoding=None):
@@ -489,6 +546,7 @@ def flatten(l):
     # use incomprensible list comprehension
     return [item for sublist in l for item in sublist]
 
+
 def bisect_index(a, x):
     """ Find the leftmost index of an element in a list using binary search.
 
@@ -533,6 +591,7 @@ def argsort(seq):
     # see http://stackoverflow.com/questions/3382352/equivalent-of-numpy-argsort-in-basic-python/3382369#3382369
     return sorted(range(len(seq)), key=seq.__getitem__)
 
+
 def argmin(seq):
     """ Obtains the index of the smallest element in a list.
 
@@ -549,6 +608,7 @@ def argmin(seq):
     """
     return argsort(seq)[0]
 
+
 def argmax(seq):
     """ Obtains the index of the largest element in a list.
 
@@ -563,6 +623,7 @@ def argmax(seq):
         The index of the largest element.
     """
     return argsort(seq)[-1]
+
 
 def read_single(path, encoding = 'UTF-8'):
     """ Reads the first column of a tab-delimited text file.
@@ -584,13 +645,14 @@ def read_single(path, encoding = 'UTF-8'):
     """
     assert isinstance(path, (str, _oldstr))
     data = []
-    with smart_open_read(path, mode = 'rb', try_gzip = True) as fh:
-        reader = csv.reader(fh, dialect = 'excel-tab', encoding = encoding)
+    with smart_open_read(path, mode='rb', try_gzip=True) as fh:
+        reader = csv.reader(fh, dialect='excel-tab', encoding=encoding)
         for l in reader:
             data.append(l[0])
     return data
 
-def read_all(path, encoding = 'UTF-8'):
+
+def read_all(path, encoding='UTF-8'):
     """ Reads a tab-delimited text file.
 
     The file can either be uncompressed or gzip'ed.
@@ -610,8 +672,8 @@ def read_all(path, encoding = 'UTF-8'):
     """
     assert isinstance(path, (str, _oldstr))
     data = []
-    with smart_open_read(path, mode = 'rb', try_gzip = True) as fh:
-        reader = csv.reader(fh, dialect = 'excel-tab', encoding = encoding)
+    with smart_open_read(path, mode='rb', try_gzip=True) as fh:
+        reader = csv.reader(fh, dialect='excel-tab', encoding=encoding)
         for l in reader:
             data.append(tuple(l))
     return data
