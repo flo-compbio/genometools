@@ -33,3 +33,11 @@ Version 0.2.1 (2016-12-16)
 - added/expanded functionality of download functions in `misc` subpackage
 
 - minor fixes
+
+Version 0.2.2 (2016-12-21)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- fix `six` version dependency issue with readthedocs
+
+- minor fixes
+
