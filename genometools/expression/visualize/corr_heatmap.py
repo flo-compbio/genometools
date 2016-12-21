@@ -40,6 +40,7 @@ logger = logging.getLogger(__name__)
 
 
 class SampleCorrelationHeatmap(object):
+    """A sample correlation heatmap."""
 
     _default_cmap_file = genometools._root.rstrip(os.sep) + os.sep + \
                          os.sep.join(['data', 'RdBu_r_colormap.tsv'])
@@ -76,6 +77,7 @@ class SampleCorrelationHeatmap(object):
         self.colorbar_label = colorbar_label
 
     def get_figure(self, **kwargs):
+        """Get a plotly figure of the heatmap."""
 
         emin = kwargs.pop('emin', -1.0)
         emax = kwargs.pop('emax', 1.0)
@@ -187,7 +189,7 @@ class SampleCorrelationHeatmap(object):
                 xaxis_label = self.corr_matrix.samples.name
             else:
                 xaxis_label = 'Samples'
-            xaxis_label =  xaxis_label + ' (n = %d)' % self.corr_matrix.n
+            xaxis_label = xaxis_label + ' (n = %d)' % self.corr_matrix.n
 
         if yaxis_label is None:
             yaxis_label = xaxis_label
@@ -240,9 +242,9 @@ class SampleCorrelationHeatmap(object):
 
         # we need separate, but overlaying, axes to place the annotations
         layout['xaxis2'] = go.XAxis(
-            overlaying = 'x',
-            showline = False,
-            tickfont = dict(size=0),
+            overlaying='x',
+            showline=False,
+            tickfont=dict(size=0),
             autorange=False,
             #range=[-0.5, self.corr_matrix.n-0.5],
             range=[-0.5, self.corr_matrix.n-0.5],
@@ -269,7 +271,7 @@ class SampleCorrelationHeatmap(object):
         block_coords = np.zeros((k, 2), dtype=np.float64)
         block_labels = []
         for i, ann in enumerate(self.block_annotations):
-            block_coords[i,:] = [ann.start_index-0.5, ann.end_index+0.5]
+            block_coords[i, :] = [ann.start_index-0.5, ann.end_index+0.5]
             block_labels.append(ann.label)
 
         # this produces the squares for the block annotations
@@ -278,8 +280,8 @@ class SampleCorrelationHeatmap(object):
             mx = block_coords[i, 1]
             data.append(
                 go.Scatter(
-                    x=[mn,mx,mx,mn,mn],
-                    y=[mn,mn,mx,mx,mn],
+                    x=[mn, mx, mx, mn, mn],
+                    y=[mn, mn, mx, mx, mn],
                     mode='lines',
                     hoverinfo='none',
                     showlegend=False,

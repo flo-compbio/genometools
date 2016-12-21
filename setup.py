@@ -32,7 +32,6 @@ here = path.abspath(path.dirname(__file__))
 description = 'GenomeTools: A Python Framework for Analyzing Genomic Data.'
 
 install_requires = [
-    'six>=1.10.0, <2',
     'future>=0.15.2, <1',
     'requests>=2.9.1, <3',
     'unicodecsv>=0.14.1, <1',
@@ -48,11 +47,13 @@ install_requires = [
 if 'READTHEDOCS' not in os.environ or \
         os.environ['READTHEDOCS'] != 'True':
     install_requires.extend([
+        'six>=1.10.0, <2',
         'scipy>=0.14, <1',
         'plotly>=1.9.6, <2',
     ])
 else:
     install_requires.extend([
+        'six>=1.5.2, <2',
         #'pandas>=0.13, <1',
     ])
 
