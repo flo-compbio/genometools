@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 
 
 class ExpHeatmap(object):
+    """An expression heatmap."""
 
     # TODO: docstrings, __str__, __repr__, hash
 
@@ -84,6 +85,7 @@ class ExpHeatmap(object):
             font='"Droid Serif", "Open Serif", serif',
             font_size=12, title_font_size=None,
             show_sample_labels=True, **kwargs):
+        """Generate a plotly figure of the heatmap."""
 
         # emin and/or emax are unspecified, set to data min/max values
         if emax is None:
@@ -103,7 +105,7 @@ class ExpHeatmap(object):
             lenmode='fraction',
             len=colorbar_size,
             title=colorbar_label,
-            titlefont = dict(
+            titlefont=dict(
                 size=title_font_size,
             ),
             titleside='right',
@@ -158,7 +160,7 @@ class ExpHeatmap(object):
                 xaxis_label = self.matrix.samples.name
             else:
                 xaxis_label = 'Samples'
-            xaxis_label =  xaxis_label + ' (n = %d)' % self.matrix.n
+            xaxis_label = xaxis_label + ' (n = %d)' % self.matrix.n
 
         if yaxis_label is None:
             if self.matrix.genes.name is not None:
@@ -236,8 +238,8 @@ class ExpHeatmap(object):
             ymx = i+0.5
             data.append(
                 go.Scatter(
-                    x=[xmn,xmx,xmx,xmn,xmn],
-                    y=[ymn,ymn,ymx,ymx,ymn],
+                    x=[xmn, xmx, xmx, xmn, xmn],
+                    y=[ymn, ymn, ymx, ymx, ymn],
                     mode='lines',
                     hoverinfo='none',
                     showlegend=False,
@@ -276,8 +278,8 @@ class ExpHeatmap(object):
             ymx = self.matrix.p-0.5
             data.append(
                 go.Scatter(
-                    x=[xmn,xmx,xmx,xmn,xmn],
-                    y=[ymn,ymn,ymx,ymx,ymn],
+                    x=[xmn, xmx, xmx, xmn, xmn],
+                    y=[ymn, ymn, ymx, ymx, ymn],
                     mode='lines',
                     hoverinfo='none',
                     showlegend=False,

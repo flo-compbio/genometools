@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 class HeatmapItemAnnotation(object):
+    """Base class for `ExpHeatmap` heatmap annotations."""
 
     default_transparency = 0.3
 
@@ -54,6 +55,7 @@ class HeatmapItemAnnotation(object):
 
 
 class HeatmapGeneAnnotation(HeatmapItemAnnotation):
+    """An `ExpHeatmap` heatmap gene (row) annotation."""
 
     # TODO: docstrings, __str__, __repr__, ...
 
@@ -71,6 +73,7 @@ class HeatmapGeneAnnotation(HeatmapItemAnnotation):
 
 
 class HeatmapSampleAnnotation(HeatmapItemAnnotation):
+    """An `ExpHeatmap` heatmap sample (column) annotation."""
 
     # TODO: docstrings, __str__, __repr__, ...
 
@@ -88,6 +91,7 @@ class HeatmapSampleAnnotation(HeatmapItemAnnotation):
 
 
 class HeatmapBlockAnnotation(object):
+    """An `ExpHeatmap` heatmap block annotation."""
 
     # TODO: docstrings, __str__, __repr__, ...
 
