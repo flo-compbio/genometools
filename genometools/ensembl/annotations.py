@@ -133,7 +133,7 @@ def get_protein_coding_genes(
                          chunksize=chunksize)
     data = []
     header = ['Gene', 'Ensembl_ID',
-              'Chromosome', 'Position', 'Lnegth',
+              'Chromosome', 'Position', 'Length',
               'Source', 'Type']
     
     valid_biotypes = set(['protein_coding'])

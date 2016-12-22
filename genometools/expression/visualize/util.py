@@ -14,26 +14,36 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Utility functions for expression visualizations.
-
-"""
+"""Utility functions for expression visualizations."""
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import *
 
-
 import numpy as np
 
 
 def read_colorscale(cmap_file):
-    """Return a colorscale in the format that plotly expects it.
+    """Return a colorscale in the format expected by plotly.
 
-    Specifically, the scale should be a list containing pairs consisting of
-    a normalized value x (between 0 and 1) and a corresponding "rgb(r,g,b)"
-    string, where r,g,b are integers from 0 to 255.
+    Parameters
+    ----------
+    cmap_file : str
+        Path of a plain-text file containing the colorscale. 
 
-    The ``cmap_file`` is a tab-separated text file containing four columns
+    Returns
+    -------
+    list
+        The colorscale.
+        
+    Notes
+    -----
+    A plotly colorscale is a list where each item is a pair
+    (i.e., a list with two elements) consisting of
+    a decimal number x between 0 and 1 and a corresponding "rgb(r,g,b)" string,
+    where r, g, and b are integers between 0 and 255.
+
+    The `cmap_file` is a tab-separated text file containing four columns
     (x,r,g,b), so that each row corresponds to an entry in the list
     described above.
     """

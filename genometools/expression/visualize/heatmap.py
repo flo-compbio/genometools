@@ -39,16 +39,52 @@ logger = logging.getLogger(__name__)
 
 
 class ExpHeatmap(object):
-    """An expression heatmap."""
+    """An expression heatmap.
+    
+    An expression heatmap visualizes a gene expression matrix, which is a
+    two-dimensional numerical array with rows corresponding to genes, and
+    columns corresponding to samples.
 
-    # TODO: docstrings, __str__, __repr__, hash
+    Parameters
+    ----------
+    matrix : `ExpMatrix`
+        See :attr:`matrix` attribute.
+    gene_annotations : list of `HeatmapGeneAnnotation`, or None, optional
+        A list of gene annotations. [None]
+    sample_annotations : list of `HeatmapSampleAnnotation`, or None, optional
+        A list of sample annotations. [None]
+    colorscale : list or None, optional
+        A plotly colorscale (see :func:`read_colorscale`). If None, load the
+        default red-blue colorscale that is included in this package. [None]
+    colorbar_label : str or None, optional
+        The colorbar label. If None, "Expression" will be used. [None]
+    title : str or None, optional
+        The figure title. If None, the figure will have no title.
+
+    Notes
+    -----
+    This class provides an intermediate layer between the underlying expression
+    data, which is represented by an `ExpMatrix` object, and the visualization
+    itself, which corresponds to a plotly figure. Its purpose is to store
+    specific additional data such as the figure title, colorbar label, and
+    (visual) annotations, but no data that only concerns the layout or visual
+    appearance of the figure (e.g., its dimensions, margins, font choices,
+    or the expression values corresponding to the lower and upper end of the
+    colorscale. This information is provided by the user when he/she calls the
+    :func:`get_figure` function, and is not stored anywhere beside the plotly
+    figure object itself.   
+
+    Gene and sample annotations are represented by `HeatmapGeneAnnotation` and
+    `HeatmapSampleAnnotations` objects, which can be used to highlight
+    individual rows and columns in the heatmap, respectively.
+    """
 
     _default_cmap_file = genometools._root.rstrip(os.sep) + os.sep + \
                          os.sep.join(['data', 'RdBu_r_colormap.tsv'])
 
     def __init__(self, matrix,
                  gene_annotations=None, sample_annotations=None,
-                 colorscale=None, colorbar_label=None, title=None):
+                 colorscale=None, colorbar_label='Expression', title=None):
 
         if gene_annotations is None:
             gene_annotations = []
@@ -74,8 +110,12 @@ class ExpHeatmap(object):
         self.colorbar_label = colorbar_label
         self.title = title
 
+    def __str__(self):
+        return '<%s of %d-by-%d matrix>' % \
+                (self.__class__.__name__, self.matrix.p, self.matrix.n)      
+
     def get_figure(
-            self, title=None, emin=None, emax=None,
+            self, emin=None, emax=None,
             width=800, height=400,
             margin_left=100, margin_bottom=60, margin_top=30, margin_right=0,
             colorbar_size=0.4,
@@ -85,7 +125,49 @@ class ExpHeatmap(object):
             font='"Droid Serif", "Open Serif", serif',
             font_size=12, title_font_size=None,
             show_sample_labels=True, **kwargs):
-        """Generate a plotly figure of the heatmap."""
+        """Generate a plotly figure of the heatmap.
+        
+        Parameters
+        ----------
+        emin : int, float, or None, optional
+            The expression value corresponding to the lower end of the
+            colorscale. If None, determine, automatically. [None]
+        emax : int, float, or None, optional
+            The expression value corresponding to the upper end of the
+            colorscale. If None, determine automatically. [None]
+        margin_left : int, optional
+            The size of the left margin (in px). [100]
+        margin_right : int, optional
+            The size of the right margin (in px). [0]
+        margin_top : int, optional
+            The size of the top margin (in px). [30]
+        margin_bottom : int, optional
+            The size of the bottom margin (in px). [60]
+        colorbar_size : int or float, optional
+            The sze of the colorbar, relative to the figure size. [0.4]
+        xaxis_label : str or None, optional
+            X-axis label. If None, use `ExpMatrix` default. [None]
+        yaxis_label : str or None, optional
+            y-axis label. If None, use `ExpMatrix` default. [None]
+        xtick_angle : int or float, optional
+            X-axis tick angle (in degrees). [30]
+        font : str, optional
+            Name of font to use. Can be multiple, separated by comma, to
+            specify a prioritized list.
+            [' "Droid Serif", "Open Serif", "serif"']
+        font_size : int or float, optional
+            Font size to use throughout the figure, in points. [12]
+        title_font_size : int or float or None, optional
+            Font size to use for labels on axes and the colorbar. If None,
+            use `font_size` value. [None]
+        show_sample_labels : bool, optional
+            Whether to show the sample labels. [True]
+
+        Returns
+        -------
+        `plotly.graph_objs.Figure`
+            The plotly figure.
+        """
 
         # emin and/or emax are unspecified, set to data min/max values
         if emax is None:
@@ -93,8 +175,7 @@ class ExpHeatmap(object):
         if emin is None:
             emin = self.matrix.X.min()
 
-        if title is None:
-            title = self.title
+        title = self.title
 
         if title_font_size is None:
             title_font_size = font_size
