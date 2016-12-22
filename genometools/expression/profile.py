@@ -40,16 +40,18 @@ logger = logging.getLogger(__name__)
 class ExpProfile(pd.Series):
     """A gene expression profile.
 
+    This class inherits from `pandas.Series`.
+
     Parameters
     ----------
-    x: 1-dimensional `numpy.ndarray`
+    x : 1-dimensional `numpy.ndarray`
         See :attr:`x` attribute.
         
     Keyword-only Parameters
     -----------------------
-    genes: list or tuple of str
+    genes : list or tuple of str
         See :attr:`genes` attribute.
-    name: str
+    name : str
         See :attr:`name` attribute.
         
     Additional Parameters
@@ -58,12 +60,13 @@ class ExpProfile(pd.Series):
 
     Attributes
     ----------
-    x: 1-dimensional `numpy.ndarray`
+    x : 1-dimensional `numpy.ndarray`
         The vector with expression values.
-    genes: tuple of str
-        The names of the genes (rows) in the matrix.
-    label: str
-        The sample label.
+    genes : `pandas.Index`
+        Alias for :attr:`pandas.Series.index`. Contains the names of the genes
+        in the matrix.
+    label : str
+        Alias for :attr:`pandas.Series.name`. The sample label.
     """
     def __init__(self, *args, **kwargs):
         
@@ -107,7 +110,7 @@ class ExpProfile(pd.Series):
                     self.index.equals(other.index) and
                     self.equals(other))
         else:
-            return NotImplemented
+            return pd.Series.__eq__(self, other)
 
     def __ne__(self, other):
         return not self.__eq__(other)

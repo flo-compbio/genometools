@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Heat map annotation classes.
+"""Heatmap annotation classes.
 
 """
 
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 class HeatmapItemAnnotation(object):
-    """Base class for `ExpHeatmap` heatmap annotations."""
+    """Base class for heatmap annotations."""
 
     default_transparency = 0.3
 
@@ -55,7 +55,7 @@ class HeatmapItemAnnotation(object):
 
 
 class HeatmapGeneAnnotation(HeatmapItemAnnotation):
-    """An `ExpHeatmap` heatmap gene (row) annotation."""
+    """An `ExpHeatmap` gene (row) annotation."""
 
     # TODO: docstrings, __str__, __repr__, ...
 
@@ -73,7 +73,7 @@ class HeatmapGeneAnnotation(HeatmapItemAnnotation):
 
 
 class HeatmapSampleAnnotation(HeatmapItemAnnotation):
-    """An `ExpHeatmap` heatmap sample (column) annotation."""
+    """An `ExpHeatmap` sample (column) annotation."""
 
     # TODO: docstrings, __str__, __repr__, ...
 
@@ -91,7 +91,7 @@ class HeatmapSampleAnnotation(HeatmapItemAnnotation):
 
 
 class HeatmapBlockAnnotation(object):
-    """An `ExpHeatmap` heatmap block annotation."""
+    """A `SampleCorrelationHeatmap` block annotation."""
 
     # TODO: docstrings, __str__, __repr__, ...
 
