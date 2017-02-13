@@ -61,55 +61,6 @@ def try_open_gzip(path):
     return fh
 
 
-def http_download(url, download_file,
-                  overwrite=False, raise_http_exception=True):
-    """Download a file over HTTP(S).
-    
-    See: http://stackoverflow.com/a/13137873/5651021 
-
-    Parameters
-    ----------
-    url : str
-        The URL.
-    download_file : str
-        The path of the local file to write to.
-    overwrite : bool, optional
-        Whether to overwrite an existing file (if present). [False]
-    raise_http_exception : bool, optional
-        Whether to raise an exception if there is an HTTP error. [True]
-
-    Raises
-    ------
-    OSError
-        If the file already exists and overwrite is set to False.
-    `requests.HTTPError`
-        If an HTTP error occurred and `raise_http_exception` was set to `True`.
-    """
-
-    assert isinstance(url, (str, _oldstr))
-    assert isinstance(download_file, (str, _oldstr))
-    assert isinstance(overwrite, bool)
-    assert isinstance(raise_http_exception, bool)
-
-    u = urlparse.urlparse(url)
-    assert u.scheme in ['http', 'https']
-
-    if os.path.isfile(download_file) and not overwrite:
-        raise OSError('File "%s" already exists!' % download_file)
-    
-    r = requests.get(url, stream=True)
-    if raise_http_exception:
-        r.raise_for_status()
-    if r.status_code == 200:
-        with open(download_file, 'wb') as fh:
-            r.raw.decode_content = True
-            shutil.copyfileobj(r.raw, fh)
-        logger.info('Downloaded file "%s".', download_file)
-    else:
-        logger.error('Failed to download url "%s": HTTP status %d/%s',
-                     url, r.status_code, r.reason)
-
-
 @contextlib.contextmanager
 def smart_open_read(path=None, mode='rb', encoding=None, try_gzip=False):
     """Open a file for reading or return ``stdin``.
@@ -395,55 +346,6 @@ def get_file_checksum(path):
     file_checksum = int(stdoutstr.split(' ')[0])
     logger.debug('Checksum of file "%s": %d', path, file_checksum)
     return file_checksum
-
-
-def ftp_download(url, download_file, overwrite=False,
-                 user_name='anonymous', password='', blocksize=4194304):
-    """Downloads a file from an FTP server.
-
-    Parameters
-    ----------
-    url : str
-        The URL of the file to download.
-    download_file : str
-        The path of the local file to download to. 
-    overwrite : bool, optional
-        Whether to overwrite existing files. [False]
-    user_name : str, optional
-        The user name to use for logging into the FTP server. ['anonymous']
-    password : str, optional
-        The password to use for logging into the FTP server. ['']
-    blocksize : int, optional
-        The blocksize (in bytes) to use for downloading. [4194304]
-    """
-    assert isinstance(url, (str, _oldstr))
-    assert isinstance(download_file, (str, _oldstr))
-    assert isinstance(user_name, (str, _oldstr))
-    assert isinstance(password, (str, _oldstr))
-
-    u = urlparse.urlparse(url)
-    assert u.scheme == 'ftp'
-
-    if os.path.isfile(download_file) and not overwrite:
-        raise OSError('File "%s" already exists.' % download_file)
-
-    ftp_server = u.netloc
-    ftp_path = u.path
-
-    if six.PY3:
-        with ftplib.FTP(ftp_server) as ftp:
-            ftp.login(user_name, password)
-            with open(download_file, 'wb') as ofh:
-                ftp.retrbinary('RETR %s' % ftp_path,
-                               callback=ofh.write, blocksize=blocksize)
-    else:
-        ftp = ftplib.FTP(ftp_server)
-        ftp.login(user_name, password)
-        with open(download_file, 'wb') as ofh:
-            ftp.retrbinary('RETR %s' % ftp_path,
-                           callback=ofh.write, blocksize=blocksize)
-        ftp.close()
-    logger.info('Downloaded file "%s" over FTP.', download_file)
 
 
 def test_file_checksum(path, checksum):

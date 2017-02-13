@@ -26,14 +26,14 @@ import numpy as np
 from genometools.expression import ExpMatrix, ExpProfile, ExpGenome
 
 
-def test_basic(my_matrix, my_genes, my_samples, my_X):
+def test_basic(my_matrix, my_gene_names, my_samples, my_X):
     assert isinstance(my_matrix, ExpMatrix)
     assert isinstance(repr(my_matrix), str)
     assert isinstance(str(my_matrix), str)
     assert isinstance(text(my_matrix), text)
     assert isinstance(my_matrix.hash, text)
 
-    assert np.array_equal(my_matrix.genes.values, my_genes)
+    assert np.array_equal(my_matrix.genes.values, my_gene_names)
     assert np.array_equal(my_matrix.samples.values, my_samples)
     assert np.array_equal(my_matrix.X, my_X)
 
@@ -63,6 +63,7 @@ def test_transformation(my_matrix):
     other.standardize_genes(inplace=True)
     assert np.allclose(other.std(axis=1, ddof=1), 1.0)
 
+
 def test_indices(my_matrix):
     assert my_matrix.genes.name == 'Genes'
     assert my_matrix.samples.name == 'Samples'
@@ -70,6 +71,8 @@ def test_indices(my_matrix):
 
 def test_filter_genome(my_matrix, my_genome):
     other = my_matrix.filter_against_genome(my_genome)
+    print(set(my_genome.gene_names))
+    print(other.genes)
     assert other is not my_matrix
     assert other == my_matrix
 
@@ -85,10 +88,9 @@ def test_genome(my_matrix, my_genes):
     assert len(genome) == len(my_genes)
 
 
-def test_copy(my_matrix, my_genes, my_samples, my_X):
+def test_copy(my_matrix):
     other = my_matrix.copy()
     assert other is not my_matrix
-    assert other == my_matrix
     assert other == my_matrix
 
 

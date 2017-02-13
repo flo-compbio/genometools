@@ -51,7 +51,7 @@ def my_v():
 @pytest.fixture
 def my_ranked_genes(my_genome, my_v):
     # This is where we map the genes names.
-    return my_genome.genes[:my_v.size]
+    return my_genome.gene_names[:my_v.size]
 
 
 @pytest.fixture

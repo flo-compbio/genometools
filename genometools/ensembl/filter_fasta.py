@@ -59,7 +59,7 @@ def get_argument_parser():
 
     parser.add_argument(
         '-s', '--species', type=str,
-        choices=sorted(ensembl.species_chrompat.keys()),
+        choices=sorted(ensembl.SPECIES_CHROMPAT.keys()),
         default='human', help=textwrap.dedent("""\
             Species for which to extract genes. (This parameter is ignored
             if ``--chromosome-pattern`` is specified.)""")
@@ -112,7 +112,7 @@ def main(args=None):
 
     # generate regular expression object from the chromosome pattern
     if chrom_pat is None:
-        chrom_pat = ensembl.species_chrompat[species]
+        chrom_pat = ensembl.SPECIES_CHROMPAT[species]
     chrom_re = re.compile(chrom_pat)
 
     # filter the FASTA file

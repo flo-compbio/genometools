@@ -36,60 +36,67 @@ class ExpGene(object):
 
     Parameters
     ----------
-    name: str
+    name : str
         See :attr:`name` attribute.
-    chromosomes: list or tuple of str, optional
-        See :attr:`chromosomes` attribute. [empty list]
-    ensembl_ids: list or tuple of str, optional
-        See :attr:`ensembl_ids` attribute. [empty list]
+    chromosome : str or None, optional
+        See :attr:`chromosome` attribute. [None]
+    position : int or None, optional
+        See :attr:`position` attribute. [None]
+    length : int or None, optional
+        See :attr:`length` attribute. [None] 
+    ensembl_id : str or None, optional
+        See :attr:`ensembl_id` attribute. [None]
 
     Attributes
     ----------
-    name: str
+    name : str
         The gene name (use the official gene symbol, if available).
-    chromosomes: list of str
-        The chromosome(s) that the gene is located on.
-    ensembl_ids: list of str
-        The Ensembl ID(s) of the gene.
-
-    Notes
-    -----
-    The reason :attr:`chromosomes` and :attr:`ensembl_ids` are lists / tuples
-    is mainly to accommodate genes located on the pseudoautosomal region of
-    the X/Y chromosomes. Although these genes have separate Ensembl IDs
-    for their X and Y "versions", in gene expression analyses they should be
-    treated as the same gene. This class therefore represents a more "abstract"
-    idea of a gene, not its physical manifestation in the genome.
+    chromosome : str or None
+        The chromosome that the gene is located on.
+    position : int or None
+        The chromosomal location (base-pair index) of the gene.
+        The sign of the this attribute indicates whether the gene is on the
+        plus or minus strand. Base pair indices are 0-based.
+    ensembl_id : list of str
+        The Ensembl ID of the gene.
     """
-    def __init__(self, name, chromosomes=None, ensembl_ids=None):
-
-        if chromosomes is None:
-            chromosomes = []
-        if ensembl_ids is None:
-            ensembl_ids = []
+    def __init__(self, name,
+                 chromosome=None, position=None, length=None,
+                 ensembl_id=None, source=None, type_=None):
 
         # type checks
         assert isinstance(name, (str, _oldstr))
-        assert isinstance(chromosomes, (list, tuple))
-        for chrom in chromosomes:
-            assert isinstance(chrom, (str, _oldstr))
-        assert isinstance(ensembl_ids, (list, tuple))
-        for id_ in ensembl_ids:
-            assert isinstance(id_, (str, _oldstr))
+        if chromosome is not None:
+            assert isinstance(chromosome, (str, _oldstr))
+        if position is not None:
+            assert isinstance(position, int)
+        if length is not None:
+            assert isinstance(length, int)
+        if ensembl_id is not None:
+            assert isinstance(ensembl_id, (str, _oldstr))
+        if source is not None:
+            assert isinstance(source, (str, _oldstr))
+        if type_ is not None:
+            assert isinstance(type_, (str, _oldstr))
 
         self._name = name
-        self._chromosomes = tuple(chromosomes)
-        self._ensembl_ids = tuple(ensembl_ids)
+        self._chromosome = chromosome
+        self._position = position
+        self._length = length
+        self._ensembl_id = ensembl_id
+        self.source = source
+        self.type_ = type_
 
     def __repr__(self):
-        return '<%s instance (name="%s", chromosomes=%s, ensembl_ids=%s)>' \
-               % (self.__class__.__name__, self._name,
-                  repr(self._chromosomes), repr(self._ensembl_ids))
+        return '<%s "%s">' \
+               % (self.__class__.__name__, self._name)
 
     def __str__(self):
-        return '<%s instance "%s" (Chromosome(s): %s, EnsemblID(s): %s)>' \
+        return '<%s "%s" (Chromosome: %s, Position: %s, Length: %s, ' \
+               'Ensembl ID: %s, Source: %s, Type: %s)>' \
                % (self.__class__.__name__, self._name,
-                  str(self._chromosomes), str(self._ensembl_ids))
+                  self._chromosome, str(self._position), str(self._length),
+                  self._ensembl_id, self.source, self.type_)
 
     def __eq__(self, other):
         if self is other:
@@ -102,6 +109,17 @@ class ExpGene(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def __lt__(self, other):
+        if self is other:
+            return False
+        if type(self) is type(other):
+            if self._name < other._name:
+                return True
+            else:
+                return False
+        else:
+            return NotImplemented
+
     def __hash__(self):
         return hash(repr(self))
 
@@ -110,42 +128,64 @@ class ExpGene(object):
         return self._name
 
     @property
-    def chromosomes(self):
-        return list(self._chromosomes)
+    def chromosome(self):
+        return self._chromosome
+    
+    @property
+    def position(self):
+        return self._position
 
     @property
-    def ensembl_ids(self):
-        return list(self._ensembl_ids)
+    def length(self):
+        return self._length
 
-    def to_list(self):
-        return [self._name, ','.join(self._chromosomes),
-                ','.join(self._ensembl_ids)]
+    @property
+    def ensembl_id(self):
+        return self._ensembl_id
+
+    #def to_list(self):
+    #    return [self._name, ','.join(self._chromosomes),
+    #            ','.join(self._ensembl_ids)]
+
+    def to_dict(self):
+        return {
+            'name': self.name,
+            'chromosome': self.chromosome or '',
+            'position': self.position or '',
+            'length': self.length or '',
+            'ensembl_id': self.ensembl_id or '',
+            'source': self.source or '',
+            'type': self.type_ or '',
+        }
 
     @classmethod
-    def from_list(cls, data):
-        """Generate an ExpGene object from a list of strings.
+    def from_dict(cls, data):
+        """Generate an `ExpGene` gene object from a dictionary.
 
         Parameters
         ----------
-        data: list or tuple of str
-            A list of strings representing gene name, chromosome(s), and
-            Ensembl ID(s), respectively. See also :meth:`to_list`.
+        data : dict
+            A dictionary with keys corresponding to attribute names.
+            Attributes with missing keys will be assigned `None`.
+            See also :meth:`to_list`.
 
         Returns
         -------
         `ExpGene`
+            The gene.
         """
-        assert isinstance(data, (list, tuple))
-        assert len(data) == 3
-        for l in data:
-            assert isinstance(l, str)
+        assert isinstance(data, dict)
+        assert 'name' in data  # required
 
-        chrom = None
-        if data[1]:
-            chrom = data[1].split(',')
+        # make a copy
+        data = dict(data)
 
-        ens = None
-        if data[2]:
-            ens = data[2].split(',')
+        for attr in ['chromosome', 'ensembl_id', 'position', 'length',
+                     'source', 'type']:
+            if attr in data and data[attr] == '':
+                data[attr] = None            
 
-        return cls(data[0], chromosomes=chrom, ensembl_ids=ens)
+        data['type_'] = data['type']
+        del data['type']
+
+        return cls(**data)

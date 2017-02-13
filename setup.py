@@ -26,7 +26,7 @@ from os import path
 
 root = 'genometools'
 name = 'genometools'
-version = '0.2.3'
+version = '0.2.4'
 
 here = path.abspath(path.dirname(__file__))
 description = 'GenomeTools: A Python Framework for Analyzing Genomic Data.'
@@ -40,7 +40,7 @@ install_requires = [
     'ftputil>=3.3.1, <4',
     'numpy>=1.8, <2',
     'pandas>=0.18, <1',
-    'xlmhg>=2.4.3, <3',
+    'xlmhg>=2.4.4, <3',
 ]
 
 # do not require installation if built by ReadTheDocs
@@ -50,7 +50,7 @@ if 'READTHEDOCS' not in os.environ or \
     install_requires.extend([
         #'six>=1.10.0, <2',
         'scipy>=0.14, <1',
-        'plotly>=1.9.6, <2',
+        'plotly>=1.9.6, <3',
     ])
 else:
     install_requires.extend([

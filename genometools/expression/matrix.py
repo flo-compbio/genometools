@@ -369,7 +369,8 @@ class ExpMatrix(pd.DataFrame):
         """
         assert isinstance(genome, ExpGenome)
 
-        return self.drop(set(self.genes) - genome.all_genes, inplace=inplace)
+        return self.drop(set(self.genes) - set(genome.gene_names),
+                         inplace=inplace)
 
     @property
     def sample_correlations(self):

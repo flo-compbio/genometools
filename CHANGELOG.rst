@@ -47,3 +47,13 @@ Version 0.2.3 (2016-12-22)
 - added docstrings in `expression` subpackage
 
 - minor fixes
+
+Version 0.2.4 (2017-02-13)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- rewrote `ensembl.get_protein_coding_genes()` function to use pandas for
+  parsing data, store more information about the genes (including position and
+  orientation), and add gene sorting feature
+- added `ensembl.gdc` subpackage, which includes routines for querying the
+  RESTful API of the NCI's Genomic Data Commons (https:///gdc.cancer.gov)
+- minor fixes  

@@ -89,7 +89,7 @@ def main(args=None):
             quiet = quiet, verbose = verbose)
 
     if chrom_pat is None:
-        chrom_pat = re.compile(ensembl.species_chrompat[species])
+        chrom_pat = re.compile(ensembl.SPECIES_CHROMPAT[species])
     else:
         chrom_pat = re.compile(chrom_pat)
 

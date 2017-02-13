@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 
 # Copyright (c) 2015 Florian Wagner
 #
@@ -31,6 +31,9 @@ from genometools import misc
 from genometools import ensembl
 from genometools.ensembl.util import get_gtf_argument_parser
 from genometools.gtf import parse_attributes
+
+logger = logging.getLogger(__name__)
+
 
 def get_argument_parser():
     """Function to obtain the argument parser.
@@ -74,7 +77,7 @@ def main(args=None):
             quiet = quiet, verbose = verbose)
 
     if chrom_pat is None:
-        chrom_pat = re.compile(ensembl.species_chrompat[species])
+        chrom_pat = re.compile(ensembl.SPECIES_CHROMPAT[species])
     else:
         chrom_pat = re.compile(chrom_pat)
 

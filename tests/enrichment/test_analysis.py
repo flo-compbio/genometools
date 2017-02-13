@@ -43,8 +43,8 @@ def test_basic(my_analysis, my_genome):
     assert isinstance(str(my_analysis), str)
     assert isinstance(text(my_analysis), text)
 
-    assert isinstance(my_analysis.genes, list)
-    assert len(my_analysis.genes) == len(my_genome)
+    assert my_analysis.genome is not my_genome
+    assert len(my_analysis.genome) == len(my_genome)
 
 
 def test_rank_based_analysis(my_analysis, my_ranked_genes,
