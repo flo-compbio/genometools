@@ -48,7 +48,7 @@ Version 0.2.3 (2016-12-22)
 
 - minor fixes
 
-Version 0.2.4 (2017-02-13)
+Version 0.2.4 (2017-02-14)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - rewrote `ensembl.get_protein_coding_genes()` function to use pandas for
