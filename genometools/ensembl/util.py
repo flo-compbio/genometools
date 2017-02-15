@@ -28,7 +28,6 @@ import re
 from collections import OrderedDict
 
 from genometools import cli
-from genometools import ensembl
 
 logger = logging.getLogger(__name__)
 
