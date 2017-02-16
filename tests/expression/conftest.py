@@ -24,26 +24,26 @@ from genometools.expression import ExpGene, ExpGenome, ExpMatrix
 
 
 @pytest.fixture
-def my_genes():
+def my_gene_names():
     return ['d', 'c', 'b', 'a']
 
 
 @pytest.fixture
-def not_my_gene():
+def my_unknown_gene_name():
     return 'X'
 
 
 @pytest.fixture
-def my_exp_genes(my_genes):
-    chromosomes = [['1'], ['X', 'Y'], None, None]
-    ensembl_ids = [None, ['ENSG0000001'], ['ENSG0000002'], None]
-    return [ExpGene(g, chromosomes=c, ensembl_ids=e)
-            for g, c, e in zip(my_genes, chromosomes, ensembl_ids)]
+def my_genes(my_gene_names):
+    chromosomes = ['1', 'X', None, None]
+    ensembl_ids = [None, 'ENSG0000001', 'ENSG0000002', None]
+    return [ExpGene(g, chromosome=c, ensembl_id=e)
+            for g, c, e in zip(my_gene_names, chromosomes, ensembl_ids)]
 
 
 @pytest.fixture
-def my_genome(my_exp_genes):
-    return ExpGenome(my_exp_genes)
+def my_genome(my_genes):
+    return ExpGenome(my_genes)
 
 
 @pytest.fixture
@@ -67,9 +67,9 @@ def my_X(my_x):
 
 
 @pytest.fixture
-def my_matrix(my_genes, my_samples, my_X):
-    genes = ['a', 'b', 'c', 'd']
-    samples = ['s1', 's2', 's3']
+def my_matrix(my_gene_names, my_samples, my_X):
+    #genes = ['a', 'b', 'c', 'd']
+    #samples = ['s1', 's2', 's3']
     # X = np.arange(12, dtype=np.float64).reshape(4, 3)
-    matrix = ExpMatrix(genes=my_genes, samples=my_samples, X=my_X)
+    matrix = ExpMatrix(genes=my_gene_names, samples=my_samples, X=my_X)
     return matrix

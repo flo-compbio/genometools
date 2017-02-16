@@ -30,50 +30,54 @@ from genometools.expression import ExpGene, ExpGenome
 
 logger = get_logger(__name__, verbose=True)
 
-def test_init(my_genome, my_exp_genes):
+
+def test_init(my_genome, my_genes):
     assert isinstance(my_genome, ExpGenome)
     assert isinstance(repr(my_genome), str)
     assert isinstance(str(my_genome), str)
     assert isinstance(text(my_genome), text)
     assert isinstance(my_genome.hash, text)
-    assert len(my_genome) == len(my_exp_genes)
+    assert len(my_genome) == len(my_genes)
     assert isinstance(my_genome, Iterable)
 
-    genes = [eg.name for eg in my_exp_genes]
-    assert my_genome.genes == genes
-    assert my_genome.exp_genes == my_exp_genes
+    assert my_genome.genes == my_genes
 
     other = deepcopy(my_genome)
     assert other is not my_genome
     assert other == my_genome
 
-def test_from_names(my_genes):
-    genome = ExpGenome.from_gene_names(my_genes)
-    assert len(genome) == len(my_genes)
-    for i, (g, eg) in enumerate(zip(my_genes, genome)):
-        assert eg.name == g
-        assert eg.chromosomes == []
-        assert eg.ensembl_ids == []
 
-def test_access(my_genome, my_exp_genes, not_my_gene):
-    for i, eg in enumerate(my_exp_genes):
-        assert my_genome.get_by_index(i) == eg
-        assert my_genome.get_by_name(eg.name) == eg
-        assert my_genome[i] == eg
-        assert my_genome[eg.name] == eg
-        assert my_genome.index(eg.name) == i
-        assert eg in my_genome
+def test_from_names(my_gene_names):
+    genome = ExpGenome.from_gene_names(my_gene_names)
+    assert len(genome) == len(my_gene_names)
+    for i, (n, g) in enumerate(zip(my_gene_names, genome)):
+        assert g.name == n
+        assert g.chromosome is None
+        assert g.position is None
+        assert g.length is None
+        assert g.ensembl_id is None
 
-    for i, eg in enumerate(my_genome):
-        assert eg == my_exp_genes[i]
+def test_access(my_genome, my_genes, my_unknown_gene_name):
+    for i, g in enumerate(my_genes):
+        assert my_genome[i] is g
+        assert my_genome[g.name] is g
+        assert my_genome.index(g) == i
+        assert g in my_genome
+
+    for i, g in enumerate(my_genome):
+        assert g == my_genes[i]
 
     with pytest.raises(ValueError):
         # test invalid gene name
-        my_genome.get_by_name(not_my_gene)
+        my_genome[my_unknown_gene_name]
 
     with pytest.raises(ValueError):
         # test invalid gene index
-        my_genome.get_by_index(len(my_exp_genes))
+        my_genome[len(my_genes)]
+
+    with pytest.raises(ValueError):
+        # test getting index of a gene that does not exist
+        my_genome.index(my_unknown_gene_name)
 
 
 def test_tsv(tmpdir, my_genome):

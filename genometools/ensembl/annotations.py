@@ -20,16 +20,94 @@ _oldstr = str
 from builtins import *
 
 import os
+import ftplib
 import time
 import re
 import logging
+from collections import Iterable, OrderedDict
 
 import pandas as pd
     
-from genometools import misc
-from genometools import gtf
+# from .. import misc
+from .. import gtf
+from . import util
 
 logger = logging.getLogger(__name__)
+
+
+def get_annotation_urls_and_checksums(species, release=None, ftp=None):
+    """Get FTP URLs and checksums for Ensembl genome annotations.
+    
+    Parameters
+    ----------
+    species : str or list of str
+        The species or list of species for which to get genome annotations
+        (e.g., "Homo_sapiens").
+    release : int, optional
+        The release number to look up. If `None`, use latest release. [None]
+    ftp : ftplib.FTP, optional
+        The FTP connection to use. If `None`, the function will open and close
+        its own connection using user "anonymous".
+    """
+    ### type checks
+    assert isinstance(species, (str, _oldstr)) or isinstance(species, Iterable)
+    if release is not None:
+        assert isinstance(release, int)
+    if ftp is not None:
+        assert isinstance(ftp, ftplib.FTP)
+
+    ### open FTP connection if necessary
+    close_connection = False
+    ftp_server = 'ftp.ensembl.org'
+    ftp_user = 'anonymous'
+    if ftp is None:
+        ftp = ftplib.FTP(ftp_server)
+        ftp.login(ftp_user)
+        close_connection = True    
+
+    ### determine release if necessary
+    if release is None:
+        # use latest release
+        release = util.get_latest_release(ftp=ftp)
+
+    species_data = OrderedDict()
+    if isinstance(species, (str, _oldstr)):
+        species_list = [species]
+    else:
+        species_list = species
+    for spec in species_list:
+
+        # get the GTF file URL
+        # => since the naming scheme isn't consistent across species,
+        #    we're using a flexible scheme here to find the right file
+        species_dir = '/pub/release-%d/gtf/%s' % (release, spec.lower())
+        data = []
+        ftp.dir(species_dir, data.append)
+        gtf_file = []
+        for d in data:
+            i = d.rindex(' ')
+            fn = d[(i + 1):]
+            if fn.endswith('.%d.gtf.gz' % release):
+                gtf_file.append(fn)
+        assert len(gtf_file) == 1
+        gtf_file = gtf_file[0]
+        logger.debug('GTF file: %s', gtf_file)
+
+        ### get the checksum for the GTF file
+        checksum_url = '/'.join([species_dir, 'CHECKSUMS'])
+        file_checksums = util.get_file_checksums(checksum_url, ftp=ftp)
+        gtf_checksum = file_checksums[gtf_file]
+        logger.debug('GTF file checksum: %d', gtf_checksum)
+
+        gtf_url = 'ftp://%s%s/%s' %(ftp_server, species_dir, gtf_file)
+
+        species_data[spec] = (gtf_url, gtf_checksum)
+
+    # close FTP connection, if we opened it
+    if close_connection:
+        ftp.close()
+
+    return species_data
 
 
 def get_protein_coding_genes(
@@ -38,7 +116,7 @@ def get_protein_coding_genes(
         include_polymorphic_pseudogenes=True,
         only_manual=False,
         remove_duplicates=True,
-        fancy_sorting=True):
+        sort_by='name'):
     r"""Get list of all protein-coding genes based on Ensembl GTF file.
     
     Parameters
@@ -55,9 +133,18 @@ def get_protein_coding_genes(
     remove_duplicates : bool, optional
         Whether to remove duplicate annotations, i.e. those with different
         Ensembl IDs for the same gene. [True]
-    fancy_sorting : bool, optional
-        Whether to sort chromosomes numerically, with "X", "Y", and "MT" at the
-        end. 
+    sort_by : str, optional
+        How to sort the genes. One of:
+          - 'name': Genes are ordered alphabetically by their name
+          - 'position': Genes are sorted by their position in the genome.abs
+                        Genes are first sorted by chromosome, then by their
+                        starting base pair position on the chromosome.
+          - 'position_fancy': Like 'positional', but attempts to sort the
+                              chromosomes in a more logical order than strictly
+                              alphabetically. This currently works for human
+                              and mouse genomes.abs
+          - 'none': The order from the GTF file is retained. 
+        Default: 'name'  
 
     Returns
     -------
@@ -132,9 +219,9 @@ def get_protein_coding_genes(
                          header=None, comment='#', dtype={0: str},
                          chunksize=chunksize)
     data = []
-    header = ['Gene', 'Ensembl_ID',
-              'Chromosome', 'Position', 'Length',
-              'Source', 'Type']
+    header = ['name', 'ensembl_id',
+              'chromosome', 'position', 'length',
+              'source', 'type']
     
     valid_biotypes = set(['protein_coding'])
     if include_polymorphic_pseudogenes:
@@ -142,6 +229,8 @@ def get_protein_coding_genes(
         
     valid_sources = set(['ensembl_havana', 'havana', 'insdc'])
     if not only_manual:
+        # we also accept annotations with source "ensembl", which are the
+        # product of an autmated annotation pipeline
         valid_sources.add('ensembl')
         
     excluded_chromosomes = set()
@@ -189,28 +278,32 @@ def get_protein_coding_genes(
     df = pd.DataFrame(columns=header, data=data)
     
     if not only_manual:
-        # keep only annotations with source "ensembl"
+        # make sure we only keep annotations with source "ensembl"
         # if no manual annotations are available
-        sel = df['Source'] == 'ensembl'
-        redundant_ensembl_genes = set(df.loc[sel, 'Gene'].values) & \
-                set(df.loc[~sel, 'Gene'].values)
-        sel = sel & df['Gene'].isin(redundant_ensembl_genes)
+        sel = df['source'] == 'ensembl'
+        redundant_ensembl_genes = set(df.loc[sel, 'name'].values) & \
+                set(df.loc[~sel, 'name'].values)
+        sel = sel & df['name'].isin(redundant_ensembl_genes)
         num_genes_before = df.shape[0]
         df = df.loc[~sel]
         num_genes_after = df.shape[0]
         logger.info('Removed %d gene annotations with source "ensembl" that '
                     'also had manual annotations.',
                     num_genes_before-num_genes_after)
+    
     if remove_duplicates:
         # remove duplicate annotations (two or more Ensembl IDs for the same
         # gene)
         num_genes_before = df.shape[0]
 
-        # sort by signed position value
-        df.sort_values('Position', kind='mergesort', inplace=True)
+        # sort by signed position value,
+        # in order to make sure we keep the most "upstream" annotation in
+        # the next step
+        df.sort_values('position', kind='mergesort', inplace=True)
 
         # remove duplicates by keeping the first occurrence
-        df.drop_duplicates(['Chromosome', 'Gene'], inplace=True)
+        #df.drop_duplicates(['chromosome', 'name'], inplace=True)
+        df.drop_duplicates('name', inplace=True)
 
         # restore original order using the numeric index
         df.sort_index(inplace=True)
@@ -219,30 +312,38 @@ def get_protein_coding_genes(
         logger.info('Removed %d duplicate gene entries',
                     num_genes_before-num_genes_after)
 
-    # sort normally (first by chromsome, then by absolute position)
-    df_sort = pd.concat([df['Chromosome'], df['Position'].abs()], axis=1)
-    df_sort = df_sort.sort_values(['Chromosome', 'Position'], kind='mergesort')
-    df = df.loc[df_sort.index]
+    if sort_by == 'name':
+        # sort alphabetically by gene name
+        df.sort_values(['name'], kind='mergesort', inplace=True)
 
-    if fancy_sorting:
-        # Perform "fancy sorting" of genes. Chromosomes with numbers (1-22)
-        # are ordered numerically, and followed by the X, Y, and MT
-        # chromosomes.
-        def transform_chrom(chrom):
-            try:
-                c = int(chrom)
-            except:
-                if chrom == 'MT':
-                    return '_MT'
+    elif sort_by in ['position', 'position_fancy']:
+        # sort first by chromsome, then by absolute position
+        df_sort = pd.concat([df['chromosome'], df['position'].abs()], axis=1)
+        df_sort = df_sort.sort_values(['chromosome', 'position'],
+                                      kind='mergesort')
+        df = df.loc[df_sort.index]
+
+        if sort_by == 'position_fancy':
+            # Perform "fancy" positional sorting. Numbered chromosomes
+            # are ordered numerically, and followed by the X, Y, and MT
+            # chromosomes.
+            def transform_chrom(chrom):
+                """Helper function to obtain specific sort order."""
+                try:
+                    c = int(chrom)
+                except:
+                    if chrom == 'MT':
+                        return '_MT'  # sort to the end
+                    else:
+                        return chrom
                 else:
-                    return chrom
-            else:
-                return '%02d' % c
+                    # make sure numbered chromosomes are sorted numerically
+                    return '%02d' % c
 
-        chrom_for_sorting = df['Chromosome'].apply(transform_chrom)
-        a = chrom_for_sorting.argsort(kind='mergesort')
-        df = df.iloc[a]
-        logger.info('Performed fancy sorting of chromosomes.')
+            chrom_for_sorting = df['chromosome'].apply(transform_chrom)
+            a = chrom_for_sorting.argsort(kind='mergesort')
+            df = df.iloc[a]
+            logger.info('Performed fancy sorting of chromosomes.')
     
     logger.info('Read %d lines (in %d chunks).', num_lines, num_chunks)
     logger.info('Found %d valid protein-coding gene entries.', c)
@@ -250,7 +351,7 @@ def get_protein_coding_genes(
     logger.info('Parsing time: %.1f s', t1-t0)
     
     # additional statistics
-    all_chromosomes = list(df['Chromosome'].unique())
+    all_chromosomes = list(df['chromosome'].unique())
     logger.info('Valid chromosomes (%d): %s',
                 len(all_chromosomes),
                 ', '.join(all_chromosomes))
@@ -259,11 +360,11 @@ def get_protein_coding_genes(
                 ', '.join(sorted(excluded_chromosomes)))
     
     logger.info('Sources:')
-    for i, c in df['Source'].value_counts().iteritems():
+    for i, c in df['source'].value_counts().iteritems():
         logger.info('\t%s: %d', i, c)
         
     logger.info('Gene types:')
-    for i, c in df['Type'].value_counts().iteritems():
+    for i, c in df['type'].value_counts().iteritems():
         logger.info('\t%s: %d', i, c)
     
     return df

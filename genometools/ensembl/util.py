@@ -3,82 +3,127 @@
 # This file is part of GenomeTools.
 #
 # GenomeTools is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License, Version 3,
+# it under the terms of the GNU Affero General Public License, Version 3,
 # as published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# GNU Affero General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Utility functions for Ensembl package."""
+"""Utility functions for the Ensembl package."""
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
+_oldstr = str
 from builtins import *
 
+import logging
 import textwrap
+import ftplib
+import re
+from collections import OrderedDict
 
 from genometools import cli
-from genometools import ensembl
 
-def get_gtf_argument_parser(desc, default_field_name='gene'):
-    """Return an argument parser with basic options for reading GTF files.
+logger = logging.getLogger(__name__)
+
+
+def get_latest_release(ftp=None):
+    """Use files on the Ensembl FTP server to determine the latest release.
 
     Parameters
     ----------
-    desc: str
-        Description of the ArgumentParser
-    default_field_name: str, optional
-        Name of field in GTF file to look for.
+    ftp : ftplib.FTP, optional
+        FTP connection (with logged in user "anonymous").
 
     Returns
     -------
-    `argparse.ArgumentParser` object
-        The argument parser.
+    int
+        The version number of the latest release.
     """
-    parser = cli.get_argument_parser(desc=desc)
+    if ftp is not None:
+        assert isinstance(ftp, ftplib.FTP)
 
-    parser.add_argument(
-        '-a', '--annotation-file', default='-', type=str,
-        help=textwrap.dedent("""\
-            Path of Ensembl gene annotation file (in GTF format). The file
-            may be gzip'ed. If set to ``-``, read from ``stdin``.""")
-    )
+    close_connection = False
+    if ftp is None:
+        ftp_server = 'ftp.ensembl.org'
+        user = 'anonymous'
+        ftp = ftplib.FTP(ftp_server)
+        ftp.login(user)
+        close_connection = True
 
-    parser.add_argument(
-        '-o', '--output-file', required=True, type=str,
-        help=textwrap.dedent("""\
-            Path of output file. If set to ``-``, print to ``stdout``,
-            and redirect logging messages to ``stderr``.""")
-    )
+    data = []
+    ftp.dir('pub', data.append)
+    pat = re.compile(r'.* current_README -> release-(\d+)/README$')
+    latest = []
+    for d in data:
+        m = pat.match(d)
+        if m is not None:
+            latest.append(int(m.group(1)))
 
-    parser.add_argument(
-        '-s', '--species', type=str,
-        choices=sorted(ensembl.species_chrompat.keys()), default='human',
-        help=textwrap.dedent("""\
-            Species for which to extract genes. (This parameter is ignored
-            if ``--chromosome-pattern`` is specified.)""")
-    )
+    assert len(latest) == 1, len(latest)
+    latest = latest[0]
 
-    parser.add_argument(
-        '-c', '--chromosome-pattern', type=str, required=False,
-        default=None, help=textwrap.dedent("""\
-            Regular expression that chromosome names have to match.
-            If not specified, determine pattern based on
-            ``--species``.""")
-    )
+    if close_connection:
+        ftp.close()
 
-    parser.add_argument(
-        '-f', '--field-name', type=str, default=default_field_name,
-        help=textwrap.dedent("""\
-            Rows in the GTF file that do not contain this value
-            in the third column are ignored.""")
-    )
+    return latest
 
-    cli.add_reporting_args(parser)
 
-    return parser
+def get_file_checksums(url, ftp=None):
+    """Download and parse an Ensembl CHECKSUMS file and obtain checksums.
+
+    Parameters
+    ----------
+    url : str
+        The URL of the CHECKSUM file.
+    ftp : `ftplib.FTP` or `None`, optional
+        An FTP connection.
+    
+    Returns
+    -------
+    `collections.OrderedDict`
+        An ordered dictionary containing file names as keys and checksums as
+        values.
+
+    Notes
+    -----
+    The checksums contains in Ensembl CHECKSUM files are obtained with the
+    UNIX `sum` command.
+    """
+    assert isinstance(url, (str, _oldstr))
+    if ftp is not None:
+        assert isinstance(ftp, ftplib.FTP)
+
+    # open FTP connection if necessary
+    close_connection = False
+    ftp_server = 'ftp.ensembl.org'
+    ftp_user = 'anonymous'
+    if ftp is None:
+        ftp = ftplib.FTP(ftp_server)
+        ftp.login(ftp_user)
+        close_connection = True    
+    
+    # download and parse CHECKSUM file
+    data = []
+    ftp.retrbinary('RETR %s' % url, data.append)
+    data = ''.join(d.decode('utf-8') for d in data).split('\n')[:-1]
+    file_checksums = OrderedDict()
+    for d in data:
+        file_name = d[(d.rindex(' ') + 1):]
+        sum_ = int(d[:d.index(' ')])
+        file_checksums[file_name] = sum_
+    
+    logger.debug('Obtained checksums for %d files', len(file_checksums))
+
+    # close FTP connection if we opened it
+    if close_connection:
+        ftp.close()
+    
+    return file_checksums
+
+

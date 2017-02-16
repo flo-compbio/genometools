@@ -14,19 +14,19 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+"""Functions for downloading GO annotations"""
+
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 _oldstr = str
 from builtins import *
 
-"""Functions for downloading GO annotations"""
-
-import os
-import sys
-import ftplib
-import re
-import tempfile
-from collections import Iterable
+# import os
+# import sys
+# import ftplib
+# import re
+# import tempfile
+# from collections import Iterable
 from contextlib import closing
 
 import pandas as pd
@@ -41,13 +41,14 @@ logger = misc.get_logger()
 
 
 def get_current_ontology_date():
-        with closing(requests.get(
-                'http://geneontology.org/ontology/go-basic.obo',
-                stream=True)) as r:
-            for i, l in enumerate(r.iter_lines(decode_unicode=True)):
-                if i == 1:
-                    assert l.split(':')[0] == 'data-version'
-                    date = l.split('/')[-1]
-                    break
-        
-        return date
+    """Get the release date of the current Gene Ontolgo release."""
+    with closing(requests.get(
+            'http://geneontology.org/ontology/go-basic.obo',
+            stream=True)) as r:
+        for i, l in enumerate(r.iter_lines(decode_unicode=True)):
+            if i == 1:
+                assert l.split(':')[0] == 'data-version'
+                date = l.split('/')[-1]
+                break
+
+    return date

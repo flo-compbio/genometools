@@ -32,27 +32,27 @@ def my_label():
 
 
 @pytest.fixture
-def my_profile(my_genes, my_label, my_x):
-    prof = ExpProfile(genes=my_genes, label=my_label, x=my_x)
+def my_profile(my_gene_names, my_label, my_x):
+    prof = ExpProfile(genes=my_gene_names, label=my_label, x=my_x)
     return prof
 
 
 @pytest.fixture
-def my_profile2(my_genes, my_x):
-    prof= ExpProfile(genes=my_genes, label=None, x=my_x)
+def my_profile2(my_gene_names, my_x):
+    prof= ExpProfile(genes=my_gene_names, label=None, x=my_x)
     return prof
 
 
-def test_init(my_profile, my_profile2, my_genes, my_x):
+def test_init(my_profile, my_profile2, my_gene_names, my_x):
     for prof in [my_profile, my_profile2]:
         assert isinstance(prof, ExpProfile)
         assert isinstance(repr(prof), str)
         assert isinstance(str(prof), str)
         assert isinstance(text(prof), text)
         assert isinstance(prof.hash, text)
-        assert prof.p == len(my_genes)
+        assert prof.p == len(my_gene_names)
         assert np.array_equal(prof.x, my_x)
-        assert np.array_equal(prof.genes, my_genes)
+        assert np.array_equal(prof.genes, my_gene_names)
         assert prof.genes.name == 'Genes'
     assert my_profile != my_profile2
     assert my_profile.label != my_profile2.label
@@ -70,12 +70,12 @@ def test_tsv(tmpdir, my_profile):
     assert other == my_profile
     assert other.genes.name == 'Genes'
 
-def test_copy(my_profile, my_genes, my_x):
+def test_copy(my_profile, my_gene_names, my_x):
     prof = my_profile.copy()
     assert prof is not my_profile
     assert prof.hash == my_profile.hash
     assert prof == my_profile
-    prof.genes = my_genes
+    prof.genes = my_gene_names
     prof.x = my_x
     assert prof == my_profile
 

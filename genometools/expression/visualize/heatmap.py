@@ -317,6 +317,7 @@ class ExpHeatmap(object):
             xmx = self.matrix.n-0.5
             ymn = i-0.5
             ymx = i+0.5
+            #logger.debug('Transparency is %.1f', ann.transparency)
             data.append(
                 go.Scatter(
                     x=[xmn, xmx, xmx, xmn, xmn],
@@ -327,7 +328,8 @@ class ExpHeatmap(object):
                     line=dict(color=ann.color),
                     xaxis='x2',
                     yaxis='y2',
-                    opacity=0.5,
+                    #opacity=0.5,
+                    opacity=1-ann.transparency,
                 )
             )
             if ann.label is not None:
@@ -343,7 +345,8 @@ class ExpHeatmap(object):
                         yanchor='bottom',
                         showarrow=False,
                         bgcolor='white',
-                        opacity=1-ann.transparency,
+                        #opacity=1-ann.transparency,
+                        opacity=0.8,
                         borderpad=0,
                         #textangle=30,
                         font=dict(color=ann.color)

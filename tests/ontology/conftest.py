@@ -52,7 +52,7 @@ def my_data_pypath(tmpdir_factory):
 @pytest.fixture(scope='session')
 def my_genome_file(my_data_pypath):
     logger.info('Starting download of genome file...')
-    url = r'https://www.dropbox.com/s/qy70cxxwqzeys7o/protein_coding_genes_human_ensembl83.tsv?dl=1'
+    url = r'https://www.dropbox.com/s/x9ddxts047dporr/protein_coding_genes_human_ensembl83.tsv?dl=1'
     path = text(my_data_pypath.join('protein_coding_genes_human_ensembl83.tsv'))
     download_file(url, path)
     return path
@@ -67,7 +67,7 @@ def my_genome(my_genome_file):
 @pytest.fixture(scope='session')
 def my_gene_ontology_file(my_data_pypath):
     logger.info('Starting download of gene ontology file...')
-    url = r'https://www.dropbox.com/s/gub7flrqzi8uzwb/go-basic_2016-01-18.obo?dl=1'
+    url = r'https://www.dropbox.com/s/s7jnkm4n9lryo8i/go-basic_2016-01-18.obo?dl=1'
     path = text(my_data_pypath.join('go-basic_2016-01-18.obo'))
     download_file(url, path)
     return path

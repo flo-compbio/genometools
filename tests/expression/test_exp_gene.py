@@ -23,16 +23,16 @@ from builtins import str as text
 from genometools.expression import ExpGene
 
 
-def test_init(my_exp_genes):
-    for g in my_exp_genes:
+def test_init(my_genes):
+    for g in my_genes:
         assert isinstance(g, ExpGene)
         assert isinstance(repr(g), str)
         assert isinstance(str(g), str)
         assert isinstance(text(g), text)
 
 
-def test_list(my_exp_genes):
-    for g in my_exp_genes:
-        other = ExpGene.from_list(g.to_list())
+def test_list(my_genes):
+    for g in my_genes:
+        other = ExpGene.from_dict(g.to_dict())
         assert other is not g
         assert other == g

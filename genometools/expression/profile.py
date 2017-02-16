@@ -223,7 +223,7 @@ class ExpProfile(pd.Series):
         """
         assert isinstance(genome, ExpGenome)
 
-        filt = self.loc[self.index & genome.genes]
+        filt = self.loc[self.index & genome.gene_names]
         return filt
 
     @classmethod

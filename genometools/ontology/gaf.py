@@ -47,7 +47,7 @@ def parse_gaf(path_or_buffer, gene_ontology, genome=None,
         The GAF file.
     gene_ontology : `GeneOntology`
         The Gene Ontology.
-    genome : `genometools.expresison.ExpGenome`
+    genome : `expression.ExpGenome`
         The genome.
     db : str, optional
         Select only annotations with this "DB"" value.
@@ -104,7 +104,7 @@ def parse_gaf(path_or_buffer, gene_ontology, genome=None,
 
     # filter rows for genome
     if genome is not None:
-        all_genes = genome.all_genes
+        all_genes = set(genome.gene_names)
         sel = df.iloc[:, 2].isin(all_genes)
         logger.info(
             'Excluding %d / %d annotations (%.1f %%) with wrong genes.',

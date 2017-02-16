@@ -71,6 +71,12 @@ class GeneSetEnrichmentAnalysis(object):
     can be used to test a set of genes for gene set enrichment, and the
     function `get_rank_based_enrichment` can be used to test a ranked list of
     genes for gene set enrichment.
+
+    Note also that two conventions get mixed here: In the `GeneSet` class, a
+    gene simply corresponds to a string containing the gene name, whereas in
+    the `ExpGenome` class, a gene is an `ExpGene` object. Here, we represent
+    genes as simple strings, since the user can always obtain the
+    corresponding `ExpGene` object from the `ExpGenome` genome.
     """
 
     def __init__(self, genome, gene_set_coll):
@@ -104,10 +110,6 @@ class GeneSetEnrichmentAnalysis(object):
         return '<%s object (%d genes in _genome; %d gene sets)>' \
                % (self.__class__.__name__,
                   len(self._genome), len(self._gene_set_coll))
-
-    @property
-    def genes(self):
-        return self._genome.genes
 
     @property
     def genome(self):
