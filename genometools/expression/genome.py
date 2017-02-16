@@ -27,6 +27,7 @@ import hashlib
 from collections import OrderedDict, Iterable, Counter
 import copy
 
+import six
 import pandas as pd
 import unicodecsv as csv
 import numpy as np
@@ -262,6 +263,10 @@ class ExpGenome(object):
         df = pd.DataFrame.from_dict(data, orient='index')
 
         # write to tab-delimited text file
-        df.to_csv(path, sep='\t', index=False)
+        sep = '\t'
+        if six.PY2:
+            sep = sep.encode('UTF-8')
+
+        df.to_csv(path, sep=sep, index=False)
 
         logger.info('Wrote %d genes to file "%s".', len(self), path)

@@ -56,4 +56,4 @@ Version 0.2.4 (2017-02-14)
   orientation), and add gene sorting feature
 - added `ensembl.gdc` subpackage, which includes routines for querying the
   RESTful API of the NCI's Genomic Data Commons (https:///gdc.cancer.gov)
-- minor fixes  
+- minor fixes
