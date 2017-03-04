@@ -151,7 +151,7 @@ setup(
             'ensembl_filter_fasta.py = genometools.ensembl.filter_fasta:main',
 
             'ensembl_extract_protein_coding_genes.py = '
-                'genometools.ensembl.extract_protein_coding_genes:main',
+                'genometools.ensembl.cli.extract_protein_coding_genes:main',
 
             'ensembl_extract_protein_coding_gene_ids.py = '
                 'genometools.ensembl.extract_protein_coding_gene_ids:main',
