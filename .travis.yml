@@ -4,14 +4,14 @@ python:
 - '3.5'
 branches:
   only:
-    - master
-    - develop
+  - master
+  - develop
 before_install:
 - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-    wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
-    -O miniconda.sh; else
-    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
-    -O miniconda.sh; fi
+    wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+  else
+    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+  fi
 - bash miniconda.sh -b -p $HOME/miniconda
 - export PATH="$HOME/miniconda/bin:$PATH"
 - hash -r
@@ -35,9 +35,10 @@ notifications:
 deploy:
   provider: pypi
   user: flo-compbio
-  distributions: "sdist bdist_wheel"
+  distributions: sdist bdist_wheel
   password:
-    secure: "O+gZcJDBbaNTpRX4UjXqhVORxtDnbxi6+VFXQZYo9tpj9uc5U7ay19BcEuKerf+LUH0DF+GMxlxWhJclDXkuCg814C6ARqsVzlfrJZEThSAKLzWuGdZ4yCl5xk9ZujR1AJB3f9V0FjzQWSrJB1duvOmUKW80OzfcL34CHZNL0IDjBXGmo/d06kPDv9WSnNxRswGx23cSylAYeDizf9Gps0ms+nH3MiXmpKwEDm1Sih+yen0X7ThoxYsWMJjcn7PNtviyHS+PGOfYwSgheYV6p3t7UUdaFvOUBhwKZX58nZB/8bqvYFYTXb2W+ajhlg/gXRZeNODYwPq178lmTxiizTTbF+4DzVFJUHfsePQBbCiUx/V9AluDhaqhvjV21G/ezK9k2Bu/Blk+H883nag37OHCM3R6DPl3JWMLXHdZqzOXy6tnVLSJcpJeYWZH17jzp8lUetG6ZCf1bkCG0Dd38alpJjTfoYNGrDl025cQWjOdT+z4VjJ9ru5AOm2VhxtziGJgaTu6h4f9BhsLlPMiYVou7P6y6bhgqYjhHG819swsbnmdLTQyA9f69IEutmaStl3tY4ySElH2IyUPa+0I4ACJ6/R8z/5zYsfX+bOpAosr/M+UbEiDYumah+dn9dNg24b1U+zahMXHQ9HFnAJaCVUR5xoaTViRPyFliq+JX58="
+    secure: kd82WySn1oaYMDA8v1fMnebfJK4aLcqMKdYNgjFaJIyPYJKX7a4AKGbwxUA1UQeRDOQR4AWeYfJPnr/AV+DUmsiCkd5C9vomO0cQpqrR1qTe4p+1mB63qSM1gpeClZvUhRry1Tyz4HDct/mjThrgcLXZMT01I+5VPx46NPhWQrSY3b0UVS6XqxKD7DWa9AXPVbHpg0Ycrxe/0w4Lzlt5Cu9FS+8nMTu73ioc4c/VX7M3+WWTq90clGcdQm4vszdc2PTCNeDZweagUyKcrP4c19+1Re52zj933q8nx7UU7Z//88tlSL4flUcMM/7dep6/avRn39OWyEBvEUE+S0Gbc8mq0fj+98TnLbVUalCTA2M7Bv1EgbXQaABJXDH7MYD1JXjvUe1dIMT1eosldbmJfpCpcc/xdCa7l03OQygl1JgsD/DVrntb4fSEh+C0o6eTtUryrsvMinle5HwFra3KAf+3aXQGtGHtXW2V1U26N31Xky9YqCmwmg8G9UAzQqxciMWIZ72d2iHthQFB8bpn0oTz5hKz7uBZrLBBKvLTSF5n7QxdO1LcInY5zAy0zCeT2yw4d0QXcz7pDxVaoebTZ4sfq1bCfHpZfgOvZmxuo+ubC3y0/ZEcTJp5dXfHnrBJDwD6e2TKovy7iipczso9w8VPJ+HTabyDyQMiOTaCfj4=
+>>>>>>> develop
   on:
     branch: master
     repo: flo-compbio/genometools

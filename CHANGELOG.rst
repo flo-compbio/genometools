@@ -57,3 +57,9 @@ Version 0.2.4 (2017-02-14)
 - added `ensembl.gdc` subpackage, which includes routines for querying the
   RESTful API of the NCI's Genomic Data Commons (https:///gdc.cancer.gov)
 - minor fixes
+
+Version 0.2.5 (2017-03-04)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- fixed `ensembl_extract_protein_coding_genes.py` script
+- added `ncbi.taxonomy` submodule to parse taxonomy data from NCBI FTP server

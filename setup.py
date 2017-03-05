@@ -26,7 +26,7 @@ from os import path
 
 root = 'genometools'
 name = 'genometools'
-version = '0.2.4'
+version = '0.2.5'
 
 here = path.abspath(path.dirname(__file__))
 description = 'GenomeTools: A Python Framework for Analyzing Genomic Data.'
@@ -151,7 +151,7 @@ setup(
             'ensembl_filter_fasta.py = genometools.ensembl.filter_fasta:main',
 
             'ensembl_extract_protein_coding_genes.py = '
-                'genometools.ensembl.extract_protein_coding_genes:main',
+                'genometools.ensembl.cli.extract_protein_coding_genes:main',
 
             'ensembl_extract_protein_coding_gene_ids.py = '
                 'genometools.ensembl.extract_protein_coding_gene_ids:main',

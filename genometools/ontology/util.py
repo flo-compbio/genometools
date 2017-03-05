@@ -40,6 +40,25 @@ logger = misc.get_logger()
 #user = 'anonymous'
 
 
+def get_latest_release():
+    """Gets the name (date) of the latest release of the Gene Ontology."""
+    list_url = 'http://viewvc.geneontology.org/viewvc/GO-SVN/ontology-releases/'
+    with closing(requests.get(list_url)) as r:
+        text = r.text
+    all_versions = re.findall('<a name="(\d{4}-\d\d-\d\d)" href="', text)
+    latest = list(sorted(all_versions))[-1]
+    return latest
+
+
+def download_release(download_file, release=None):
+    """Downloads the "go-basic.obo" file for the specified release."""
+    if release is None:
+        release = get_latest_release()
+    url = 'http://viewvc.geneontology.org/viewvc/GO-SVN/ontology-releases/%s/go-basic.obo' % release
+    #download_file = 'go-basic_%s.obo' % release
+    misc.http_download(url, download_file)
+
+
 def get_current_ontology_date():
     """Get the release date of the current Gene Ontolgo release."""
     with closing(requests.get(

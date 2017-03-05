@@ -23,8 +23,8 @@ from builtins import *
 
 import textwrap
 
-from .. import ensembl
-from .. import cli
+from ... import ensembl
+from ... import cli
 
 
 def get_gtf_argument_parser(desc, default_field_name='gene'):
