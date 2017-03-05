@@ -38,7 +38,6 @@ deploy:
   distributions: sdist bdist_wheel
   password:
     secure: kd82WySn1oaYMDA8v1fMnebfJK4aLcqMKdYNgjFaJIyPYJKX7a4AKGbwxUA1UQeRDOQR4AWeYfJPnr/AV+DUmsiCkd5C9vomO0cQpqrR1qTe4p+1mB63qSM1gpeClZvUhRry1Tyz4HDct/mjThrgcLXZMT01I+5VPx46NPhWQrSY3b0UVS6XqxKD7DWa9AXPVbHpg0Ycrxe/0w4Lzlt5Cu9FS+8nMTu73ioc4c/VX7M3+WWTq90clGcdQm4vszdc2PTCNeDZweagUyKcrP4c19+1Re52zj933q8nx7UU7Z//88tlSL4flUcMM/7dep6/avRn39OWyEBvEUE+S0Gbc8mq0fj+98TnLbVUalCTA2M7Bv1EgbXQaABJXDH7MYD1JXjvUe1dIMT1eosldbmJfpCpcc/xdCa7l03OQygl1JgsD/DVrntb4fSEh+C0o6eTtUryrsvMinle5HwFra3KAf+3aXQGtGHtXW2V1U26N31Xky9YqCmwmg8G9UAzQqxciMWIZ72d2iHthQFB8bpn0oTz5hKz7uBZrLBBKvLTSF5n7QxdO1LcInY5zAy0zCeT2yw4d0QXcz7pDxVaoebTZ4sfq1bCfHpZfgOvZmxuo+ubC3y0/ZEcTJp5dXfHnrBJDwD6e2TKovy7iipczso9w8VPJ+HTabyDyQMiOTaCfj4=
->>>>>>> develop
   on:
     branch: master
     repo: flo-compbio/genometools
