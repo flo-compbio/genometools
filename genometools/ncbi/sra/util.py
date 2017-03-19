@@ -5,7 +5,7 @@ sra_host = 'ftp-trace.ncbi.nlm.nih.gov'
 sra_user = 'anonymous'
 sra_password = 'anonymous'
 
-def get_sra_experiment_urls(exp):
+def get_experiment_urls(exp):
     exp_urls = []
     with ftputil.FTPHost(sra_host, sra_user, sra_password) as ftp_host:
         download_paths = []
@@ -23,7 +23,7 @@ def get_sra_experiment_urls(exp):
                 exp_urls.append(path)
     return exp_urls
 
-def get_sra_file_sizes(files):
+def get_file_sizes(files):
     sizes = []
     with ftputil.FTPHost(sra_host, sra_user, sra_password) as ftp_host:
         for f in files:

@@ -30,9 +30,9 @@ import os
 
 import unicodecsv as csv
 
-from genometools import misc
+from ... import misc
 # from genometools import ensembl
-from genometools import cli
+from ... import cli
 
 
 def get_argument_parser():

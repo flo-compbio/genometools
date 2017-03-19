@@ -26,7 +26,7 @@ from os import path
 
 root = 'genometools'
 name = 'genometools'
-version = '0.2.6'
+version = '0.2.7'
 
 here = path.abspath(path.dirname(__file__))
 description = 'GenomeTools: A Python Framework for Analyzing Genomic Data.'
@@ -133,7 +133,7 @@ setup(
             'mock',
         ],
         'tests': [
-            'pytest>=2.8.5, <3',
+            'pytest>=2.8.5, <4',
             'pytest-cov>=2.2.1, <3',
         ],
     },

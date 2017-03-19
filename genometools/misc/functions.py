@@ -430,6 +430,16 @@ def gzip_open_text(path, encoding=None):
     return fh
 
 
+def is_writable(path):
+    """Tests if a file is writable."""
+    try:
+        with open(path, 'a'):
+            pass
+    except:
+        return False
+    return True
+
+
 def flatten(l):
     """Flattens a list of lists.
 

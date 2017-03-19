@@ -62,8 +62,8 @@ import textwrap
 
 import unicodecsv as csv
 
-from genometools import misc
-from genometools import cli
+from ... import misc
+from ... import cli
 
 
 def get_argument_parser():

@@ -26,7 +26,7 @@ from collections import Iterable
 import unicodecsv as csv
 import numpy as np
 
-from .. import misc
+from ... import misc
 
 
 def get_series_matrix_url(acc):
