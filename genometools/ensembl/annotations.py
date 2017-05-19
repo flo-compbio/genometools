@@ -19,7 +19,7 @@ from __future__ import (absolute_import, division,
 _oldstr = str
 from builtins import *
 
-import os
+# import os
 import ftplib
 import time
 import re
@@ -112,7 +112,8 @@ def get_annotation_urls_and_checksums(species, release=None, ftp=None):
 
 def get_protein_coding_genes(
         path_or_buffer, chunksize=100000,
-        chromosome_pattern=r'(?:\d\d?|MT|X|Y)$',
+        chromosome_pattern=None,
+        #chromosome_pattern=r'(?:\d\d?|MT|X|Y)$',
         include_polymorphic_pseudogenes=True,
         only_manual=False,
         remove_duplicates=True,
@@ -124,7 +125,7 @@ def get_protein_coding_genes(
     path_or_buffer : str or buffer
         The GTF file (either the file path or a buffer)
     chromosome_pattern : str, optional
-        Regular expression specifying valid chromosomes. [r'(?:\d\d?|MT|X|Y)$']
+        Regular expression specifying valid chromosomes. [None]
     include_polymorphic_pseudogene : bool, optional
         Whether to include genes annotated as "polymorphic pseudogenes"?
     only_manual : bool, optional
@@ -208,7 +209,9 @@ def get_protein_coding_genes(
     and then we're using the original index (position) to restore the original
     order.
     """
-    chrompat = re.compile(chromosome_pattern)
+    chrompat = None
+    if chromosome_pattern is not None:
+        chrompat = re.compile(chromosome_pattern)
     
     c = 0
     num_lines = 0
@@ -250,10 +253,11 @@ def get_protein_coding_genes(
 
             chrom = str(row[0])
             source = row[1]
-            match = chrompat.match(chrom)
-            if match is None:
-                excluded_chromosomes.add(chrom)
-                continue
+            if chrompat is not None:
+                match = chrompat.match(chrom)
+                if match is None:
+                    excluded_chromosomes.add(chrom)
+                    continue
 
             c += 1
 
@@ -332,10 +336,12 @@ def get_protein_coding_genes(
                 try:
                     c = int(chrom)
                 except:
-                    if chrom == 'MT':
+                    if chrom in ['X', 'Y']:
+                        return chrom
+                    elif chrom == 'MT':
                         return '_MT'  # sort to the end
                     else:
-                        return chrom
+                        return '__' + chrom  # sort to the very end
                 else:
                     # make sure numbered chromosomes are sorted numerically
                     return '%02d' % c

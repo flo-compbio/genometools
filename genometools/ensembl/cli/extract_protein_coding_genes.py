@@ -72,7 +72,7 @@ def get_argument_parser():
     return parser
 
 
-def main(args = None):
+def main(args=None):
     """Extract protein-coding genes and store in tab-delimited text file.
 
     Parameters
@@ -104,7 +104,7 @@ def main(args = None):
 
     input_file = args.annotation_file
     output_file = args.output_file
-    species = args.species
+    # species = args.species
     chrom_pat = args.chromosome_pattern
     log_file = args.log_file
     quiet = args.quiet
@@ -119,11 +119,12 @@ def main(args = None):
     logger = misc.get_logger(log_stream=log_stream, log_file=log_file,
                              quiet=quiet, verbose=verbose)
 
-    if chrom_pat is None:
-        chrom_pat = ensembl.SPECIES_CHROMPAT[species]
+    #if chrom_pat is None:
+    #    chrom_pat = ensembl.SPECIES_CHROMPAT[species]
 
-    logger.info('Regular expression used for filtering chromosome names: "%s"',
-                chrom_pat)
+    if chrom_pat is not None:
+        logger.info('Regular expression used for filtering chromosome names: '
+                    '"%s"', chrom_pat)
 
     if input_file == '-':
         input_file = sys.stdin
@@ -137,6 +138,7 @@ def main(args = None):
     genes.to_csv(output_file, sep='\t', index=False)
 
     return 0
+
 
 if __name__ == '__main__':
     return_code = main()
