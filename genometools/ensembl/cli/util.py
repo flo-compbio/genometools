@@ -58,20 +58,19 @@ def get_gtf_argument_parser(desc, default_field_name='gene'):
             and redirect logging messages to ``stderr``.""")
     )
 
-    parser.add_argument(
-        '-s', '--species', type=str,
-        choices=sorted(ensembl.SPECIES_CHROMPAT.keys()), default='human',
-        help=textwrap.dedent("""\
-            Species for which to extract genes. (This parameter is ignored
-            if ``--chromosome-pattern`` is specified.)""")
-    )
+    #parser.add_argument(
+    #    '-s', '--species', type=str,
+    #    choices=sorted(ensembl.SPECIES_CHROMPAT.keys()), default='human',
+    #    help=textwrap.dedent("""\
+    #        Species for which to extract genes. (This parameter is ignored
+    #        if ``--chromosome-pattern`` is specified.)""")
+    #)
 
     parser.add_argument(
         '-c', '--chromosome-pattern', type=str, required=False,
         default=None, help=textwrap.dedent("""\
-            Regular expression that chromosome names have to match.
-            If not specified, determine pattern based on
-            ``--species``.""")
+            Regular expression that chromosome names have to match. [None]
+            """)
     )
 
     #parser.add_argument(

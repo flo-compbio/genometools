@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division,
-                        print_function, unicode_literals)
-from builtins import *
+#from __future__ import (absolute_import, division,
+#                        print_function, unicode_literals)
+#from builtins import *
 
 import os
 import pkg_resources
@@ -25,6 +25,16 @@ __version__ = pkg_resources.require('genometools')[0].version
 
 _root = os.path.abspath(os.path.dirname(__file__))
 
-from . import misc, gtf, ensembl, rnaseq, sra
+from . import basic
+from . import ebi
+from . import enrichment
+from . import ensembl
+from . import expression
+from . import gdc
+from . import misc
+from . import ncbi
+from . import ontology
+from . import rnaseq
+from . import seq
 
-__all__ = ['misc', 'gtf', 'ensembl', 'rnaseq', 'rnaseq']
+# __all__ = ['misc', 'gtf', 'ensembl', 'rnaseq', 'rnaseq']

@@ -65,14 +65,16 @@ def parse_gaf(path_or_buffer, gene_ontology, genome=None,
     assert isinstance(gene_ontology, GeneOntology)
     if db is not None:
         assert isinstance(db, (str, _oldstr))
-    if ev_codes is not None:
+    if (ev_codes is not None) and ev_codes:
         assert isinstance(ev_codes, (str, _oldstr)) or \
                 isinstance(ev_codes, Iterable)
 
     if isinstance(ev_codes, str):
         ev_codes = set([ev_codes])
-    elif ev_codes is not None:
+    elif (ev_codes is not None) and ev_codes:
         ev_codes = set(ev_codes)
+    else:
+        ev_codes = None
 
     # open file, if necessary
     if isinstance(path_or_buffer, (str, _oldstr)):
@@ -81,18 +83,27 @@ def parse_gaf(path_or_buffer, gene_ontology, genome=None,
         buffer = path_or_buffer
 
     # use pandas to parse the file quickly
-    df = pd.read_csv(buffer, sep='\t', comment='!', header=None, dtype=str)
+    df = pd.read_csv(buffer, sep='\t', comment='!', header=None, dtype=_oldstr)
+
+    # replace pandas' NaNs with empty strings
+    df.fillna('', inplace=True)
 
     # exclude annotations with unknown Gene Ontology terms
     all_go_term_ids = set(gene_ontology._term_dict.keys())
     sel = df.iloc[:, 4].isin(all_go_term_ids)
     logger.info(
-        'Excluding %d / %d annotations (%.1f %%) with unknown GO terms.',
+        'Ignoring %d / %d annotations (%.1f %%) with unknown GO terms.',
         (~sel).sum(), sel.size, 100*((~sel).sum()/float(sel.size)))
     df = df.loc[sel]
 
-    # replace pandas' NaNs with empty strings
-    df.fillna('', inplace=True)
+    # filter rows for genome
+    if genome is not None:
+        all_genes = set(genome.gene_names)
+        sel = df.iloc[:, 2].isin(all_genes)
+        logger.info(
+            'Ignoring %d / %d annotations (%.1f %%) with unknown genes.',
+            (~sel).sum(), sel.size, 100*((~sel).sum()/float(sel.size)))
+        df = df.loc[sel]
 
     # filter rows for DB value
     if db is not None:
@@ -102,21 +113,11 @@ def parse_gaf(path_or_buffer, gene_ontology, genome=None,
             (~sel).sum(), sel.size, 100*((~sel).sum()/float(sel.size)))
         df = df.loc[sel]
 
-    # filter rows for genome
-    if genome is not None:
-        all_genes = set(genome.gene_names)
-        sel = df.iloc[:, 2].isin(all_genes)
-        logger.info(
-            'Excluding %d / %d annotations (%.1f %%) with wrong genes.',
-            (~sel).sum(), sel.size, 100*((~sel).sum()/float(sel.size)))
-        df = df.loc[sel]
-
     # filter rows for evidence value
     if ev_codes is not None:
         sel = (df.iloc[:, 6].isin(ev_codes))
         logger.info(
-            'Excluding %d / %d annotations (%.1f %%) with wrong evidence '
-            'codes.',
+            'Excluding %d / %d annotations (%.1f %%) based on evidence code.',
             (~sel).sum(), sel.size, 100*((~sel).sum()/float(sel.size)))
         df = df.loc[sel]
 

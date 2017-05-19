@@ -1,31 +1,32 @@
-# Copyright (c) 2015, 2016 Florian Wagner
+# Copyright (c) 2015-2017 Florian Wagner
 #
 # This file is part of GenomeTools.
 #
 # GenomeTools is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License, Version 3,
+# it under the terms of the GNU Affero General Public License, Version 3,
 # as published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# GNU Affero General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 """Logging-related functions."""
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
+_oldstr = str
 from builtins import *
 
 import sys
 import logging
 
-def configure_logger(name, log_stream = sys.stdout, log_file = None,
-        log_level = logging.INFO, keep_old_handlers = False,
-        propagate = False):
+def configure_logger(name, log_stream=sys.stdout, log_file=None,
+                     log_level=logging.INFO, keep_old_handlers=False,
+                     propagate=False):
     """Configures and returns a logger.
 
     This function serves to simplify the configuration of a logger that
@@ -48,8 +49,8 @@ def configure_logger(name, log_stream = sys.stdout, log_file = None,
         If set to ``True``, keep any pre-existing handlers that are attached to
         the logger. The default value is ``False``.
     propagate: bool, optional
-        If set to ``True``, propagate the loggers messages to the parent logger.
-        The default value is ``False``.
+        If set to ``True``, propagate the loggers messages to the parent
+        logger. The default value is ``False``.
 
     Returns
     -------
@@ -104,8 +105,9 @@ def configure_logger(name, log_stream = sys.stdout, log_file = None,
       
     return logger
 
-def get_logger(name = '', log_stream = None, log_file = None,
-        quiet = False, verbose = False):
+
+def get_logger(name='', log_stream=None, log_file=None,
+               quiet=False, verbose=False):
     """Convenience function for getting a logger."""
 
     # configure root logger
@@ -118,8 +120,8 @@ def get_logger(name = '', log_stream = None, log_file = None,
     if log_stream is None:
         log_stream = sys.stdout
 
-    new_logger = configure_logger(name, log_stream = log_stream,
-            log_file = log_file, log_level = log_level)
+    new_logger = configure_logger(name, log_stream=log_stream,
+                                  log_file=log_file, log_level=log_level)
 
     return new_logger
 
