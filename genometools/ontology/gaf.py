@@ -83,7 +83,7 @@ def parse_gaf(path_or_buffer, gene_ontology, genome=None,
         buffer = path_or_buffer
 
     # use pandas to parse the file quickly
-    df = pd.read_csv(buffer, sep='\t', comment='!', header=None, dtype=str)
+    df = pd.read_csv(buffer, sep='\t', comment='!', header=None, dtype=_oldstr)
 
     # replace pandas' NaNs with empty strings
     df.fillna('', inplace=True)
