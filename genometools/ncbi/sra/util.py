@@ -44,7 +44,13 @@ def get_project_urls(project):
                 path = exp_dir + folder + '/' + f
                 urls.append(path)
     return urls
-    
+
+
+def get_run_url(run):
+    """Returns the FTP URL for a given SRA run accession ID."""
+    return ('ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra'
+            '/SRR/%s/%s/%s.sra' % (run[:6], run, run))
+
 
 def get_file_sizes(files):
     sizes = []
