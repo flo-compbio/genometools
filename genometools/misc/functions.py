@@ -35,6 +35,7 @@ import contextlib
 import subprocess as subproc
 import locale
 import ftplib
+import hashlib
 
 import six
 
@@ -59,6 +60,13 @@ def try_open_gzip(path):
     else:
         fh = gzip.open(path)
     return fh
+
+
+def get_file_md5sum(path):
+    """Calculate the MD5 hash for a file."""
+    with open(path, 'rb') as fh:
+        h = str(hashlib.md5(fh.read()).hexdigest())
+    return h
 
 
 @contextlib.contextmanager

@@ -48,9 +48,9 @@ def parse_attributes(s):
     atts = attr_sep.split(s)
     for a in atts:
         #print(a)
-        kv = a.split(' ')
+        kv = a.split(' ', maxsplit=1)
         if len(kv) == 2:
-            k,v = kv
+            k, v = kv
             v = v.strip('"')
             attr[k] = v
     return attr 
