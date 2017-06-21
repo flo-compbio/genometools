@@ -21,5 +21,6 @@ from .species import *
 from .util import *
 from .annotations import *
 from .cdna import *
+from .dna import *
 
 # __all__ = ['species_names', 'species_scientific', 'species_chrompat']

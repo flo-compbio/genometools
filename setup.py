@@ -26,7 +26,7 @@ from os import path
 
 root = 'genometools'
 name = 'genometools'
-version = '0.2.7'
+version = '0.3.0'
 
 here = path.abspath(path.dirname(__file__))
 description = 'GenomeTools: A Python Framework for Analyzing Genomic Data.'
@@ -41,6 +41,10 @@ install_requires = [
     'numpy>=1.8, <2',
     'pandas>=0.18, <1',
     'xlmhg>=2.4.9, <3',
+    'google-cloud-storage>=0.23.1',
+    'oauth2client>=4, <5',
+    'jinja2>=2.9.5, <3',
+    'biopython>=1.69'
 ]
 
 # do not require installation if built by ReadTheDocs
@@ -140,7 +144,12 @@ setup(
 
     # data
     # package_data={'genometools': ['data/RdBu_r_colormap.tsv']},
-    package_data={'genometools': ['data/*.tsv']},
+    package_data={
+        'genometools': [
+            'data/*.tsv',
+            'data/cloudscripts/*.sh',
+            'data/pipelines/*.sh']
+    },
 
     # data outside the package
     # data_files=[('my_data', ['data/data_file'])],

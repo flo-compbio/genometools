@@ -111,7 +111,7 @@ def get_annotation_urls_and_checksums(species, release=None, ftp=None):
 
 
 def get_protein_coding_genes(
-        path_or_buffer, chunksize=100000,
+        path_or_buffer, chunksize=10000,
         chromosome_pattern=None,
         #chromosome_pattern=r'(?:\d\d?|MT|X|Y)$',
         include_polymorphic_pseudogenes=True,
@@ -261,8 +261,11 @@ def get_protein_coding_genes(
 
             c += 1
 
-            gene_name = attr['gene_name']
             ensembl_id = attr['gene_id']
+            try:
+                gene_name = attr['gene_name']
+            except KeyError as e:
+                gene_name = ensembl_id
 
             assert row[6] in ['+', '-']
             if row[6] == '+':
