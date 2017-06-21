@@ -29,17 +29,8 @@ import logging
 import pandas as pd
 from Bio import SeqIO
 
-from genometools import misc
 
-logger = logging.getLogger(__name__)
-
-raw_data_dir = os.path.join(os.environ['HOME'], 'data')
-download_dir = os.path.join(raw_data_dir, 'download')
-output_dir = 'output'
-
-fasta_file = os.path.join(download_dir, 'Mus_musculus.GRCm38.dna.primary_assembly.fa.gz')
-
-logger = misc.get_logger()
+_LOGGER = logging.getLogger(__name__)
 
 
 def _transform_chrom(chrom):
@@ -59,12 +50,13 @@ def _transform_chrom(chrom):
 
 
 def get_chromosome_lengths(fasta_file, fancy_sort=True):
+    """Extract chromosome lengths from genome FASTA file."""
     chromlen = []
     with gzip.open(fasta_file, 'rt', encoding='ascii') as fh:
         fasta = SeqIO.parse(fh, 'fasta')
         for i, f in enumerate(fasta):
             chromlen.append((f.id, len(f.seq)))
-            logger.info('Chromosome: %s', f.id)
+            _LOGGER.info('Processed chromosome "%s"...', f.id)
             #print(dir(f))
             #if i == 1: break
             
@@ -75,7 +67,7 @@ def get_chromosome_lengths(fasta_file, fancy_sort=True):
 
     if fancy_sort:
         # sort using fancy ordering
-        chrom_for_sorting = s.index.to_series().apply(_transform_chrom)
+        chrom_for_sorting = chromlen.index.to_series().apply(_transform_chrom)
         a = chrom_for_sorting.argsort(kind='mergesort')
         chromlen = chromlen.iloc[a]
 
