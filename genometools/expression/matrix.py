@@ -89,9 +89,6 @@ class ExpMatrix(pd.DataFrame):
         if samples is not None:
             assert isinstance(samples, Iterable)
 
-        dtype = kwargs.pop('dtype', np.float64)
-        kwargs['dtype'] = dtype
-
         # call base class constructor
         pd.DataFrame.__init__(self, *args, **kwargs)
 
