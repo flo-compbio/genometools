@@ -89,6 +89,9 @@ class ExpMatrix(pd.DataFrame):
         if samples is not None:
             assert isinstance(samples, Iterable)
 
+        dtype = kwargs.pop('dtype', np.float64)
+        kwargs['dtype'] = dtype
+
         # call base class constructor
         pd.DataFrame.__init__(self, *args, **kwargs)
 
@@ -419,7 +422,7 @@ class ExpMatrix(pd.DataFrame):
         # (this seems to be the only way we can prevent pandas from converting
         #  "nan" or "NaN" to floats in the index)
         ind = pd.read_csv(path, sep='\t', usecols=[0, ], header=0,
-                           encoding=encoding, na_filter=False)
+                          encoding=encoding, na_filter=False)
 
         matrix.index = ind.iloc[:, 0]
 
