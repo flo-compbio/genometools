@@ -100,7 +100,7 @@ def cluster_samples(matrix, metric='euclidean', method='average',
 
     # workaround for scipy bug when supplied with a row of NaNs
     # see: https://github.com/scipy/scipy/issues/5142
-    valid_rows = matrix.notnull().all(axis=1)
+    valid_rows = (matrix.values != 0).all(axis=1)
     filtered = matrix.loc[valid_rows]
 
     order_cols = _cluster_ndarray(filtered.X.T, metric=metric, method=method,
