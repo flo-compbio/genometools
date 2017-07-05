@@ -26,7 +26,7 @@ from os import path
 
 root = 'genometools'
 name = 'genometools'
-version = '0.3.2'
+version = '0.3.3'
 
 here = path.abspath(path.dirname(__file__))
 description = 'GenomeTools: A Python Framework for Analyzing Genomic Data.'
@@ -44,7 +44,8 @@ install_requires = [
     'google-cloud-storage>=0.23.1',
     'oauth2client>=4, <5',
     'jinja2>=2.9.5, <3',
-    'biopython>=1.69'
+    'biopython>=1.69',
+    'sortedcontainers>=1.5.7,<2'
 ]
 
 # do not require installation if built by ReadTheDocs
