@@ -110,24 +110,24 @@ def get_annotation_urls_and_checksums(species, release=None, ftp=None):
     return species_data
 
 
-def get_protein_coding_genes(
-        path_or_buffer, chunksize=10000,
+def get_genes(
+        path_or_buffer, valid_biotypes,
+        chunksize=10000,
         chromosome_pattern=None,
         #chromosome_pattern=r'(?:\d\d?|MT|X|Y)$',
-        include_polymorphic_pseudogenes=True,
         only_manual=False,
         remove_duplicates=True,
         sort_by='name'):
-    r"""Get list of all protein-coding genes based on Ensembl GTF file.
+    r"""Get all genes of a specific a biotype from an Ensembl GTF file.
     
     Parameters
     ----------
     path_or_buffer : str or buffer
-        The GTF file (either the file path or a buffer)
+        The GTF file (either the file path or a buffer).
+    valid_biotypes : set of str
+        The set of biotypes to include (e.g., "protein_coding").
     chromosome_pattern : str, optional
         Regular expression specifying valid chromosomes. [None]
-    include_polymorphic_pseudogene : bool, optional
-        Whether to include genes annotated as "polymorphic pseudogenes"?
     only_manual : bool, optional
         Whether to exclude annotations with source "ensembl", which
         are based only on an automatic annotation pipeline. [True]
@@ -140,17 +140,17 @@ def get_protein_coding_genes(
           - 'position': Genes are sorted by their position in the genome.abs
                         Genes are first sorted by chromosome, then by their
                         starting base pair position on the chromosome.
-          - 'position_fancy': Like 'positional', but attempts to sort the
+          - 'position_fancy': Like 'position', but attempts to sort the
                               chromosomes in a more logical order than strictly
                               alphabetically. This currently works for human
-                              and mouse genomes.abs
+                              and mouse genomes.
           - 'none': The order from the GTF file is retained. 
         Default: 'name'  
 
     Returns
     -------
     `pandas.DataFrame`
-        Table with rows corresponding to protein-coding genes.
+        Table with rows corresponding to the genes found.
 
     Notes
     -----
@@ -225,11 +225,7 @@ def get_protein_coding_genes(
     header = ['name', 'ensembl_id',
               'chromosome', 'position', 'length',
               'source', 'type']
-    
-    valid_biotypes = set(['protein_coding'])
-    if include_polymorphic_pseudogenes:
-        valid_biotypes.add('polymorphic_pseudogene')
-        
+            
     valid_sources = set(['ensembl_havana', 'havana', 'insdc'])
     if not only_manual:
         # we also accept annotations with source "ensembl", which are the
@@ -355,8 +351,8 @@ def get_protein_coding_genes(
             logger.info('Performed fancy sorting of chromosomes.')
     
     logger.info('Read %d lines (in %d chunks).', num_lines, num_chunks)
-    logger.info('Found %d valid protein-coding gene entries.', c)
-    logger.info('Final number of unique protein-coding genes: %d', df.shape[0])
+    logger.info('Found %d valid gene entries.', c)
+    logger.info('Final number of unique genes: %d', df.shape[0])
     logger.info('Parsing time: %.1f s', t1-t0)
     
     # additional statistics
@@ -370,10 +366,55 @@ def get_protein_coding_genes(
     
     logger.info('Sources:')
     for i, c in df['source'].value_counts().iteritems():
-        logger.info('\t%s: %d', i, c)
+        logger.info('- %s: %d', i, c)
         
     logger.info('Gene types:')
     for i, c in df['type'].value_counts().iteritems():
-        logger.info('\t%s: %d', i, c)
+        logger.info('- %s: %d', i, c)
     
+    return df
+    
+
+def get_protein_coding_genes(
+        path_or_buffer, 
+        include_polymorphic_pseudogenes=True,
+        **kwargs):
+    r"""Get list of all protein-coding genes based on Ensembl GTF file.
+    
+    Parameters
+    ----------
+    See :func:`get_genes` function.
+
+    Returns
+    -------
+    `pandas.DataFrame`
+        Table with rows corresponding to protein-coding genes.
+
+    """
+    valid_biotypes = set(['protein_coding'])
+    if include_polymorphic_pseudogenes:
+        valid_biotypes.add('polymorphic_pseudogene')
+    
+    df = get_genes(path_or_buffer, valid_biotypes, **kwargs)
+    return df
+
+
+def get_linc_rna_genes(
+        path_or_buffer, 
+        **kwargs):
+    r"""Get list of all protein-coding genes based on Ensembl GTF file.
+    
+    Parameters
+    ----------
+    See :func:`get_genes` function.
+
+    Returns
+    -------
+    `pandas.DataFrame`
+        Table with rows corresponding to protein-coding genes.
+
+    """
+    valid_biotypes = set(['lincRNA'])
+    
+    df = get_genes(path_or_buffer, valid_biotypes, **kwargs)
     return df

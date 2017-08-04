@@ -102,6 +102,8 @@ def create_instance(credentials, project, zone, name,
     headers = {
         'Authorization': 'Bearer %s' % access_token.access_token
     }
+
+    #print('Test:', json.dumps(payload, indent=4, sort_keys=True))
     
     _LOGGER.debug('Access token: %s' % access_token.access_token)
 

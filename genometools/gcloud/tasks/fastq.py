@@ -40,7 +40,7 @@ def sra_download_paired_end(credentials, instance_config, instance_name,
 
     TODO: docstring"""
 
-    template = _TEMPLATE_ENV.get_template('sra_download_paired_end.sh')
+    template = _TEMPLATE_ENV.get_template('sra_download_paired-end.sh')
     startup_script = template.render(
         script_dir=script_dir,
         sra_run_acc=sra_run_acc,
