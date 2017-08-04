@@ -1,6 +1,6 @@
 """Module containing the `InstanceConfig` class."""
 
-from . import create_instance
+from . import create_instance, delete_instance, wait_for_instance_deletion
 
 class InstanceConfig(object):
     """Class that holds instance configuration data.
@@ -25,4 +25,22 @@ class InstanceConfig(object):
             disk_size_gb=self.disk_size_gb,
             **kwargs)
         
+        return op_name
+
+    def delete_instance(self, credentials, name, **kwargs):
+        """Delete an instance based on the configuration data.
+        
+        TODO: docstring"""
+        op_name = delete_instance(
+            credentials, self.project, self.zone, name, **kwargs)
+
+        return op_name
+
+    def wait_for_instance_deletion(self, credentials, name, **kwargs):
+        """Wait for deletion of instance based on the configuration data.
+
+        TODO: docstring"""
+        op_name = wait_for_instance_deletion(
+            credentials, self.project, self.zone, name, **kwargs)
+
         return op_name
