@@ -29,7 +29,6 @@ import logging
 import pandas as pd
 from Bio import SeqIO
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

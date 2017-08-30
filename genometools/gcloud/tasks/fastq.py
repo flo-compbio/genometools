@@ -30,8 +30,10 @@ def run_fastqc(credentials, instance_config, instance_name,
 
     #print(startup_script)
 
-    instance_config.create_instance(
+    op_name = instance_config.create_instance(
         credentials, instance_name, startup_script=startup_script, **kwargs)
+
+    return op_name
 
 
 def sra_download_paired_end(credentials, instance_config, instance_name,
