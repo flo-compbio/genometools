@@ -57,9 +57,9 @@ def create_instance(credentials, project, zone, name,
                 "boot": True,
                 "mode": "READ_WRITE",
                 "autoDelete": True,
-                "deviceName": "test-instance",
+                "deviceName": name,
                 "initializeParams": {
-                    "sourceImage": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-1604-xenial-v20161115",
+                    "sourceImage": "projects/ubuntu-os-cloud/global/images/ubuntu-1604-xenial-v20170815a",
                     "diskType": "projects/%s/zones/%s/diskTypes/pd-standard" % (project, zone),
                     "diskSizeGb": str(disk_size_gb)
                 }
@@ -106,6 +106,9 @@ def create_instance(credentials, project, zone, name,
     #print('Test:', json.dumps(payload, indent=4, sort_keys=True))
     
     _LOGGER.debug('Access token: %s' % access_token.access_token)
+
+    _LOGGER.debug('Payload: %s', json.dumps(payload, sort_keys=True, indent=4))
+
 
     r = requests.post('https://www.googleapis.com/compute/v1/'
                       'projects/%s/zones/%s/instances' % (project, zone),
@@ -185,6 +188,12 @@ def wait_for_instance_deletion(credentials, project, zone, instance_name,
 
     while True:
         time.sleep(interval_seconds)
+
+        access_token = credentials.get_access_token()
+        headers = {
+            'Authorization': 'Bearer %s' % access_token.access_token
+        }
+
         r = requests.get('https://www.googleapis.com/compute/v1/'
                          'projects/%s/zones/%s/instances/%s'
                          % (project, zone, instance_name),

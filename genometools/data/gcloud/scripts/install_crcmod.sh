@@ -7,5 +7,5 @@ apt-get update
 apt-get install -y python-pip python-dev build-essential
 pip install --upgrade pip
 
-pip uninstall crcmod
+/usr/bin/yes | pip uninstall crcmod
 pip install --no-cache crcmod
