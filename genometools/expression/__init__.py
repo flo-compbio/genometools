@@ -3,7 +3,7 @@
 # from builtins import *
 
 from .gene import ExpGene
-from .genome import ExpGenome
+from .gene_table import ExpGeneTable
 from .profile import ExpProfile
 from .matrix import ExpMatrix
 from .normalize import quantile_normalize

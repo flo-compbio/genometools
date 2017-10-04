@@ -37,7 +37,7 @@ from ..basic import GeneSet, GeneSetCollection
 logger = logging.getLogger(__name__)
 
 
-def parse_gaf(path_or_buffer, gene_ontology, genome=None,
+def parse_gaf(path_or_buffer, gene_ontology, valid_genes=None,
               db=None, ev_codes=None):
     """Parse a GAF 2.1 file containing GO annotations.
     
@@ -47,12 +47,12 @@ def parse_gaf(path_or_buffer, gene_ontology, genome=None,
         The GAF file.
     gene_ontology : `GeneOntology`
         The Gene Ontology.
-    genome : `expression.ExpGenome`
-        The genome.
+    valid_genes : Iterable of str, optional
+        A list of valid gene names. [None]
     db : str, optional
-        Select only annotations with this "DB"" value.
+        Select only annotations with this "DB"" value. [None]
     ev_codes : str or set of str, optional
-        Select only annotations with this/these evidence codes.
+        Select only annotations with this/these evidence codes. [None]
     
     Returns
     -------
@@ -82,6 +82,9 @@ def parse_gaf(path_or_buffer, gene_ontology, genome=None,
     else:
         buffer = path_or_buffer
 
+    if valid_genes is not None:
+        valid_genes = set(valid_genes)
+
     # use pandas to parse the file quickly
     df = pd.read_csv(buffer, sep='\t', comment='!', header=None, dtype=_oldstr)
 
@@ -96,10 +99,9 @@ def parse_gaf(path_or_buffer, gene_ontology, genome=None,
         (~sel).sum(), sel.size, 100*((~sel).sum()/float(sel.size)))
     df = df.loc[sel]
 
-    # filter rows for genome
-    if genome is not None:
-        all_genes = set(genome.gene_names)
-        sel = df.iloc[:, 2].isin(all_genes)
+    # filter rows for valid genes
+    if valid_genes is not None:
+        sel = df.iloc[:, 2].isin(valid_genes)
         logger.info(
             'Ignoring %d / %d annotations (%.1f %%) with unknown genes.',
             (~sel).sum(), sel.size, 100*((~sel).sum()/float(sel.size)))

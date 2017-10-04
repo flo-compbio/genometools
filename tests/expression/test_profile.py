@@ -87,7 +87,6 @@ def test_sort(my_profile):
     assert np.all(np.lexsort([prof.genes]) == np.arange(prof.p))
 
 
-def test_filter(my_profile, my_genome):
-    print(my_genome.genes)
-    prof = my_profile.filter_against_genome(my_genome)
+def test_filter_genes(my_profile, my_gene_table):
+    prof = my_profile.filter_genes(my_gene_table.gene_names)
     assert prof == my_profile

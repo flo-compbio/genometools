@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division,
 import pytest
 import numpy as np
 
-from genometools.expression import ExpGene, ExpGenome, ExpMatrix
+from genometools.expression import ExpGene, ExpGeneTable, ExpMatrix
 
 
 @pytest.fixture
@@ -29,21 +29,27 @@ def my_gene_names():
 
 
 @pytest.fixture
+def my_gene_ids():
+    ensembl_ids = ['ENSG0000001', 'ENSG0000002', 'ENSG0000003', 'ENSG0000004']
+    return ensembl_ids
+
+
+@pytest.fixture
 def my_unknown_gene_name():
     return 'X'
 
 
 @pytest.fixture
-def my_genes(my_gene_names):
+def my_genes(my_gene_ids, my_gene_names):
     chromosomes = ['1', 'X', None, None]
-    ensembl_ids = [None, 'ENSG0000001', 'ENSG0000002', None]
-    return [ExpGene(g, chromosome=c, ensembl_id=e)
-            for g, c, e in zip(my_gene_names, chromosomes, ensembl_ids)]
+    return [ExpGene(id_, name=name, chromosome=chrom)
+            for id_, name, chrom in
+            zip(my_gene_ids, my_gene_names, chromosomes)]
 
 
 @pytest.fixture
-def my_genome(my_genes):
-    return ExpGenome(my_genes)
+def my_gene_table(my_genes):
+    return ExpGeneTable.from_genes(my_genes)
 
 
 @pytest.fixture

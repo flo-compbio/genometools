@@ -33,7 +33,7 @@ import numpy as np
 
 from genometools import misc
 from genometools import cli
-from genometools.expression import ExpGenome, ExpMatrix
+from genometools.expression import ExpGeneTable, ExpMatrix
 
 
 def get_argument_parser():
@@ -117,7 +117,7 @@ def main(args=None):
     logger = misc.get_logger(log_file=log_file, quiet=quiet, verbose=verbose)
 
     # read data
-    genome = ExpGenome.read_tsv(gene_file)
+    genome = ExpGeneTable.read_tsv(gene_file)
     matrix = ExpMatrix.read_tsv(expression_file)
     e2g = dict(misc.read_all(entrez2gene_file))
 

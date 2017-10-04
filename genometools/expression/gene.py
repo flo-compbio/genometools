@@ -1,4 +1,4 @@
-# Copyright (c) 2015, 2016 Florian Wagner
+# Copyright (c) 2015-2017 Florian Wagner
 #
 # This file is part of GenomeTools.
 #
@@ -18,85 +18,86 @@
 
 """
 
-from __future__ import (absolute_import, division,
-                        print_function, unicode_literals)
-_oldstr = str
-from builtins import *
-
 import logging
+from typing import Dict, Union
 
-logger = logging.getLogger(__name__)
+import pandas as pd
+
+_LOGGER = logging.getLogger(__name__)
 
 
-class ExpGene(object):
+class ExpGene:
     """A gene in a gene expression analysis.
 
-    Instances are to be treated as immutable, to allow use of ExpGene
+    Instances are to be treated as immutable, to allow ExpGene
     objects to be used in sets etc.
 
     Parameters
     ----------
-    name : str
-        See :attr:`name` attribute.
+    ensembl_id : str
+        See :attr:`ensembl_id` attribute.
+    name : str, optional
+        See :attr:`name` attribute. [None]
     chromosome : str or None, optional
         See :attr:`chromosome` attribute. [None]
     position : int or None, optional
         See :attr:`position` attribute. [None]
     length : int or None, optional
-        See :attr:`length` attribute. [None] 
-    ensembl_id : str or None, optional
-        See :attr:`ensembl_id` attribute. [None]
+        See :attr:`length` attribute. [None]
+    type_ : str, optional
+        See :attr:`type` attribute. [None]
+    source : str, optional
+        See :attr:`source` attribute. [None]
 
     Attributes
     ----------
-    name : str
-        The gene name (use the official gene symbol, if available).
+    ensembl_id : str
+        The Ensembl ID of the gene.
+    name : str or None
+        The gene name (sometimes called "gene symbol").
     chromosome : str or None
         The chromosome that the gene is located on.
     position : int or None
-        The chromosomal location (base-pair index) of the gene.
-        The sign of the this attribute indicates whether the gene is on the
-        plus or minus strand. Base pair indices are 0-based.
-    ensembl_id : list of str
-        The Ensembl ID of the gene.
+        The chromosomal location of the gene, defined as the index of
+        its 5'-most base, according to its orientation on the chromosome.
+        The sign of the value indicates whether the gene is located on the
+        plus or minus strand.
+    length : int or None
+        The length of the gene.
+    type : str or None
+        The type ("biotype") of the gene, using Ensembl identifiers.
+        Examples: "protein_coding", "polymorphic_pseudogene".
+    source : str or None
+        The source of the gene, using Ensembl identifiers.
+        Examples: "havana", "ensembl_havana".
     """
-    def __init__(self, name,
-                 chromosome=None, position=None, length=None,
-                 ensembl_id=None, source=None, type_=None):
+    def __init__(self, ensembl_id: str, name: str = None,
+                 chromosome: str = None, position: int = None,
+                 length: int = None,
+                 type_: str = None, source: str = None):
 
-        # type checks
-        assert isinstance(name, (str, _oldstr))
-        if chromosome is not None:
-            assert isinstance(chromosome, (str, _oldstr))
-        if position is not None:
-            assert isinstance(position, int)
-        if length is not None:
-            assert isinstance(length, int)
-        if ensembl_id is not None:
-            assert isinstance(ensembl_id, (str, _oldstr))
-        if source is not None:
-            assert isinstance(source, (str, _oldstr))
-        if type_ is not None:
-            assert isinstance(type_, (str, _oldstr))
-
+        self._ensembl_id = ensembl_id
         self._name = name
         self._chromosome = chromosome
         self._position = position
         self._length = length
         self._ensembl_id = ensembl_id
-        self.source = source
-        self.type_ = type_
+        self._type = type_
+        self._source = source
 
     def __repr__(self):
-        return '<%s "%s">' \
-               % (self.__class__.__name__, self._name)
+        # there should only be one ExpGene object per Ensembl ID
+        return '<%s %s>' \
+               % (self.__class__.__name__, self._ensembl_id)
 
     def __str__(self):
-        return '<%s "%s" (Chromosome: %s, Position: %s, Length: %s, ' \
-               'Ensembl ID: %s, Source: %s, Type: %s)>' \
-               % (self.__class__.__name__, self._name,
+        name = self._name or '[no name]'
+        type_ = self._type or '[unknown]'
+        return '<%s %s (%s) of type "%s" ' \
+               '(Chromosome: %s, Position: %s, Length: %s, Source: %s)>' \
+               % (self.__class__.__name__, self._ensembl_id, name, type_,
                   self._chromosome, str(self._position), str(self._length),
-                  self._ensembl_id, self.source, self.type_)
+                  self._source)
 
     def __eq__(self, other):
         if self is other:
@@ -113,13 +114,13 @@ class ExpGene(object):
         if self is other:
             return False
         if type(self) is type(other):
-            if self._name < other._name:
+            if self._ensembl_id < other._ensembl_id:
                 return True
             else:
                 return False
         else:
             return NotImplemented
-
+        
     def __hash__(self):
         return hash(repr(self))
 
@@ -142,32 +143,24 @@ class ExpGene(object):
     @property
     def ensembl_id(self):
         return self._ensembl_id
-
-    #def to_list(self):
-    #    return [self._name, ','.join(self._chromosomes),
-    #            ','.join(self._ensembl_ids)]
-
-    def to_dict(self):
-        return {
-            'name': self.name,
-            'chromosome': self.chromosome or '',
-            'position': self.position or '',
-            'length': self.length or '',
-            'ensembl_id': self.ensembl_id or '',
-            'source': self.source or '',
-            'type': self.type_ or '',
-        }
+    
+    @property
+    def source(self):
+        return self._source
+    
+    @property
+    def type(self):
+        return self._type
 
     @classmethod
-    def from_dict(cls, data):
-        """Generate an `ExpGene` gene object from a dictionary.
+    def from_dict(cls, data: Dict[str, Union[str, int]]):
+        """Generate an `ExpGene` object from a dictionary.
 
         Parameters
         ----------
         data : dict
             A dictionary with keys corresponding to attribute names.
             Attributes with missing keys will be assigned `None`.
-            See also :meth:`to_list`.
 
         Returns
         -------
@@ -175,13 +168,15 @@ class ExpGene(object):
             The gene.
         """
         assert isinstance(data, dict)
-        assert 'name' in data  # required
+
+        if 'ensembl_id' not in data:
+            raise ValueError('An "ensembl_id" key is missing!')
 
         # make a copy
         data = dict(data)
-
-        for attr in ['chromosome', 'ensembl_id', 'position', 'length',
-                     'source', 'type']:
+        
+        for attr in ['name', 'chromosome', 'position', 'length',
+                     'type', 'source']:
             if attr in data and data[attr] == '':
                 data[attr] = None            
 
@@ -189,3 +184,14 @@ class ExpGene(object):
         del data['type']
 
         return cls(**data)
+
+    @classmethod
+    def from_series(cls, s: pd.Series):
+        """Generate an `ExpGene` object from a pandas Series."""
+        return cls.from_dict(s.to_dict())
+
+    def to_dict(self):
+        d = dict([attr, getattr(self, attr)] for attr in
+                 ['ensembl_id', 'name', 'chromosome', 'position', 'length',
+                  'type', 'source'])
+        return d

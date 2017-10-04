@@ -83,7 +83,7 @@ def configure_logger(name, log_stream=sys.stdout, log_file=None,
     # create the formatter
     log_fmt = '[%(asctime)s] %(levelname)s: %(message)s'
     log_datefmt = '%Y-%m-%d %H:%M:%S'
-    formatter = logging.Formatter(log_fmt,log_datefmt)
+    formatter = logging.Formatter(log_fmt, log_datefmt)
 
     # create and attach the handlers
 

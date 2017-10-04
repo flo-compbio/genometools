@@ -14,22 +14,20 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function
-
 # import sys
 
 import os
+from os import path
 import io
 
 from setuptools import setup, find_packages, Command
-from os import path
 
 root = 'genometools'
 name = 'genometools'
-version = '0.3.5'
+version = '0.4.0'
 
 here = path.abspath(path.dirname(__file__))
-description = 'GenomeTools: A Python Framework for Analyzing Genomic Data.'
+description = 'GenomeTools: A Python Toolkit for Working with Genomic Data.'
 
 install_requires = [
     'six>=1.5.2, <2',
@@ -39,7 +37,8 @@ install_requires = [
     'xmltodict>=0.10.1, <1',
     'ftputil>=3.3.1, <4',
     'numpy>=1.8, <2',
-    'pandas>=0.18, <1',
+    'scipy>=0.19.0, <1',
+    'pandas>=0.20.1, <1',
     'xlmhg>=2.4.9, <3',
     'google-cloud-storage>=0.23.1',
     'oauth2client>=4, <5',
@@ -114,7 +113,6 @@ setup(
 
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
 
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.5',
     ],
 
@@ -148,8 +146,10 @@ setup(
     package_data={
         'genometools': [
             'data/*.tsv',
-            'data/cloudscripts/*.sh',
-            'data/pipelines/*.sh']
+            'data/gcloud/pipelines/*.sh',
+            'data/gcloud/pipelines/STAR/*.sh',
+            'data/gcloud/scripts/*.sh',
+            'data/tests/*']
     },
 
     # data outside the package
