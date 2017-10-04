@@ -16,12 +16,6 @@
 
 """Tests for the `GSEAnalysis` class."""
 
-from __future__ import (absolute_import, division,
-                        print_function, unicode_literals)
-from builtins import str as text
-
-from string import ascii_lowercase
-
 import pytest
 
 # from genometools.expression import ExpGenome
@@ -32,19 +26,18 @@ logger = misc.get_logger('genometools', verbose=True)
 
 
 @pytest.fixture
-def my_analysis(my_genome, my_gene_set_coll):
-    analysis = GeneSetEnrichmentAnalysis(my_genome, my_gene_set_coll)
+def my_analysis(my_valid_genes, my_gene_set_coll):
+    analysis = GeneSetEnrichmentAnalysis(my_valid_genes, my_gene_set_coll)
     return analysis
 
 
-def test_basic(my_analysis, my_genome):
+def test_basic(my_analysis, my_valid_genes):
     assert isinstance(my_analysis, GeneSetEnrichmentAnalysis)
     assert isinstance(repr(my_analysis), str)
     assert isinstance(str(my_analysis), str)
-    assert isinstance(text(my_analysis), text)
 
-    assert my_analysis.genome is not my_genome
-    assert len(my_analysis.genome) == len(my_genome)
+    assert my_analysis.valid_genes is not my_valid_genes
+    assert len(my_analysis.valid_genes) == len(my_valid_genes)
 
 
 def test_rank_based_analysis(my_analysis, my_ranked_genes,

@@ -35,14 +35,14 @@ def test_checksum(my_checksum_file):
     assert misc.get_file_checksum(my_checksum_file) == 2761
     assert misc.test_file_checksum(my_checksum_file, 2761)
 
-
+@pytest.mark.online
 def test_ftp_download(my_readme_file):
     """Tests `ftp_download` function."""
     misc.ftp_download('ftp://ftp.ensembl.org/pub/current_README',
                       my_readme_file)
     assert os.stat(my_readme_file).st_size > 0
 
-
+@pytest.mark.online
 def test_http_download(my_temp_dir):
     """Tests `http_download` function."""
     download_file = text(my_temp_dir.join('google.htm'))

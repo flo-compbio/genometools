@@ -22,10 +22,10 @@ from builtins import str as text
 
 # import os
 import shutil
+import logging
 
 import pytest
 import requests
-import logging
 
 logging.basicConfig(level=logging.INFO)
 
@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 from genometools import misc
 from genometools.ontology import GOTerm, GeneOntology
-from genometools.expression import ExpGenome
+from genometools.expression import ExpGeneTable
 
 def download_file(url, path):
     r = requests.get(url, stream=True)
@@ -50,18 +50,20 @@ def my_data_pypath(tmpdir_factory):
 
 
 @pytest.fixture(scope='session')
-def my_genome_file(my_data_pypath):
-    logger.info('Starting download of genome file...')
-    url = r'https://www.dropbox.com/s/vvhz0jt2ly9hzsz/protein_coding_genes_human_ensembl83.tsv?dl=1'
-    path = text(my_data_pypath.join('protein_coding_genes_human_ensembl83.tsv'))
+def my_gene_file(my_data_pypath):
+    logger.info('Starting download of gene file...')
+    url = r'https://www.dropbox.com/s/b01lydrh4qdgvpe/protein_coding_genes_human_ensembl89.tsv?dl=1'
+    path = text(my_data_pypath.join('protein_coding_genes_human_ensembl89.tsv'))
     download_file(url, path)
+    print(open(path).readlines()[:5])
     return path
 
 
 @pytest.fixture(scope='session')
-def my_genome(my_genome_file):
-    genome = ExpGenome.read_tsv(my_genome_file)
-    return genome
+def my_valid_genes(my_gene_file):
+    gene_table = ExpGeneTable.read_tsv(my_gene_file)
+    valid_genes = gene_table['name']
+    return valid_genes
 
 
 @pytest.fixture(scope='session')

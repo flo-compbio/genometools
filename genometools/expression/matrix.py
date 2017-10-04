@@ -24,21 +24,24 @@ from builtins import *
 import logging
 import importlib
 import hashlib
-from collections import Iterable
+from collections import OrderedDict
+from typing import Iterable
 
 import pandas as pd
 import numpy as np
+import scipy as sp
+from scipy import sparse
 import unicodecsv as csv
 import six
 
 # from .. import misc
-from . import ExpGene, ExpGenome
+from . import ExpGene, ExpGeneTable
 profile = importlib.import_module('.profile', package='genometools.expression')
 # - "import profile" is not possible, since a "profile" module exists
 #    in the standard library
 # - "from . import profile" fails due to cyclical imports
 
-logger = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 
 class ExpMatrix(pd.DataFrame):
@@ -71,46 +74,54 @@ class ExpMatrix(pd.DataFrame):
     X : 2-dimensional `numpy.ndarray`
         The matrix of expression values.
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args,
+                 X: np.ndarray = None,
+                 genes: Iterable[str] = None, gene_label: str = None,
+                 cells: Iterable[str] = None, cell_label: str = None,
+                 samples: Iterable[str] = None, sample_label: str = None,
+                 **kwargs):
         
-        # check if user provided "X" keyword argument
-        X = kwargs.pop('X', None)
+        # check if user provided "X" keyword argument...
+        # if so, pass it as the "data" argument to the DataFrame constructor
         if X is not None:
-            assert isinstance(X, np.ndarray) and X.ndim == 2
+            if 'data' in kwargs:
+                raise ValueError(
+                    'Cannot specify both "X" and "data" arguments.')
             kwargs['data'] = X
 
-        # check if user provided "genes" keyword argument
-        genes = kwargs.pop('genes', None)
-        if genes is not None:
-            assert isinstance(genes, Iterable)
+        if cells is not None and samples is not None:
+            raise ValueError('Cannot specify both "cells" and "samples" '
+                             'arguments.')
 
-        # check if user provided "samples" keyword argument
-        samples = kwargs.pop('samples', None)
-        if samples is not None:
-            assert isinstance(samples, Iterable)
+        if cell_label is not None and sample_label is not None:
+            raise ValueError('Cannot specify both "cell_label" and '
+                             '"sample_label" arguments.')
 
         # call base class constructor
         pd.DataFrame.__init__(self, *args, **kwargs)
 
+        # set gene (row) and cell/sample (column) labels, if provided
         if genes is not None:
             self.index = genes
 
-        if samples is not None:
+        if cells is not None:
+            self.columns = cells
+        elif samples is not None:
             self.columns = samples
 
-        # set default index name to "Genes"
-        gene_label = kwargs.pop('gene_label', None)
+        # set index name (default: "Genes")
         if gene_label is not None:
             self.index.name = gene_label
         elif self.index.name is None:
             self.index.name = 'Genes'
 
-        # set default column name to "Samples"
-        sample_label = kwargs.pop('sample_label', None)
-        if sample_label is not None:
+        # set column name (default: "Cells")
+        if cell_label is not None:
+            self.columns.name = cell_label
+        elif sample_label is not None:
             self.columns.name = sample_label
         elif self.columns.name is None:
-            self.columns.name = 'Samples'
+            self.columns.name = 'Cells'
 
 
     def __eq__(self, other):
@@ -172,6 +183,16 @@ class ExpMatrix(pd.DataFrame):
         self.index = gene_list
 
     @property
+    def cells(self):
+        """Alias for `DataFrame.columns`."""
+        # return tuple(str(s) for s in self.columns)
+        return self.columns
+
+    @cells.setter
+    def cells(self, cell_list):
+        self.columns = cell_list
+
+    @property
     def samples(self):
         """Alias for `DataFrame.columns`."""
         # return tuple(str(s) for s in self.columns)
@@ -186,10 +207,27 @@ class ExpMatrix(pd.DataFrame):
         """Alias for `DataFrame.values`."""
         return self.values
 
-    @property
-    def genome(self):
-        """Get an `ExpGenome` representation of the genes in the matrix."""
-        return ExpGenome.from_gene_names(self.genes.tolist())
+    def sum(self, axis=0, dtype=None):
+        """Sum over rows or columns.
+        
+        Overrides the default `pandas.DataFrame.sum()` function to prevent
+        temporary in-memory copies.
+        """
+        if axis not in [0, 1, 'index', 'columns']:
+            raise ValueError('"axis" parameter must be one of 0, 1, "index", '
+                             'or "columns".')
+
+        sum_kwargs = {}
+        if dtype is not None:
+            sum_kwargs['dtype'] = dtype
+        y = self.values.sum(axis=axis, **sum_kwargs)
+
+        if axis == 0 or axis == 'index':
+            y = profile.ExpProfile(y, genes=self.cells)
+        else:
+            y = profile.ExpProfile(y, genes=self.genes)
+
+        return y
 
 
     def filter_variance(self, top):
@@ -223,10 +261,10 @@ class ExpMatrix(pd.DataFrame):
         from .visualize import HeatmapGeneAnnotation
         from .visualize import HeatmapSampleAnnotation
 
-        if highlight_genes is not None:
-            assert isinstance(highlight_genes, Iterable)
-        if highlight_samples is not None:
-            assert isinstance(highlight_genes, Iterable)
+        #if highlight_genes is not None:
+        #    assert isinstance(highlight_genes, Iterable)
+        #if highlight_samples is not None:
+        #    assert isinstance(highlight_genes, Iterable)
         if highlight_color is not None:
             assert isinstance(highlight_color, (str, _oldstr))
 
@@ -352,12 +390,12 @@ class ExpMatrix(pd.DataFrame):
             np.tile(np.std(matrix.X, axis=1, ddof=1), (matrix.n, 1)).T
         return matrix
 
-    def filter_against_genome(self, genome, inplace=False):
+    def filter_genes(self, gene_names : Iterable[str], inplace=False):
         """Filter the expression matrix against a _genome (set of genes).
 
         Parameters
         ----------
-        genome: `genometools.expression.ExpGenome`
+        gene_names: list of str
             The genome to filter the genes against.
         inplace: bool, optional
             Whether to perform the operation in-place.
@@ -367,9 +405,8 @@ class ExpMatrix(pd.DataFrame):
         ExpMatrix
             The filtered expression matrix.
         """
-        assert isinstance(genome, ExpGenome)
 
-        return self.drop(set(self.genes) - set(genome.gene_names),
+        return self.drop(set(self.genes) - set(gene_names),
                          inplace=inplace)
 
     @property
@@ -386,15 +423,17 @@ class ExpMatrix(pd.DataFrame):
         corr_matrix = ExpMatrix(genes=self.samples, samples=self.samples, X=C)
         return corr_matrix
 
+
     @classmethod
-    def read_tsv(cls, path, genome=None, encoding='UTF-8'):
+    def read_tsv(cls, file_path: str, gene_table: ExpGeneTable = None,
+                 encoding: str = 'UTF-8'):
         """Read expression matrix from a tab-delimited text file.
 
         Parameters
         ----------
-        path: str
+        file_path: str
             The path of the text file.
-        genome: `ExpGenome` object, optional
+        gene_table: `ExpGeneTable` object, optional
             The set of valid genes. If given, the genes in the text file will
             be filtered against this set of genes. (None)
         encoding: str, optional
@@ -405,36 +444,31 @@ class ExpMatrix(pd.DataFrame):
         `ExpMatrix`
             The expression matrix.
         """
-        # checks
-        assert isinstance(path, (str, _oldstr))
-        if genome is not None:
-            assert isinstance(genome, ExpGenome)
-        assert isinstance(encoding, (str, _oldstr))
-
         # use pd.read_csv to parse the tsv file into a DataFrame
-        matrix = cls(pd.read_csv(path, sep='\t', index_col=0, header=0,
+        matrix = cls(pd.read_csv(file_path, sep='\t', index_col=0, header=0,
                                  encoding=encoding))
 
         # parse index column separately
         # (this seems to be the only way we can prevent pandas from converting
         #  "nan" or "NaN" to floats in the index)
-        ind = pd.read_csv(path, sep='\t', usecols=[0, ], header=0,
+        ind = pd.read_csv(file_path, sep='\t', usecols=[0, ], header=0,
                           encoding=encoding, na_filter=False)
 
         matrix.index = ind.iloc[:, 0]
 
-        if genome is not None:
+        if gene_table is not None:
             # filter genes
-            matrix = matrix.filter_against_genome(genome)
+            matrix = matrix.filter_genes(gene_table.gene_names)
 
         return matrix
 
-    def write_tsv(self, path, encoding='UTF-8'):
+
+    def write_tsv(self, file_path: str, encoding: str = 'UTF-8'):
         """Write expression matrix to a tab-delimited text file.
 
         Parameters
         ----------
-        path: str
+        file_path: str
             The path of the output file.
         encoding: str, optional
             The file encoding. ("UTF-8")
@@ -443,18 +477,97 @@ class ExpMatrix(pd.DataFrame):
         -------
         None
         """
-        assert isinstance(path, (str, _oldstr))
-        assert isinstance(encoding, (str, _oldstr))
-
-        # sep = str('\t')
         sep = '\t'
         if six.PY2:
             sep = sep.encode('UTF-8')
 
         self.to_csv(
-            path, sep=sep, float_format='%.5f', mode='w',
+            file_path, sep=sep, float_format='%.5f', mode='w',
             encoding=encoding, quoting=csv.QUOTE_NONE
         )
 
-        logger.info('Wrote %d x %d expression matrix to "%s".',
-                    self.p, self.n, path)
+        _LOGGER.info('Wrote %d x %d expression matrix to "%s".',
+                    self.p, self.n, file_path)
+
+
+    def write_sparse(self, file_path: str):
+        """Write a sparse representation to a tab-delimited text file.
+        
+        TODO: docstring"""
+
+        coo = sparse.coo_matrix(self.X)
+        data = OrderedDict([(0, coo.row+1), (1, coo.col+1), (2, coo.data)])
+        df = pd.DataFrame(data, columns=data.keys())
+        with open(file_path, 'w') as ofh:
+            ofh.write('%%MatrixMarket matrix coordinate real general\n')
+            ofh.write('%%%s\n' % '\t'.join(self.genes.astype(str)))
+            ofh.write('%%%s\n' % '\t'.join(self.cells.astype(str)))
+            ofh.write('%\n')
+            ofh.write('%d %d %d\n' % (coo.shape[0], coo.shape[1], coo.nnz))
+            df.to_csv(ofh, sep=' ', float_format='%.5f',
+                      header=None, index=None)
+
+
+    @classmethod
+    def read_sparse(cls, file_path: str):
+        """Read a sparse representation from a tab-delimited text file.
+        
+        TODO: docstring"""
+        
+        with open(file_path) as fh:
+            next(fh)  # skip header line
+            genes = next(fh)[1:-1].split('\t')
+            cells = next(fh)[1:-1].split('\t')
+            next(fh)
+            m, n, nnz = [int(s) for s in next(fh)[:-1].split(' ')]
+        
+        t = pd.read_csv(file_path, sep=' ', skiprows=5, header=None,
+                        dtype={0: np.uint32, 1: np.uint32})
+        
+        i = t[0].values - 1
+        j = t[1].values - 1
+        data = t[2].values
+
+        assert data.size == nnz
+
+        X = sparse.coo_matrix((data, (i,j)), shape=[m, n]).todense()
+
+        return cls(X=X, genes=genes, cells=cells)
+
+    @classmethod
+    def read_10xgenomics(cls, tarball_fpath: str, prefix: str):
+        """Read a 10X genomics compressed tarball containing expression data.
+        
+        Note: common prefix patterns:
+        - "filtered_gene_bc_matrices/[annotations]/"
+        - "filtered_matrices_mex/[annotations]/"
+
+        TODO: docstring"""
+
+        _LOGGER.info('Reading file: %s', tarball_fpath)
+
+        with tarfile.open(tarball_fpath, mode='r:gz') as tf:
+            ti = tf.getmember('%smatrix.mtx' % prefix)
+            with tf.extractfile(ti) as fh:
+                mtx = scipy.io.mmread(fh)
+
+            ti = tf.getmember('%sgenes.tsv' % prefix)
+            with tf.extractfile(ti) as fh:
+                wrapper = io.TextIOWrapper(fh, encoding='ascii')
+                gene_names = \
+                        [row[1] for row in csv.reader(wrapper, delimiter='\t')]
+
+            ti = tf.getmember('%sbarcodes.tsv' % prefix)
+            with tf.extractfile(ti) as fh:
+                wrapper = io.TextIOWrapper(fh, encoding='ascii')
+                barcodes = \
+                        [row[0] for row in csv.reader(wrapper, delimiter='\t')]
+
+
+            assert mtx.shape[0] == len(gene_names)
+            assert mtx.shape[1] == len(barcodes)
+        
+        _LOGGER.info('Matrix dimensions: %s', str(mtx.shape))
+        matrix = cls(X=mtx, genes=gene_names, cells=barcodes)
+        
+        return matrix

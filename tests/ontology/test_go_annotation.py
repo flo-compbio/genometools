@@ -77,11 +77,11 @@ def test_list(my_go_annotation, my_go_term):
 
 
 @pytest.mark.online
-def test_parser(my_goa_file, my_genome, my_gene_ontology):
+def test_parser(my_goa_file, my_valid_genes, my_gene_ontology):
 
     ev_codes = ['IEA', 'TAS']
     go_annotations = parse_gaf(my_goa_file, my_gene_ontology,
-                               genome=my_genome,
+                               valid_genes=my_valid_genes,
                                db='UniProtKB', ev_codes=ev_codes)
     
     assert isinstance(go_annotations, list)

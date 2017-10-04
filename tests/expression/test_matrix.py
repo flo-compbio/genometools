@@ -23,7 +23,7 @@ from builtins import str as text
 import pytest
 import numpy as np
 
-from genometools.expression import ExpMatrix, ExpProfile, ExpGenome
+from genometools.expression import ExpMatrix, ExpProfile, ExpGeneTable
 
 
 def test_basic(my_matrix, my_gene_names, my_samples, my_X):
@@ -66,12 +66,12 @@ def test_transformation(my_matrix):
 
 def test_indices(my_matrix):
     assert my_matrix.genes.name == 'Genes'
-    assert my_matrix.samples.name == 'Samples'
+    assert my_matrix.samples.name == 'Cells'
 
 
-def test_filter_genome(my_matrix, my_genome):
-    other = my_matrix.filter_against_genome(my_genome)
-    print(set(my_genome.gene_names))
+def test_filter_genes(my_matrix, my_gene_table):
+    other = my_matrix.filter_genes(my_gene_table.gene_names)
+    print(set(my_gene_table.gene_names))
     print(other.genes)
     assert other is not my_matrix
     assert other == my_matrix
@@ -80,12 +80,6 @@ def test_filter_genome(my_matrix, my_genome):
 def test_filter_variance(my_matrix):
     other = my_matrix.filter_variance(top=2)
     other.genes.tolist() == ['c', 'd']
-
-
-def test_genome(my_matrix, my_genes):
-    genome = my_matrix.genome
-    assert isinstance(genome, ExpGenome)
-    assert len(genome) == len(my_genes)
 
 
 def test_copy(my_matrix):
@@ -101,5 +95,14 @@ def test_tsv(tmpdir, my_matrix):
     # h = hashlib.md5(data).hexdigest()
     # assert h == 'd34bf3d376eb613e4fea894f7c9d601f'
     other = ExpMatrix.read_tsv(output_file)
+    assert other is not my_matrix
+    assert other == my_matrix
+
+
+def test_sparse(tmpdir, my_matrix):
+    """Test reading/writing of sparse text format."""
+    output_file = tmpdir.join('expression_matrix.mtx').strpath
+    my_matrix.write_sparse(output_file)
+    other = ExpMatrix.read_sparse(output_file)
     assert other is not my_matrix
     assert other == my_matrix

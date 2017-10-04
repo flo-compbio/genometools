@@ -18,8 +18,6 @@
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
-from builtins import str as text
-from builtins import int as newint
 
 import os
 
@@ -33,7 +31,7 @@ logger = misc.get_logger()
 @pytest.mark.online
 def test_latest_release():
     release = ensembl.get_latest_release()
-    assert isinstance(release, newint)
+    assert isinstance(release, int)
     logger.info('Current release: %d', release)
 
 @pytest.mark.online
@@ -41,8 +39,6 @@ def test_latest_release():
 @pytest.mark.darwin
 @pytest.mark.cygwin
 def test_download(my_download_dir):
-    assert isinstance(my_download_dir, text)
-
     species = [
         'Homo_sapiens',
         'Mus_musculus',
@@ -51,7 +47,7 @@ def test_download(my_download_dir):
     species_data = ensembl.get_annotation_urls_and_checksums(species)
     assert len(species_data) == len(species)
     for spec, (url, chksum) in species_data.items():
-        assert isinstance(url, text)
-        assert isinstance(chksum, newint)
+        assert isinstance(url, str)
+        assert isinstance(chksum, int)
     #for fn in dl_files:
     #    assert os.path.isfile(fn)

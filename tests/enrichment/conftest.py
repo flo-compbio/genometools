@@ -1,4 +1,4 @@
-# Copyright (c) 2016 Florian Wagner
+# Copyright (c) 2016, 2017 Florian Wagner
 #
 # This file is part of GenomeTools.
 #
@@ -14,11 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division,
-                        print_function, unicode_literals)
-from builtins import str as text
-
 from string import ascii_lowercase
+from collections import OrderedDict
 
 import pytest
 import numpy as np
@@ -27,17 +24,13 @@ from scipy.stats import hypergeom
 from xlmhg import get_xlmhg_test_result
 
 from genometools.basic import GeneSet, GeneSetCollection
-from genometools.expression import ExpGenome
+from genometools.expression import ExpGeneTable
 from genometools.enrichment import *
 
 
 @pytest.fixture
-def my_genome():
-    # we're creating a fake genome consisting of all lowercase ascii characters
-    genes = [text(c) for c in ascii_lowercase]
-    genome = ExpGenome.from_gene_names(genes)
-    return genome
-
+def my_valid_genes():
+    return [c for c in ascii_lowercase]
 
 @pytest.fixture
 def my_v():
@@ -49,9 +42,9 @@ def my_v():
 
 
 @pytest.fixture
-def my_ranked_genes(my_genome, my_v):
+def my_ranked_genes(my_valid_genes, my_v):
     # This is where we map the genes names.
-    return my_genome.gene_names[:my_v.size]
+    return my_valid_genes[:my_v.size]
 
 
 @pytest.fixture

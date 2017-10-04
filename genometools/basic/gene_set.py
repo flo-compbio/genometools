@@ -16,13 +16,8 @@
 
 """Module containing the `GeneSet` class."""
 
-from __future__ import (absolute_import, division,
-                        print_function, unicode_literals)
-_oldstr = str
-from builtins import *
-
 import hashlib
-from collections import Iterable
+from typing import List, Iterable
 
 
 class GeneSet(object):
@@ -67,18 +62,9 @@ class GeneSet(object):
     description: None or str
         The description of the gene set.
     """
-    def __init__(self, id, name, genes,
-                 source=None, collection=None, description=None):
-
-        assert isinstance(id, (str, _oldstr))
-        assert isinstance(name, Iterable)
-
-        if source is not None:
-            assert isinstance(source, (str, _oldstr))
-        if collection is not None:
-            assert isinstance(collection, (str, _oldstr))
-        if description is not None:
-            assert isinstance(description, (str, _oldstr))
+    def __init__(self, id: str, name: str, genes: Iterable[str],
+                 source: str = None, collection: str = None,
+                 description: str = None):
 
         self._id = id
         self._name = name
