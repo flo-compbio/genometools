@@ -37,7 +37,6 @@ install_requires = [
     'xmltodict>=0.10.1, <1',
     'ftputil>=3.3.1, <4',
     'numpy>=1.8, <2',
-    'scipy>=0.19.0, <1',
     'pandas>=0.20.1, <1',
     'xlmhg>=2.4.9, <3',
     'google-cloud-storage>=0.23.1',
@@ -53,7 +52,7 @@ if 'READTHEDOCS' not in os.environ or \
         os.environ['READTHEDOCS'] != 'True':
     install_requires.extend([
         #'six>=1.10.0, <2',
-        'scipy>=0.14, <1',
+        'scipy>=0.19.0, <1',
         'plotly>=1.9.6, <3',
     ])
 else:
