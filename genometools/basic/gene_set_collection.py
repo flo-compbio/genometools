@@ -29,7 +29,8 @@ import os
 import io
 import logging
 import hashlib
-from collections import OrderedDict, Iterable
+from collections import OrderedDict
+from typing import List, Iterable
 
 import numpy as np
 import xmltodict
@@ -59,13 +60,9 @@ class GeneSetCollection(object):
         The list of gene sets in the database. Note that this is a read-only
         property.
     """
-    def __init__(self, gene_sets):
+    def __init__(self, gene_sets: Iterable[GeneSet]):
         
-        assert isinstance(gene_sets, Iterable)
-
         gene_sets = list(gene_sets)
-        for gs in gene_sets:
-            assert isinstance(gs, GeneSet)
 
         # make sure all IDs are unique
         all_ids = [gs.id for gs in gene_sets]

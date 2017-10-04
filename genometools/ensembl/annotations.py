@@ -1,4 +1,4 @@
-# Copyright (c) 2016 Florian Wagner
+# Copyright (c) 2016-2017 Florian Wagner
 #
 # This file is part of GenomeTools.
 #
@@ -32,7 +32,7 @@ import pandas as pd
 from .. import gtf
 from . import util
 
-logger = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 
 def get_annotation_urls_and_checksums(species, release=None, ftp=None):
@@ -91,13 +91,13 @@ def get_annotation_urls_and_checksums(species, release=None, ftp=None):
                 gtf_file.append(fn)
         assert len(gtf_file) == 1
         gtf_file = gtf_file[0]
-        logger.debug('GTF file: %s', gtf_file)
+        _LOGGER.debug('GTF file: %s', gtf_file)
 
         ### get the checksum for the GTF file
         checksum_url = '/'.join([species_dir, 'CHECKSUMS'])
         file_checksums = util.get_file_checksums(checksum_url, ftp=ftp)
         gtf_checksum = file_checksums[gtf_file]
-        logger.debug('GTF file checksum: %d', gtf_checksum)
+        _LOGGER.debug('GTF file checksum: %d', gtf_checksum)
 
         gtf_url = 'ftp://%s%s/%s' %(ftp_server, species_dir, gtf_file)
 
@@ -118,7 +118,7 @@ def get_genes(
         only_manual=False,
         remove_duplicates=True,
         sort_by='name'):
-    r"""Get all genes of a specific a biotype from an Ensembl GTF file.
+    """Get all genes of a specific a biotype from an Ensembl GTF file.
     
     Parameters
     ----------
@@ -133,7 +133,8 @@ def get_genes(
         are based only on an automatic annotation pipeline. [True]
     remove_duplicates : bool, optional
         Whether to remove duplicate annotations, i.e. those with different
-        Ensembl IDs for the same gene. [True]
+        Ensembl IDs for the same gene (only applies to protein-coding genes).
+        [True]
     sort_by : str, optional
         How to sort the genes. One of:
           - 'name': Genes are ordered alphabetically by their name
@@ -212,6 +213,9 @@ def get_genes(
     chrompat = None
     if chromosome_pattern is not None:
         chrompat = re.compile(chromosome_pattern)
+
+    # make sure this is a set
+    valid_biotypes = set(valid_biotypes)
     
     c = 0
     num_lines = 0
@@ -221,28 +225,32 @@ def get_genes(
     reader = pd.read_csv(path_or_buffer, encoding='ascii', sep='\t',
                          header=None, comment='#', dtype={0: str},
                          chunksize=chunksize)
-    data = []
-    header = ['name', 'ensembl_id',
-              'chromosome', 'position', 'length',
-              'source', 'type']
             
+    # "insdc" is required to catch the mitochondrial protein-coding genes
     valid_sources = set(['ensembl_havana', 'havana', 'insdc'])
+    
     if not only_manual:
         # we also accept annotations with source "ensembl", which are the
-        # product of an autmated annotation pipeline
+        # product of an automated annotation pipeline
         valid_sources.add('ensembl')
         
     excluded_chromosomes = set()
-    
+
+    # parse GTF file and keep specific information
+    data = []
     for j, df in enumerate(reader):
         num_chunks += 1
         num_lines += (df.shape[0])
-        # "insdc" is required to catch the mitochondrial protein-coding genes
-        sel = (df.iloc[:, 2] == 'gene') & df.iloc[:, 1].isin(valid_sources)
-        # c += sel.sum()
+        
+        # select rows of type "gene"
+        sel = (df.iloc[:, 2] == 'gene')
+        
         for i, row in df.loc[sel].iterrows():
+            
+            # parse attribute in 9th column
             attr = gtf.parse_attributes(row[8].lstrip(' '))
 
+            # check if biotype is valid
             biotype = attr['gene_biotype']
             if biotype not in valid_biotypes:
                 continue
@@ -257,63 +265,99 @@ def get_genes(
 
             c += 1
 
+            # extract gene ID and gene name
             ensembl_id = attr['gene_id']
             try:
                 gene_name = attr['gene_name']
-            except KeyError as e:
+            except KeyError:
+                # no gene name, so we'll use the ID as the name
                 gene_name = ensembl_id
 
-            assert row[6] in ['+', '-']
+            # We define the position to be the index of the 5'-most base of the gene,
+            # according its orientation on the chromosome (DNA sequences are always represented 5'->3').
+            # We encode the strand as the sign of the index
+            # ("+" strand = positive sign, "-" strand = negative sign).
             if row[6] == '+':
                 pos = int(row[3])-1
             elif row[6] == '-':
-                pos = -int(row[4])
+                pos = -(int(row[4])-1)
             else:
                 raise ValueError('Invalid strand information: %s'
                                  % str(row[6]))
-            length = abs(int(row[4]) - int(row[3]))
+            length = abs(int(row[4]) - int(row[3])) + 1
 
-            data.append([gene_name, ensembl_id, chrom, pos, length,
-                         source, biotype])
+            #data.append([gene_name, ensembl_id, chrom, pos, length,
+            #             source, biotype])
+            data.append([ensembl_id, gene_name, chrom, pos, length,
+                         biotype, source])
             
     t1 = time.time()
     
+    header = ['ensembl_id', 'name',
+              'chromosome', 'position', 'length',
+              'type', 'source']
     df = pd.DataFrame(columns=header, data=data)
     
-    if not only_manual:
-        # make sure we only keep annotations with source "ensembl"
-        # if no manual annotations are available
-        sel = df['source'] == 'ensembl'
-        redundant_ensembl_genes = set(df.loc[sel, 'name'].values) & \
-                set(df.loc[~sel, 'name'].values)
-        sel = sel & df['name'].isin(redundant_ensembl_genes)
-        num_genes_before = df.shape[0]
-        df = df.loc[~sel]
-        num_genes_after = df.shape[0]
-        logger.info('Removed %d gene annotations with source "ensembl" that '
-                    'also had manual annotations.',
-                    num_genes_before-num_genes_after)
-    
-    if remove_duplicates:
-        # remove duplicate annotations (two or more Ensembl IDs for the same
-        # gene)
-        num_genes_before = df.shape[0]
+    if 'protein_coding' in valid_biotypes:
+        if only_manual:
+            # exclude protein-coding genes that are the based on
+            # automatic annotation (source "ensembl")
+            sel = (df['type'] == 'protein_coding' & df['source'] == 'ensembl')
+            df = df.loc[~sel]
 
-        # sort by signed position value,
-        # in order to make sure we keep the most "upstream" annotation in
-        # the next step
-        df.sort_values('position', kind='mergesort', inplace=True)
+        else:
+            # make sure we only keep protein-coding genes with source "ensembl"
+            # if no manual annotations are available
+            sel_pc = df['type'] == 'protein_coding'
 
-        # remove duplicates by keeping the first occurrence
-        #df.drop_duplicates(['chromosome', 'name'], inplace=True)
-        df.drop_duplicates('name', inplace=True)
+            sel_ensembl = ((df['source'] == 'ensembl') & sel_pc)
+            sel_manual = ((df['source'] != 'ensembl') & sel_pc)
+            redundant_ensembl_genes = set(df.loc[sel_ensembl, 'name'].values) \
+                    & set(df.loc[sel_manual, 'name'].values)
+            sel_redund = sel_ensembl & df['name'].isin(redundant_ensembl_genes)
+            num_genes_before = df.shape[0]
+            df = df.loc[~sel_redund]
+            num_genes_after = df.shape[0]
+            _LOGGER.info('Removed %d protein-coding genes with source '
+                        '"ensembl" that also had manual annotations.',
+                        num_genes_before - num_genes_after)
+        
+        if remove_duplicates:
+            # remove duplicate annotations (two or more Ensembl IDs for the
+            # same gene)
+            num_genes_before = df.shape[0]
 
-        # restore original order using the numeric index
-        df.sort_index(inplace=True)
+            sel_pc = df['type'] == 'protein_coding'
+            df_sel = df.loc[sel_pc].copy()
 
-        num_genes_after = df.shape[0]
-        logger.info('Removed %d duplicate gene entries',
-                    num_genes_before-num_genes_after)
+            # sort by signed position value,
+            # in order to make sure we keep the most "upstream" annotation in
+            # the next step
+            df_sel.sort_values('position', kind='mergesort', inplace=True)
+
+            # remove duplicates by keeping the first occurrence
+            #df.drop_duplicates(['chromosome', 'name'], inplace=True)
+            df_sel.drop_duplicates('name', inplace=True)
+
+            # combine protein-coding genes and non-protein-coding genes again
+            df = pd.concat([df_sel, df.loc[~sel_pc]])
+
+            # restore original order using the numeric index
+            df.sort_index(inplace=True)
+
+            num_genes_after = df.shape[0]
+            _LOGGER.info('Removed %d duplicate protein-coding gene entries',
+                        num_genes_before - num_genes_after)
+        else:
+            # print names of genes with duplicate IDs
+            sel = df['type'] == 'protein_coding'
+
+            counts = df.loc[sel]['name'].value_counts()
+            sel = counts > 1
+            if sel.sum() > 0:
+                _LOGGER.info('Protein-coding genes with multiple Ensembl IDs:'
+                             '%s', ', '.join(['%s (%d)' % (k, v)
+                                             for k, v in counts[sel].items()]))
 
     if sort_by == 'name':
         # sort alphabetically by gene name
@@ -348,29 +392,32 @@ def get_genes(
             chrom_for_sorting = df['chromosome'].apply(transform_chrom)
             a = chrom_for_sorting.argsort(kind='mergesort')
             df = df.iloc[a]
-            logger.info('Performed fancy sorting of chromosomes.')
+            _LOGGER.info('Performed fancy sorting of chromosomes.')
+            
+    # set index to ensembl ID
+    df.set_index('ensembl_id', inplace=True)
     
-    logger.info('Read %d lines (in %d chunks).', num_lines, num_chunks)
-    logger.info('Found %d valid gene entries.', c)
-    logger.info('Final number of unique genes: %d', df.shape[0])
-    logger.info('Parsing time: %.1f s', t1-t0)
+    _LOGGER.info('Read %d lines (in %d chunks).', num_lines, num_chunks)
+    _LOGGER.info('Found %d valid gene entries.', c)
+    _LOGGER.info('Final number of unique genes: %d', df.shape[0])
+    _LOGGER.info('Parsing time: %.1f s', t1-t0)
     
     # additional statistics
     all_chromosomes = list(df['chromosome'].unique())
-    logger.info('Valid chromosomes (%d): %s',
+    _LOGGER.info('Valid chromosomes (%d): %s',
                 len(all_chromosomes),
                 ', '.join(all_chromosomes))
-    logger.info('Excluded chromosomes (%d): %s',
+    _LOGGER.info('Excluded chromosomes (%d): %s',
                 len(excluded_chromosomes),
                 ', '.join(sorted(excluded_chromosomes)))
     
-    logger.info('Sources:')
+    _LOGGER.info('Sources:')
     for i, c in df['source'].value_counts().iteritems():
-        logger.info('- %s: %d', i, c)
+        _LOGGER.info('- %s: %d', i, c)
         
-    logger.info('Gene types:')
+    _LOGGER.info('Gene types:')
     for i, c in df['type'].value_counts().iteritems():
-        logger.info('- %s: %d', i, c)
+        _LOGGER.info('- %s: %d', i, c)
     
     return df
     
@@ -378,6 +425,7 @@ def get_genes(
 def get_protein_coding_genes(
         path_or_buffer, 
         include_polymorphic_pseudogenes=True,
+        remove_duplicates=True,
         **kwargs):
     r"""Get list of all protein-coding genes based on Ensembl GTF file.
     
@@ -395,12 +443,14 @@ def get_protein_coding_genes(
     if include_polymorphic_pseudogenes:
         valid_biotypes.add('polymorphic_pseudogene')
     
-    df = get_genes(path_or_buffer, valid_biotypes, **kwargs)
+    df = get_genes(path_or_buffer, valid_biotypes,
+                   remove_duplicates=remove_duplicates, **kwargs)
     return df
 
 
 def get_linc_rna_genes(
-        path_or_buffer, 
+        path_or_buffer,
+        remove_duplicates=True,
         **kwargs):
     r"""Get list of all protein-coding genes based on Ensembl GTF file.
     
@@ -416,5 +466,6 @@ def get_linc_rna_genes(
     """
     valid_biotypes = set(['lincRNA'])
     
-    df = get_genes(path_or_buffer, valid_biotypes, **kwargs)
+    df = get_genes(path_or_buffer, valid_biotypes,
+                   remove_duplicates=remove_duplicates, **kwargs)
     return df

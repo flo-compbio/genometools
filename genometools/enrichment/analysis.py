@@ -1,4 +1,4 @@
-# Copyright (c) 2015, 2016 Florian Wagner
+# Copyright (c) 2015-2017 Florian Wagner
 #
 # This file is part of GenomeTools.
 #
@@ -16,16 +16,13 @@
 
 """Module containing the `GeneSetEnrichmentAnalysis` class."""
 
-from __future__ import (absolute_import, division,
-                        print_function, unicode_literals)
-_oldstr = str
-from builtins import *
-
 import logging
 from math import ceil
 import copy
-from collections import Iterable
+#from collections import Iterable
 import sys
+from typing import Iterable, List, Union
+import hashlib
 
 import numpy as np
 from scipy.stats import hypergeom
@@ -34,32 +31,31 @@ import xlmhg
 
 # from ..basic import GeneSet, GeneSetCollection
 from ..basic import GeneSetCollection
-from ..expression import ExpGenome
 from . import StaticGSEResult, RankBasedGSEResult
 
 logger = logging.getLogger(__name__)
 
 
-class GeneSetEnrichmentAnalysis(object):
+class GeneSetEnrichmentAnalysis:
     """Test a set of genes or a ranked list of genes for gene set enrichment.
 
     Parameters
     ----------
-    genome: `ExpGenome` object
-        See :attr:`_genome` attribute.
+    valid_genes: list of str
+        See :attr:`valid_genes` attribute.
     gene_set_coll: `GeneSetCollection` object
-        See :attr:`_gene_set_coll` attribute.
+        See :attr:`gene_set_coll` attribute.
 
     Attributes
     ----------
-    _genome: `ExpGenome` object
-        The universe of genes.
-    _gene_set_coll: `GeneSetCollection` object
+    valid_genes: list of str (read-only)
+        The list ("universe") of all genes.
+    gene_set_coll: `GeneSetCollection` object (read-only)
         The list of gene sets to be tested.
 
     Notes
     -----
-    The class is initialized with a set of valid gene names (an `ExpGenome`
+    The class is initialized with a set of valid gene names (an `ExpGeneTable`
     object), as well as a set of gene sets (a `GeneSetCollection` object).
     During initialization, a binary "gene-by-gene set" matrix is constructed,
     which stores information about which gene is contained in each gene set.
@@ -72,52 +68,67 @@ class GeneSetEnrichmentAnalysis(object):
     function `get_rank_based_enrichment` can be used to test a ranked list of
     genes for gene set enrichment.
 
-    Note also that two conventions get mixed here: In the `GeneSet` class, a
-    gene simply corresponds to a string containing the gene name, whereas in
-    the `ExpGenome` class, a gene is an `ExpGene` object. Here, we represent
-    genes as simple strings, since the user can always obtain the
-    corresponding `ExpGene` object from the `ExpGenome` genome.
+    As in the `GeneSet` class, we represent a gene here simply as a string
+    containing the gene name.
+
+    Class attributes are private, and exposed via read-only properties, because
+    during initialization some preprocessing is done to allow many enrichment
+    tests to be carried out efficiently.
     """
 
-    def __init__(self, genome, gene_set_coll):
+    def __init__(self,
+                 valid_genes: Iterable[str],
+                 gene_set_coll: GeneSetCollection):
 
-        assert isinstance(genome, ExpGenome)
-        assert isinstance(gene_set_coll, GeneSetCollection)
+        self._valid_genes = tuple(copy.deepcopy(valid_genes))
+        self._gene_set_coll = copy.deepcopy(gene_set_coll)
 
-        self._genome = genome
-        self._gene_set_coll = gene_set_coll
+        self._gene_indices = \
+                dict([gene, i]
+                     for i, gene in enumerate(valid_genes))
 
         # generate annotation matrix by going over all gene sets
         logger.info('Generating gene-by-gene set membership matrix...')
-        gene_memberships = np.zeros((len(genome), gene_set_coll.n),
+        gene_memberships = np.zeros((len(self._valid_genes), gene_set_coll.n),
                                     dtype=np.uint8)
         for j, gs in enumerate(self._gene_set_coll.gene_sets):
             for g in gs.genes:
                 try:
-                    idx = self._genome.index(g)
-                except ValueError:
+                    idx = self._gene_indices[g]
+                except KeyError:
                     pass
                 else:
                     gene_memberships[idx, j] = 1
         self._gene_memberships = gene_memberships
 
     def __repr__(self):
-        return '<%s object (genome=%s; gene_set_coll=%s)>' \
+        h = hashlib.md5(str(self._valid_genes).encode('utf-8')).hexdigest()
+        gene_cls = self._valid_genes.__class__.__name__
+        gene_str = '<%s object (n=%d, hash=%s)>' \
+                % (gene_cls, len(self._valid_genes), h)
+        return '<%s object (all_genes=%s; gene_set_coll=%s)>' \
                % (self.__class__.__name__,
-                  repr(self._genome), repr(self._gene_set_coll))
+                  gene_str, repr(self._gene_set_coll))
 
     def __str__(self):
-        return '<%s object (%d genes in _genome; %d gene sets)>' \
+        return '<%s with %d genes and %d gene sets>' \
                % (self.__class__.__name__,
-                  len(self._genome), len(self._gene_set_coll))
+                  len(self._valid_genes), len(self._gene_set_coll))
 
     @property
-    def genome(self):
-        return copy.deepcopy(self._genome)
+    def valid_genes(self):
+        return self._valid_genes  # is a tuple, so immutable
+
+    @property
+    def gene_set_coll(self):
+        return copy.deepcopy(self._gene_set_coll)
 
     def get_static_enrichment(
-            self, genes, pval_thresh, adjust_pval_thresh=True, K_min=3,
-            gene_set_ids=None):
+            self, genes: Iterable[str],
+            pval_thresh: float,
+            adjust_pval_thresh: bool = True,
+            K_min: int = 3,
+            gene_set_ids: Iterable[str] = None) -> StaticGSEResult:
         """Find enriched gene sets in a set of genes.
 
         Parameters
@@ -141,12 +152,7 @@ class GeneSetEnrichmentAnalysis(object):
         list of `StaticGSEResult`
             A list of all significantly enriched gene sets. 
         """
-        assert isinstance(genes, set)
-        assert isinstance(pval_thresh, (float, np.float))
-        assert isinstance(K_min, (int, np.integer))
-        if gene_set_ids is not None:
-            assert isinstance(gene_set_ids, Iterable)
-
+        genes = set(genes)
         gene_set_coll = self._gene_set_coll
         gene_sets = self._gene_set_coll.gene_sets
         gene_memberships = self._gene_memberships
@@ -175,10 +181,9 @@ class GeneSetEnrichmentAnalysis(object):
         filtered_genes = []
         logger.debug('Looking up indices for %d genes...', len(sorted_genes))
         for i, g in enumerate(sorted_genes):
-            assert isinstance(g, (str, _oldstr))
             try:
-                idx = self._genome.index(g)
-            except ValueError:
+                idx = self._gene_indices[g]
+            except KeyError:
                 unknown += 1
             else:
                 sel.append(idx)
@@ -210,12 +215,13 @@ class GeneSetEnrichmentAnalysis(object):
 
         logger.debug('N=%d, n=%d', N, n)
         sys.stdout.flush()
+        genes = self._valid_genes
         for j in range(m):
             pval = hypergeom.sf(k_vec[j] - 1, N, K_vec[j], n)
             if pval <= final_pval_thresh:
                 # found significant enrichment
                 # sel_genes = [filtered_genes[i] for i in np.nonzero(gene_memberships[:, j])[0]]
-                sel_genes = [self._genome[i] for i in
+                sel_genes = [genes[i] for i in
                              np.nonzero(gene_memberships[gene_indices, j])[0]]
                 enriched.append(
                     StaticGSEResult(gene_sets[j], N, n, set(sel_genes), pval))
@@ -224,10 +230,17 @@ class GeneSetEnrichmentAnalysis(object):
 
 
     def get_rank_based_enrichment(
-            self, ranked_genes, pval_thresh=0.05,
-            X_frac=0.25, X_min=5, L=None,
-            adjust_pval_thresh=True, escore_pval_thresh=None,
-            exact_pval='always', gene_set_ids=None, table=None):
+            self,
+            ranked_genes: List[str],
+            pval_thresh: float = 0.05,
+            X_frac: float = 0.25,
+            X_min: int = 5,
+            L: int = None,
+            adjust_pval_thresh: bool = True,
+            escore_pval_thresh: float = None,
+            exact_pval: str = 'always',
+            gene_set_ids: List[str] = None,
+            table: np.ndarray = None) -> RankBasedGSEResult:
         """Test for gene set enrichment at the top of a ranked list of genes.
 
         This function uses the XL-mHG test to identify enriched gene sets.
@@ -237,8 +250,8 @@ class GeneSetEnrichmentAnalysis(object):
 
         Parameters
         ----------
-        ranked_genes : list of str
-            The ranked list of genes.
+        ranked_gene_ids : list of str
+            The ranked list of gene IDs.
         pval_thresh : float, optional
             The p-value threshold used to determine significance.
             See also ``adjust_pval_thresh``. [0.05]
@@ -253,7 +266,8 @@ class GeneSetEnrichmentAnalysis(object):
             Whether to adjust the p-value thershold for multiple testing,
             using the Bonferroni method. [True]
         escore_pval_thresh : float or None, optional
-            The "psi" p-value threshold used in calculating E-scores. [None]
+            The "psi" p-value threshold used in calculating E-scores. If
+            ``None``, will be set to p-value threshold. [None]
         exact_pval : str
             Choices are: "always", "if_significant", "if_necessary". Parameter
             will be passed to `xlmhg.get_xlmhg_test_result`. ["always"]
@@ -267,26 +281,15 @@ class GeneSetEnrichmentAnalysis(object):
         list of `RankBasedGSEResult`
             A list of all significantly enriched gene sets. 
         """
-        if isinstance(X_frac, (int, np.integer)):
-            X_frac = float(X_frac)
 
-        # type checks
-        assert isinstance(ranked_genes, Iterable)
-        assert isinstance(pval_thresh, (float, np.float))
-        assert isinstance(X_frac, (float, np.float))
-        assert isinstance(X_min, (int, np.integer))
-        if L is not None:
-            assert isinstance(L, (int, np.integer))
-        assert isinstance(adjust_pval_thresh, bool)
-        assert isinstance(exact_pval, (str, _oldstr))
+        # make sure X_frac is a float (e.g., if specified as 0)
+        X_frac = float(X_frac)
 
-        if escore_pval_thresh is not None:
-            assert isinstance(escore_pval_thresh, (float, np.float))
-        if gene_set_ids is not None:
-            assert isinstance(gene_set_ids, Iterable)
         if table is not None:
-            assert isinstance(table, np.ndarray) and \
-                   np.issubdtype(table.dtype, np.longdouble)
+            if not np.issubdtype(table.dtype, np.longdouble):
+                raise TypeError('The provided array for storing the dynamic '
+                                'programming table must be of type '
+                                '"longdouble"!')
 
         if L is None:
             L = int(len(ranked_genes)/4.0)
@@ -319,10 +322,9 @@ class GeneSetEnrichmentAnalysis(object):
         filtered_genes = []
         logger.debug('Looking up indices for %d genes...' % len(ranked_genes))
         for i, g in enumerate(ranked_genes):
-            assert isinstance(g, (str, _oldstr))
             try:
-                idx = self._genome.index(g)
-            except ValueError:
+                idx = self._gene_indices[g]
+            except KeyError:
                 unknown += 1
                 # adjust L if the gene was above the original L cutoff
                 if i < L:

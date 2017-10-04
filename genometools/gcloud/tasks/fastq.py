@@ -59,7 +59,7 @@ def sra_download_paired_end(credentials, instance_config, instance_name,
 
 def trim_fastq(credentials, instance_config, instance_name,
                script_dir, input_file, output_file,
-               trim_crop, trim_headcrop=0,
+               trim_crop, trim_headcrop=0, self_destruct=True,
                **kwargs):
     """Trims a FASTQ file.
     
@@ -70,7 +70,8 @@ def trim_fastq(credentials, instance_config, instance_name,
         input_file=input_file,
         output_file=output_file,
         trim_crop=trim_crop,
-        trim_headcrop=trim_headcrop)
+        trim_headcrop=trim_headcrop,
+        self_destruct=self_destruct)
 
     if len(startup_script) > 32768:
         raise ValueError('Startup script larger than 32,768 bytes!')
