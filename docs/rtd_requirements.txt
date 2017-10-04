@@ -1,7 +1,6 @@
 setuptools>=34.0.0
 sphinx
 sphinx-rtd-theme
-sphinx-argparse
 mock
 pip>=8.1.2
 numpy>=1.8,<2
