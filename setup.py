@@ -24,7 +24,7 @@ from setuptools import setup, find_packages, Command
 
 root = 'genometools'
 name = 'genometools'
-version = '0.4.0'
+version = '0.4.1'
 
 here = path.abspath(path.dirname(__file__))
 description = 'GenomeTools: A Python Toolkit for Working with Genomic Data.'
@@ -52,8 +52,8 @@ if 'READTHEDOCS' not in os.environ or \
         os.environ['READTHEDOCS'] != 'True':
     install_requires.extend([
         #'six>=1.10.0, <2',
-        'scipy>=0.19.0, <1',
-        'plotly>=1.9.6, <3',
+        'scipy>=1, <2',
+        'plotly>=2, <3',
     ])
 else:
     install_requires.extend([

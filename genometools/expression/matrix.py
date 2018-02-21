@@ -16,23 +16,21 @@
 
 """Module containing the `ExpMatrix` class."""
 
-from __future__ import (absolute_import, division,
-                        print_function, unicode_literals)
-_oldstr = str
-from builtins import *
-
 import logging
 import importlib
 import hashlib
 from collections import OrderedDict
 from typing import Iterable
+import tarfile
+import io
 
 import pandas as pd
 import numpy as np
 import scipy as sp
+import scipy.io
 from scipy import sparse
-import unicodecsv as csv
-import six
+import csv
+#import six
 
 # from .. import misc
 from . import ExpGene, ExpGeneTable
@@ -266,7 +264,7 @@ class ExpMatrix(pd.DataFrame):
         #if highlight_samples is not None:
         #    assert isinstance(highlight_genes, Iterable)
         if highlight_color is not None:
-            assert isinstance(highlight_color, (str, _oldstr))
+            assert isinstance(highlight_color, str)
 
         if highlight_color is None:
             highlight_color = 'blue'
@@ -426,7 +424,7 @@ class ExpMatrix(pd.DataFrame):
 
     @classmethod
     def read_tsv(cls, file_path: str, gene_table: ExpGeneTable = None,
-                 encoding: str = 'UTF-8'):
+                 encoding: str = 'UTF-8', sep: str = '\t'):
         """Read expression matrix from a tab-delimited text file.
 
         Parameters
@@ -438,6 +436,8 @@ class ExpMatrix(pd.DataFrame):
             be filtered against this set of genes. (None)
         encoding: str, optional
             The file encoding. ("UTF-8")
+        sep: str, optional
+            The separator. ("\t")
 
         Returns
         -------
@@ -445,16 +445,19 @@ class ExpMatrix(pd.DataFrame):
             The expression matrix.
         """
         # use pd.read_csv to parse the tsv file into a DataFrame
-        matrix = cls(pd.read_csv(file_path, sep='\t', index_col=0, header=0,
+        matrix = cls(pd.read_csv(file_path, sep=sep, index_col=0, header=0,
                                  encoding=encoding))
 
         # parse index column separately
         # (this seems to be the only way we can prevent pandas from converting
-        #  "nan" or "NaN" to floats in the index)
-        ind = pd.read_csv(file_path, sep='\t', usecols=[0, ], header=0,
-                          encoding=encoding, na_filter=False)
+        #  "nan" or "NaN" to floats in the index)['1_cell_306.120', '1_cell_086.024', '1_cell_168.103']
+        #ind = pd.read_csv(file_path, sep=sep, usecols=[0, ], header=0,
+        #                  encoding=encoding, na_filter=False)
+        ind = pd.read_csv(file_path, sep=sep, usecols=[0, ], header=None,
+                          skiprows=1, encoding=encoding, na_filter=False)
 
         matrix.index = ind.iloc[:, 0]
+        matrix.index.name = 'Genes'
 
         if gene_table is not None:
             # filter genes
@@ -463,7 +466,8 @@ class ExpMatrix(pd.DataFrame):
         return matrix
 
 
-    def write_tsv(self, file_path: str, encoding: str = 'UTF-8'):
+    def write_tsv(self, file_path: str, encoding: str = 'UTF-8',
+                  sep: str = '\t'):
         """Write expression matrix to a tab-delimited text file.
 
         Parameters
@@ -477,9 +481,8 @@ class ExpMatrix(pd.DataFrame):
         -------
         None
         """
-        sep = '\t'
-        if six.PY2:
-            sep = sep.encode('UTF-8')
+        #if six.PY2:
+        #    sep = sep.encode('UTF-8')
 
         self.to_csv(
             file_path, sep=sep, float_format='%.5f', mode='w',
@@ -535,7 +538,8 @@ class ExpMatrix(pd.DataFrame):
         return cls(X=X, genes=genes, cells=cells)
 
     @classmethod
-    def read_10xgenomics(cls, tarball_fpath: str, prefix: str):
+    def read_10xgenomics(cls, tarball_fpath: str, prefix: str,
+                         use_ensembl_ids: bool = False):
         """Read a 10X genomics compressed tarball containing expression data.
         
         Note: common prefix patterns:
@@ -554,8 +558,11 @@ class ExpMatrix(pd.DataFrame):
             ti = tf.getmember('%sgenes.tsv' % prefix)
             with tf.extractfile(ti) as fh:
                 wrapper = io.TextIOWrapper(fh, encoding='ascii')
+                i = 1
+                if use_ensembl_ids:
+                    i = 0
                 gene_names = \
-                        [row[1] for row in csv.reader(wrapper, delimiter='\t')]
+                        [row[i] for row in csv.reader(wrapper, delimiter='\t')]
 
             ti = tf.getmember('%sbarcodes.tsv' % prefix)
             with tf.extractfile(ti) as fh:
@@ -568,6 +575,7 @@ class ExpMatrix(pd.DataFrame):
             assert mtx.shape[1] == len(barcodes)
         
         _LOGGER.info('Matrix dimensions: %s', str(mtx.shape))
-        matrix = cls(X=mtx, genes=gene_names, cells=barcodes)
+        X = mtx.todense()
+        matrix = cls(X=X, genes=gene_names, cells=barcodes)
         
         return matrix
