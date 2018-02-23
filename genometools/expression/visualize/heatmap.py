@@ -18,11 +18,6 @@
 
 """
 
-from __future__ import (absolute_import, division,
-                        print_function, unicode_literals)
-_oldstr = str
-from builtins import *
-
 import os
 import logging
 
@@ -84,13 +79,17 @@ class ExpHeatmap(object):
 
     def __init__(self, matrix,
                  gene_annotations=None, sample_annotations=None,
-                 colorscale=None, colorbar_label='Expression', title=None):
+                 colorscale=None, colorbar_label='Expression', title=None,
+                 gene_aliases=None):
 
         if gene_annotations is None:
             gene_annotations = []
 
         if sample_annotations is None:
             sample_annotations = []
+
+        if gene_aliases is None:
+            gene_aliases = dict()
 
         if colorscale is None:
             # use default colorscale
@@ -101,11 +100,12 @@ class ExpHeatmap(object):
         assert isinstance(sample_annotations, Iterable)
         assert isinstance(colorscale, Iterable)
         if colorbar_label is not None:
-            assert isinstance(colorbar_label, (str, _oldstr))
+            assert isinstance(colorbar_label, str)
 
         self.matrix = matrix
         self.gene_annotations = gene_annotations
         self.sample_annotations = sample_annotations
+        self.gene_aliases = gene_aliases
         self.colorscale = colorscale
         self.colorbar_label = colorbar_label
         self.title = title
@@ -216,13 +216,26 @@ class ExpHeatmap(object):
             return fixed_labels
 
         x = fix_plotly_label_bug(self.matrix.samples)
-        y = fix_plotly_label_bug(self.matrix.genes)
+
+        gene_labels = self.matrix.genes.tolist()
+
+        if self.gene_aliases:
+            for i, gene in enumerate(gene_labels):
+                try:
+                    alias = self.gene_aliases[gene]
+                except KeyError:
+                    pass
+                else:
+                    gene_labels[i] = '%s/%s' % (gene, alias)
+            
+        gene_labels = fix_plotly_label_bug(gene_labels)
+
 
         data = [
             go.Heatmap(
                 z=self.matrix.X,
                 x=x,
-                y=y,
+                y=gene_labels,
                 zmin=emin,
                 zmax=emax,
                 colorscale=self.colorscale,
